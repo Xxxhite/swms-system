@@ -1,7 +1,9 @@
-import { Elysia } from "elysia";
+import { app } from "@/app"
+import { env } from "@/utils/env"
 
-const app = new Elysia().get("/", () => "Hello Elysia").listen(3000);
+app.listen(env.port)
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+const { hostname, port } = app.server ?? {}
+
+console.log(`🦊 温馨社工服务管理系统 API 已启动：http://${hostname}:${port}`)
+console.log(`📘 接口文档：http://${hostname}:${port}/docs`)

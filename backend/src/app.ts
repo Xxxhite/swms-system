@@ -15,8 +15,10 @@ export const app = new Elysia()
   .use(errorHandler)
   .use(
     cors({
+      // 凭证走请求头（Authorization: Bearer），不依赖 Cookie，所以显式关掉 credentials
+      // 注意：@elysiajs/cors 的 credentials 默认是 true，不写这行浏览器仍会收到凭证许可
+      credentials: false,
       origin: env.corsOrigins,
-      credentials: true,
     }),
   )
   .use(

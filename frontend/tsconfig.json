@@ -1,9 +1,6 @@
 {
   "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
   /* 这两项是给工具链看的：Bun（bun -e / bun test）按最近的 tsconfig.json 解析 @/ 别名，
      两个引用工程各自已经有自己的 paths，不受这里影响。 */
   "compilerOptions": {

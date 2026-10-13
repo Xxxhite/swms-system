@@ -1,6 +1,6 @@
-import {createRouter, createWebHashHistory, type RouteRecordRaw} from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 
-import {filterMenuTree, LAYOUT_NAME, menuToRoutes, menuTree, publicRoutes} from '@/router/routes'
+import { filterMenuTree, LAYOUT_NAME, menuToRoutes, menuTree, publicRoutes } from '@/router/routes'
 
 /**
  * 路由表分两部分：
@@ -25,7 +25,7 @@ export function installLayout(permissions: string[]): void {
             path: 'dashboard',
             name: 'Dashboard',
             component: () => import('@/views/dashboard/index.vue'),
-            meta: {title: '工作台'},
+            meta: { title: '工作台' },
         },
         ...menuToRoutes(menus),
         {
@@ -33,7 +33,7 @@ export function installLayout(permissions: string[]): void {
             path: ':pathMatch(.*)*',
             name: 'NotFound',
             component: () => import('@/views/placeholder/ModulePlaceholder.vue'),
-            meta: {title: '页面不存在'},
+            meta: { title: '页面不存在' },
         },
     ]
 

@@ -53,4 +53,4 @@ export const app = new Elysia()
     }),
   )
   // 业务模块统一挂在 /api 下，模块路由自带二级 prefix
-  .group("/api", (api) => modules.reduce((acc, module) => acc.use(module), api))
+  .group("/api", (api) => api.use(modules))

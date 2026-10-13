@@ -1,8 +1,8 @@
-import type {AxiosRequestConfig, AxiosResponse} from 'axios'
+import type { AxiosRequestConfig, AxiosResponse } from 'axios'
 
-import {httpStatusOf} from '@/api/error-code'
-import type {ApiResponse} from '@/api/types'
-import {mockLogin, mockLogout, mockProfile} from '@/mock/auth'
+import { httpStatusOf } from '@/api/error-code'
+import type { ApiResponse } from '@/api/types'
+import { mockLogin, mockLogout, mockProfile } from '@/mock/auth'
 
 type MockHandler = (config: AxiosRequestConfig) => ApiResponse<unknown>
 
@@ -28,7 +28,7 @@ export async function mockAdapter(config: AxiosRequestConfig): Promise<AxiosResp
 
     const body: ApiResponse<unknown> = handler
         ? handler(config)
-        : {code: 3000, message: `mock 未实现的接口：${key}`, data: null}
+        : { code: 3000, message: `mock 未实现的接口：${key}`, data: null }
 
     return {
         data: body,

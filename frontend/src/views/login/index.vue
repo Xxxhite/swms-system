@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {reactive, ref} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import {ElMessage, type FormInstance, type FormRules} from 'element-plus'
+import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 
-import {useMock} from '@/api/config'
-import {mockAccountsHint} from '@/mock/auth'
-import {useUserStore} from '@/stores/user'
+import { useMock } from '@/api/config'
+import { mockAccountsHint } from '@/mock/auth'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const route = useRoute()
@@ -21,8 +21,8 @@ const form = reactive({
 })
 
 const rules: FormRules = {
-    username: [{required: true, message: '请输入账号', trigger: 'blur'}],
-    password: [{required: true, message: '请输入密码', trigger: 'blur'}],
+    username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+    password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
 async function submit(): Promise<void> {
@@ -31,7 +31,7 @@ async function submit(): Promise<void> {
 
     submitting.value = true
     try {
-        await userStore.login({username: form.username, password: form.password})
+        await userStore.login({ username: form.username, password: form.password })
         ElMessage.success('登录成功')
         const redirect = (route.query.redirect as string) || '/dashboard'
         await router.replace(redirect)
@@ -51,18 +51,30 @@ async function submit(): Promise<void> {
 
             <el-form ref="formRef" :model="form" :rules="rules" @keyup.enter="submit">
                 <el-form-item prop="username">
-                    <el-input v-model="form.username" placeholder="账号" clearable/>
+                    <el-input v-model="form.username" placeholder="账号" clearable />
                 </el-form-item>
                 <el-form-item prop="password">
-                    <el-input v-model="form.password" type="password" placeholder="密码" show-password/>
+                    <el-input
+                        v-model="form.password"
+                        type="password"
+                        placeholder="密码"
+                        show-password
+                    />
                 </el-form-item>
-                <el-button type="primary" class="login__submit" :loading="submitting" @click="submit">
+                <el-button
+                    type="primary"
+                    class="login__submit"
+                    :loading="submitting"
+                    @click="submit"
+                >
                     登 录
                 </el-button>
             </el-form>
 
             <div v-if="useMock" class="login__hint">
-                <div class="login__hint-title">当前是本地 mock 模式，可用账号（密码都是 123456）</div>
+                <div class="login__hint-title">
+                    当前是本地 mock 模式，可用账号（密码都是 123456）
+                </div>
                 <div v-for="item in mockAccountsHint" :key="item.username" class="login__hint-row">
                     <code>{{ item.username }}</code> — {{ item.roleName }}
                 </div>

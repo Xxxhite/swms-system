@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import {computed} from 'vue'
+import { computed } from 'vue'
 
-import {useMock} from '@/api/config'
-import {useUserStore} from '@/stores/user'
+import { useMock } from '@/api/config'
+import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
 
@@ -22,15 +22,21 @@ const menuCount = computed(() => userStore.menus.length)
         <el-card class="dashboard__card">
             <template #header>登录状态</template>
             <el-descriptions :column="2" border>
-                <el-descriptions-item label="账号">{{ userStore.profile?.username }}</el-descriptions-item>
-                <el-descriptions-item label="姓名">{{ userStore.profile?.name }}</el-descriptions-item>
+                <el-descriptions-item label="账号">{{
+                    userStore.profile?.username
+                }}</el-descriptions-item>
+                <el-descriptions-item label="姓名">{{
+                    userStore.profile?.name
+                }}</el-descriptions-item>
                 <el-descriptions-item label="角色">
                     {{ userStore.profile?.roleNames.join('、') }}
                 </el-descriptions-item>
                 <el-descriptions-item label="所属团队">
                     {{ userStore.profile?.teamName }}
                 </el-descriptions-item>
-                <el-descriptions-item label="数据范围">{{ userStore.dataScopeText }}</el-descriptions-item>
+                <el-descriptions-item label="数据范围">{{
+                    userStore.dataScopeText
+                }}</el-descriptions-item>
                 <el-descriptions-item label="可见菜单">{{ menuCount }} 项</el-descriptions-item>
                 <el-descriptions-item label="功能权限" :span="2">
                     {{ userStore.permissions.length }} 项

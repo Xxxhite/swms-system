@@ -1,5 +1,5 @@
-import {http} from '@/api/request'
-import type {CurrentUser, LoginPayload, LoginResult} from '@/api/types'
+import { http } from '@/api/request'
+import type { CurrentUser, LoginPayload, LoginResult } from '@/api/types'
 
 /** 基本信息模块：登录与当前用户 */
 export const authApi = {

@@ -1,7 +1,7 @@
-import type {AxiosRequestConfig} from 'axios'
+import type { AxiosRequestConfig } from 'axios'
 
-import {PERM, ROLE} from '@/api/permissions'
-import type {ApiResponse, CurrentUser} from '@/api/types'
+import { PERM, ROLE } from '@/api/permissions'
+import type { ApiResponse, CurrentUser } from '@/api/types'
 
 /**
  * 本地 mock 账号。只用于前端联调演示，真实后端接上以后整份文件都不再被引用。
@@ -96,7 +96,8 @@ function readBody(config: AxiosRequestConfig): Record<string, unknown> {
 
 /** 从 mock token 反查账号，替代真实后端的 JWT 校验 */
 function currentAccount(config: AxiosRequestConfig): MockAccount | null {
-    const header = (config.headers?.Authorization ?? config.headers?.authorization) as string | undefined
+    const header = (config.headers?.Authorization ?? config.headers?.authorization) as
+        string | undefined
     const token = header?.replace(/^Bearer\s+/, '') ?? ''
     const username = token.replace(/^mock-token-/, '')
     return accounts[username] ?? null
@@ -109,26 +110,26 @@ export function mockLogin(config: AxiosRequestConfig): ApiResponse<unknown> {
     const account = accounts[username]
 
     if (!account || account.password !== password) {
-        return {code: 1000, message: '账号或密码不正确', data: null}
+        return { code: 1000, message: '账号或密码不正确', data: null }
     }
 
     return {
         code: 0,
         message: 'ok',
-        data: {token: `mock-token-${username}`, user: account.user},
+        data: { token: `mock-token-${username}`, user: account.user },
     }
 }
 
 export function mockProfile(config: AxiosRequestConfig): ApiResponse<unknown> {
     const account = currentAccount(config)
     if (!account) {
-        return {code: 2000, message: '登录状态已失效，请重新登录', data: null}
+        return { code: 2000, message: '登录状态已失效，请重新登录', data: null }
     }
-    return {code: 0, message: 'ok', data: account.user}
+    return { code: 0, message: 'ok', data: account.user }
 }
 
 export function mockLogout(): ApiResponse<unknown> {
-    return {code: 0, message: 'ok', data: null}
+    return { code: 0, message: 'ok', data: null }
 }
 
 /** 登录页用来提示可用账号，只在 mock 模式下展示 */

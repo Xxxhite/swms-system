@@ -13,7 +13,7 @@ export const env = {
   port: toPositiveInt(process.env.PORT, 3000),
   /**
    * 允许跨域的前端地址，多个用英文逗号分隔。
-   * 默认只放开发用的 Vite 地址，别用 "*"：带 credentials 的跨域请求不允许通配源。
+   * 默认只放开发用的 Vite 地址；凭证走请求头，CORS credentials 显式关闭。
    */
   corsOrigins: (process.env.CORS_ORIGIN ?? "http://localhost:5173")
     .split(",")

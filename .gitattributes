@@ -1,0 +1,2 @@
+# 与 Prettier 保持一致，避免 Windows 检出后产生换行格式差异。
+* text=auto eol=lf

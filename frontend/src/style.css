@@ -6,7 +6,12 @@
 :root {
     /* 固定为浅色：Element Plus 在这里用浅色主题，交给系统自动切深色会两边打架 */
     color-scheme: light;
-    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        'Microsoft YaHei',
+        sans-serif;
     line-height: 1.5;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;

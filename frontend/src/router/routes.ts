@@ -1,6 +1,6 @@
-import type {RouteRecordRaw} from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
 
-import {PERM} from '@/api/permissions'
+import { PERM } from '@/api/permissions'
 
 /** 菜单节点：既是侧边菜单的数据源，也是动态路由的来源 */
 export interface MenuNode {
@@ -20,32 +20,68 @@ export const menuTree: MenuNode[] = [
         path: '/service',
         title: '服务管理',
         children: [
-            {path: '/service/monitor', title: '指标监测端', permission: PERM.SERVICE_MONITOR},
+            { path: '/service/monitor', title: '指标监测端', permission: PERM.SERVICE_MONITOR },
             {
                 path: '/service/archive',
                 title: '服务档案',
                 permission: PERM.SERVICE_ARCHIVE,
                 children: [
-                    {path: '/service/archive/case', title: '专-个案', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/group', title: '专-小组', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/activity', title: '专-活动', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/volunteer', title: '专-志愿者活动', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/record', title: '专-建档', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/visit', title: '专-探访', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/consult', title: '专-咨询', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/meeting', title: '行-会议记录', permission: PERM.SERVICE_ARCHIVE},
-                    {path: '/service/archive/monthly', title: '行-月计划', permission: PERM.SERVICE_ARCHIVE},
+                    {
+                        path: '/service/archive/case',
+                        title: '专-个案',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/group',
+                        title: '专-小组',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/activity',
+                        title: '专-活动',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/volunteer',
+                        title: '专-志愿者活动',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/record',
+                        title: '专-建档',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/visit',
+                        title: '专-探访',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/consult',
+                        title: '专-咨询',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/meeting',
+                        title: '行-会议记录',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
+                    {
+                        path: '/service/archive/monthly',
+                        title: '行-月计划',
+                        permission: PERM.SERVICE_ARCHIVE,
+                    },
                 ],
             },
-            {path: '/service/approval', title: '档案审批', permission: PERM.SERVICE_APPROVE},
+            { path: '/service/approval', title: '档案审批', permission: PERM.SERVICE_APPROVE },
         ],
     },
-    {path: '/project', title: '项目管理', permission: PERM.PROJECT},
-    {path: '/activity', title: '活动管理', permission: PERM.ACTIVITY},
-    {path: '/resource', title: '资源管理', permission: PERM.RESOURCE},
-    {path: '/analysis', title: '数据分析', permission: PERM.ANALYSIS},
-    {path: '/knowledge', title: '知识管理', permission: PERM.KNOWLEDGE},
-    {path: '/system', title: '系统管理', permission: PERM.SYSTEM},
+    { path: '/project', title: '项目管理', permission: PERM.PROJECT },
+    { path: '/activity', title: '活动管理', permission: PERM.ACTIVITY },
+    { path: '/resource', title: '资源管理', permission: PERM.RESOURCE },
+    { path: '/analysis', title: '数据分析', permission: PERM.ANALYSIS },
+    { path: '/knowledge', title: '知识管理', permission: PERM.KNOWLEDGE },
+    { path: '/system', title: '系统管理', permission: PERM.SYSTEM },
 ]
 
 /** 按权限过滤菜单树；子节点全被过滤掉的父节点也不再展示 */
@@ -57,9 +93,9 @@ export function filterMenuTree(nodes: MenuNode[], permissions: string[]): MenuNo
         if (node.children?.length) {
             const children = filterMenuTree(node.children, permissions)
             if (!children.length) continue
-            result.push({...node, children})
+            result.push({ ...node, children })
         } else {
-            result.push({...node})
+            result.push({ ...node })
         }
     }
     return result
@@ -72,10 +108,10 @@ export function filterMenuTree(nodes: MenuNode[], permissions: string[]): MenuNo
 function flattenMenu(
     nodes: MenuNode[],
     parents: string[] = [],
-): Array<{node: MenuNode; parents: string[]}> {
-    const flat: Array<{node: MenuNode; parents: string[]}> = []
+): Array<{ node: MenuNode; parents: string[] }> {
+    const flat: Array<{ node: MenuNode; parents: string[] }> = []
     for (const node of nodes) {
-        flat.push({node, parents})
+        flat.push({ node, parents })
         if (node.children?.length) {
             flat.push(...flattenMenu(node.children, [...parents, node.title]))
         }
@@ -84,11 +120,11 @@ function flattenMenu(
 }
 
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
-    return flattenMenu(nodes).map(({node, parents}) => ({
+    return flattenMenu(nodes).map(({ node, parents }) => ({
         path: node.path,
         name: `menu:${node.path}`,
         component: () => import('@/views/placeholder/ModulePlaceholder.vue'),
-        meta: {title: node.title, parents},
+        meta: { title: node.title, parents },
     }))
 }
 
@@ -98,7 +134,7 @@ export const publicRoutes: RouteRecordRaw[] = [
         path: '/login',
         name: 'Login',
         component: () => import('@/views/login/index.vue'),
-        meta: {title: '登录', public: true},
+        meta: { title: '登录', public: true },
     },
 ]
 

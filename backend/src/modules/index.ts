@@ -1,4 +1,4 @@
-import type { Elysia } from "elysia"
+import type { AnyElysia } from "elysia"
 
 /**
  * 业务模块注册表。新增模块时只改这一个文件，app.ts 不用动。
@@ -13,4 +13,4 @@ import type { Elysia } from "elysia"
  *
  * 当前为空：业务模块的表结构要等机构调研结果，模块骨架先不挂假路由。
  */
-export const modules: Elysia[] = []
+export const modules: AnyElysia[] = []

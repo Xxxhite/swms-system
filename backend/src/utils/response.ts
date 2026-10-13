@@ -11,11 +11,7 @@ export function ok<T>(data: T, message = "ok"): ApiResponse<T> {
   return { code: ErrorCode.OK, message, data }
 }
 
-export function fail(
-  code: number,
-  message: string,
-  data: unknown = null,
-): ApiResponse<unknown> {
+export function fail(code: number, message: string, data: unknown = null): ApiResponse<unknown> {
   return { code, message, data }
 }
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {computed} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import {ElMessage, ElMessageBox} from 'element-plus'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 
 import SidebarItem from '@/layouts/components/SidebarItem.vue'
-import {useUserStore} from '@/stores/user'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,9 +19,18 @@ const roleNames = computed(() => userStore.profile?.roleNames.join('/') ?? '')
 
 async function handleCommand(command: string): Promise<void> {
     if (command === 'logout') {
-        await ElMessageBox.confirm('确定要退出登录吗？', '提示', {type: 'warning'})
-        await userStore.logout()
-        await router.replace('/login')
+        try {
+            await ElMessageBox.confirm('确定要退出登录吗？', '提示', { type: 'warning' })
+        } catch {
+            return
+        }
+        try {
+            await userStore.logout()
+        } catch {
+            // 接口失败的提示由请求层负责，本地会话仍然已清理。
+        } finally {
+            await router.replace('/login')
+        }
         return
     }
     ElMessage.info('个人中心待接入')
@@ -38,8 +47,9 @@ async function handleCommand(command: string): Promise<void> {
                 class="layout__menu"
                 background-color="#22303f"
                 text-color="#c3ccd6"
-                active-text-color="#ffd04b">
-                <sidebar-item v-for="item in userStore.menus" :key="item.path" :node="item"/>
+                active-text-color="#ffd04b"
+            >
+                <sidebar-item v-for="item in userStore.menus" :key="item.path" :node="item" />
             </el-menu>
         </el-aside>
 
@@ -60,7 +70,9 @@ async function handleCommand(command: string): Promise<void> {
                         <template #dropdown>
                             <el-dropdown-menu>
                                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                                <el-dropdown-item command="logout" divided
+                                    >退出登录</el-dropdown-item
+                                >
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -68,7 +80,7 @@ async function handleCommand(command: string): Promise<void> {
             </el-header>
 
             <el-main class="layout__main">
-                <router-view/>
+                <router-view />
             </el-main>
         </el-container>
     </el-container>

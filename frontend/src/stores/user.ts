@@ -1,11 +1,11 @@
-import {defineStore} from 'pinia'
-import {computed, ref} from 'vue'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
-import {authApi} from '@/api/modules/auth'
-import type {CurrentUser, DataScope, LoginPayload} from '@/api/types'
-import {clearLayout, installLayout} from '@/router'
-import {filterMenuTree, menuTree} from '@/router/routes'
-import {getToken, removeToken, setToken} from '@/utils/auth'
+import { authApi } from '@/api/modules/auth'
+import type { CurrentUser, DataScope, LoginPayload } from '@/api/types'
+import { clearLayout, installLayout } from '@/router'
+import { filterMenuTree, menuTree } from '@/router/routes'
+import { getToken, removeToken, setToken } from '@/utils/auth'
 
 /** 数据范围的中文说法，界面上直接展示，答辩时也用来说明权限设计 */
 const dataScopeLabels: Record<DataScope, string> = {
@@ -50,18 +50,27 @@ export const useUserStore = defineStore('user', () => {
 
     /** 刷新页面后用本地 token 恢复登录态 */
     async function loadProfile(): Promise<void> {
-        applyProfile(await authApi.profile())
+        const currentToken = token.value
+        const user = await authApi.profile()
+        // 防止退出或切换账号时，旧请求重新恢复上一份用户资料。
+        if (!token.value || token.value !== currentToken) throw new Error('登录状态已变更')
+        applyProfile(user)
+    }
+
+    /** 失效与主动退出共用清理逻辑，不再依赖登出接口成功。 */
+    function resetSession(): void {
+        removeToken()
+        token.value = ''
+        profile.value = null
+        loaded.value = false
+        clearLayout()
     }
 
     async function logout(): Promise<void> {
         try {
             await authApi.logout()
         } finally {
-            removeToken()
-            token.value = ''
-            profile.value = null
-            loaded.value = false
-            clearLayout()
+            resetSession()
         }
     }
 
@@ -75,6 +84,7 @@ export const useUserStore = defineStore('user', () => {
         hasPermission,
         login,
         loadProfile,
+        resetSession,
         logout,
     }
 })

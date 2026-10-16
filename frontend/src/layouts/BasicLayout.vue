@@ -40,7 +40,9 @@ async function handleCommand(command: string): Promise<void> {
 <template>
     <el-container class="layout">
         <el-aside width="220px" class="layout__aside">
-            <div class="layout__brand">温馨社工服务管理系统</div>
+            <router-link to="/dashboard" class="layout__brand" title="返回工作台">
+                温馨社工服务管理系统
+            </router-link>
             <el-menu
                 :default-active="activeMenu"
                 router
@@ -49,6 +51,7 @@ async function handleCommand(command: string): Promise<void> {
                 text-color="#c3ccd6"
                 active-text-color="#ffd04b"
             >
+                <el-menu-item index="/dashboard">工作台</el-menu-item>
                 <sidebar-item v-for="item in userStore.menus" :key="item.path" :node="item" />
             </el-menu>
         </el-aside>
@@ -107,6 +110,16 @@ async function handleCommand(command: string): Promise<void> {
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.5px;
+    text-decoration: none;
+}
+
+.layout__brand:hover {
+    background-color: #1b2632;
+}
+
+.layout__brand:focus-visible {
+    outline: 2px solid #ffd04b;
+    outline-offset: -2px;
 }
 
 .layout__menu {

@@ -136,6 +136,12 @@ export const publicRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/login/index.vue'),
         meta: { title: '登录', public: true },
     },
+    {
+        path: '/test',
+        name: 'TestPage',
+        component: () => import('@/views/test/index.vue'),
+        meta: { title: '测试页', public: true },
+    },
 ]
 
 export const LAYOUT_NAME = 'Layout'

@@ -1,16 +1,18 @@
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import ElementPlus from 'element-plus'
+import zhCN from 'element-plus/es/locale/lang/zh-cn'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 
-import router from './router'
-import { setupRouterGuard } from './router/guard'
 import { setupRequestAuth } from '@/api/request'
+import router from '@/router'
+import { setupRouterGuard } from '@/router/guard'
 import { useUserStore } from '@/stores/user'
-import ElementPlus from 'element-plus'
-import zhCN from 'element-plus/es/locale/lang/zh-cn'
 
 import App from './App.vue'
 
 import 'element-plus/theme-chalk/dark/css-vars.css'
+import '@/style.css'
 
 const app = createApp(App)
 
@@ -31,4 +33,10 @@ setupRequestAuth(() => {
 setupRouterGuard()
 app.use(router)
 app.use(ElementPlus, { size: 'small', zIndex: 3000, locale: zhCN })
+
+// 全局注册图标组件，必须在挂载应用之前完成。
+for (const [name, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(name, component)
+}
+
 app.mount('#app')

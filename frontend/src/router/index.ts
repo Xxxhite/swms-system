@@ -7,9 +7,16 @@ import { filterMenuTree, LAYOUT_NAME, menuToRoutes, menuTree, publicRoutes } fro
  * - 免登录路由（登录页、脚手架验证页）在这里静态注册
  * - 业务路由由登录后的权限动态装配（见 installLayout）
  */
+const APP_TITLE = '温馨社工服务信息管理系统'
+
 const router = createRouter({
     history: createWebHashHistory(),
     routes: [...publicRoutes],
+})
+
+router.afterEach((to) => {
+    if (typeof document === 'undefined') return
+    document.title = to.meta.title ? `${to.meta.title} - ${APP_TITLE}` : APP_TITLE
 })
 
 /**

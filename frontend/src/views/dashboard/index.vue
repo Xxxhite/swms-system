@@ -3,69 +3,142 @@ import { computed } from 'vue'
 
 import { useMock } from '@/api/config'
 import { useUserStore } from '@/stores/user'
+import ShortcutItem from './components/ShortcutItem.vue'
 
 const userStore = useUserStore()
-
-const menuCount = computed(() => userStore.menus.length)
+const displayName = computed(() => userStore.profile?.name?.trim() || '用户')
+const teamName = computed(() => userStore.profile?.teamName?.trim() || '未设置')
+const roleNames = computed(() => userStore.profile?.roleNames.join('、') || '未设置')
 </script>
 
 <template>
     <div class="dashboard">
+        <section class="dashboard__welcome" aria-labelledby="welcome-title">
+            <p class="dashboard__eyebrow">工作台</p>
+            <h1 id="welcome-title">{{ displayName }}，你好</h1>
+            <p class="dashboard__intro">从下方选择功能，开始今天的工作。</p>
+            <dl class="dashboard__identity">
+                <div>
+                    <dt>所属团队</dt>
+                    <dd>{{ teamName }}</dd>
+                </div>
+                <div>
+                    <dt>角色</dt>
+                    <dd>{{ roleNames }}</dd>
+                </div>
+                <div>
+                    <dt>数据范围</dt>
+                    <dd>{{ userStore.dataScopeText || '未设置' }}</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section aria-labelledby="shortcuts-title">
+            <h2 id="shortcuts-title" class="dashboard__section-title">常用功能</h2>
+            <div v-if="userStore.menus.length" class="dashboard__shortcuts">
+                <section
+                    v-for="menu in userStore.menus"
+                    :key="menu.path"
+                    class="dashboard__module"
+                    :class="{ 'dashboard__module--group': menu.children?.length }"
+                    :aria-label="menu.title"
+                >
+                    <template v-if="menu.children?.length">
+                        <h3>{{ menu.title }}</h3>
+                        <div class="dashboard__module-items">
+                            <shortcut-item
+                                v-for="child in menu.children"
+                                :key="child.path"
+                                :node="child"
+                            />
+                        </div>
+                    </template>
+                    <shortcut-item v-else :node="menu" />
+                </section>
+            </div>
+            <el-empty v-else description="暂无可用功能，请联系管理员配置权限。" />
+        </section>
+
         <el-alert
             v-if="useMock"
             type="info"
             show-icon
             :closable="false"
-            title="当前为本地 mock 模式：登录与用户信息由前端模拟，数据库表结构确定后再切到真实接口。"
+            title="当前为演示环境，数据为模拟数据。"
         />
-
-        <el-card class="dashboard__card">
-            <template #header>登录状态</template>
-            <el-descriptions :column="2" border>
-                <el-descriptions-item label="账号">{{
-                    userStore.profile?.username
-                }}</el-descriptions-item>
-                <el-descriptions-item label="姓名">{{
-                    userStore.profile?.name
-                }}</el-descriptions-item>
-                <el-descriptions-item label="角色">
-                    {{ userStore.profile?.roleNames.join('、') }}
-                </el-descriptions-item>
-                <el-descriptions-item label="所属团队">
-                    {{ userStore.profile?.teamName }}
-                </el-descriptions-item>
-                <el-descriptions-item label="数据范围">{{
-                    userStore.dataScopeText
-                }}</el-descriptions-item>
-                <el-descriptions-item label="可见菜单">{{ menuCount }} 项</el-descriptions-item>
-                <el-descriptions-item label="功能权限" :span="2">
-                    {{ userStore.permissions.length }} 项
-                </el-descriptions-item>
-            </el-descriptions>
-        </el-card>
-
-        <el-card class="dashboard__card">
-            <template #header>当前进度</template>
-            <el-timeline>
-                <el-timeline-item timestamp="已完成" type="success">
-                    仓库脚手架、后端数据库层、后端基础设施（统一响应与全局错误处理）
-                </el-timeline-item>
-                <el-timeline-item timestamp="已完成" type="success">
-                    前端骨架：登录、布局、按角色渲染的动态菜单与按钮权限判断
-                </el-timeline-item>
-                <el-timeline-item timestamp="进行中" type="warning">
-                    机构业务调研：收集空白文书模板与统计表格
-                </el-timeline-item>
-                <el-timeline-item timestamp="待开展">
-                    数据库表结构设计（9 类档案、合同包指标）→ 业务模块接口 → 各模块页面
-                </el-timeline-item>
-            </el-timeline>
-        </el-card>
     </div>
 </template>
 
 <style scoped>
-.dashboard__card {
-    margin-top: 16px;
+.dashboard {
+    display: grid;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.dashboard__welcome {
+    padding: 28px;
+    border: 1px solid #d9e7f2;
+    border-radius: 8px;
+    background: linear-gradient(120deg, #fff 35%, #ecf5ff);
+}
+.dashboard__eyebrow {
+    margin: 0 0 8px;
+    color: #337ecc;
+    font-size: 13px;
+}
+.dashboard__welcome h1 {
+    margin: 0;
+    font-size: 26px;
+    color: #303133;
+}
+.dashboard__intro {
+    margin: 10px 0 24px;
+    color: #606266;
+}
+.dashboard__identity {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 40px;
+    margin: 0;
+}
+.dashboard__identity dt {
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #606266;
+}
+.dashboard__identity dd {
+    margin: 0;
+    color: #303133;
+    font-weight: 500;
+}
+.dashboard__section-title {
+    margin: 0 0 14px;
+    font-size: 18px;
+    color: #303133;
+}
+.dashboard__shortcuts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+.dashboard__module {
+    padding: 16px;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    background: #fff;
+}
+.dashboard__module--group {
+    grid-column: 1 / -1;
+}
+.dashboard__module h3 {
+    margin: 0 0 14px;
+    font-size: 16px;
+    color: #303133;
+}
+.dashboard__module-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
 }
 </style>

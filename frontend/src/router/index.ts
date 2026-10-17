@@ -29,11 +29,11 @@ export function installLayout(permissions: string[]): void {
         },
         ...menuToRoutes(menus),
         {
-            // 兜底路由必须最后注册，否则会把上面这些业务路由全吃掉
+            // 未知地址与当前账号未注册的业务地址共用兜底页。
             path: ':pathMatch(.*)*',
             name: 'NotFound',
-            component: () => import('@/views/placeholder/ModulePlaceholder.vue'),
-            meta: { title: '页面不存在' },
+            component: () => import('@/views/error/NotFound.vue'),
+            meta: { title: '页面不存在或暂不可访问' },
         },
     ]
 

@@ -13,7 +13,9 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
-const breadcrumb = computed(() => [...(route.meta.parents ?? []), route.meta.title ?? ''])
+const breadcrumb = computed(() =>
+    route.path === '/dashboard' ? [] : [...(route.meta.parents ?? []), route.meta.title ?? ''],
+)
 const userName = computed(() => userStore.profile?.name ?? '')
 const roleNames = computed(() => userStore.profile?.roleNames.join('/') ?? '')
 
@@ -59,6 +61,11 @@ async function handleCommand(command: string): Promise<void> {
         <el-container>
             <el-header class="layout__header">
                 <el-breadcrumb separator="/">
+                    <el-breadcrumb-item
+                        :to="route.path === '/dashboard' ? undefined : '/dashboard'"
+                    >
+                        工作台
+                    </el-breadcrumb-item>
                     <el-breadcrumb-item v-for="(item, index) in breadcrumb" :key="index">
                         {{ item }}
                     </el-breadcrumb-item>

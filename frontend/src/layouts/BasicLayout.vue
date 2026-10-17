@@ -45,14 +45,7 @@ async function handleCommand(command: string): Promise<void> {
             <router-link to="/dashboard" class="layout__brand" title="返回工作台">
                 温馨社工服务管理系统
             </router-link>
-            <el-menu
-                :default-active="activeMenu"
-                router
-                class="layout__menu"
-                background-color="#22303f"
-                text-color="#c3ccd6"
-                active-text-color="#ffd04b"
-            >
+            <el-menu :default-active="activeMenu" router class="layout__menu">
                 <el-menu-item index="/dashboard">工作台</el-menu-item>
                 <sidebar-item v-for="item in userStore.menus" :key="item.path" :node="item" />
             </el-menu>
@@ -104,7 +97,7 @@ async function handleCommand(command: string): Promise<void> {
 .layout__aside {
     display: flex;
     flex-direction: column;
-    background-color: #22303f;
+    background-color: var(--swms-sidebar-bg);
 }
 
 .layout__brand {
@@ -113,7 +106,7 @@ async function handleCommand(command: string): Promise<void> {
     display: flex;
     align-items: center;
     padding: 0 16px;
-    color: #fff;
+    color: var(--el-color-white);
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -121,15 +114,21 @@ async function handleCommand(command: string): Promise<void> {
 }
 
 .layout__brand:hover {
-    background-color: #1b2632;
+    background-color: var(--swms-sidebar-hover);
 }
 
 .layout__brand:focus-visible {
-    outline: 2px solid #ffd04b;
+    outline: 2px solid var(--swms-sidebar-active);
     outline-offset: -2px;
 }
 
 .layout__menu {
+    --el-menu-bg-color: var(--swms-sidebar-bg);
+    --el-menu-text-color: var(--swms-sidebar-text);
+    --el-menu-hover-text-color: var(--swms-sidebar-active);
+    --el-menu-active-color: var(--swms-sidebar-active);
+    --el-menu-hover-bg-color: var(--swms-sidebar-hover);
+
     flex: 1;
     overflow-y: auto;
     border-right: none;
@@ -139,8 +138,8 @@ async function handleCommand(command: string): Promise<void> {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #fff;
-    border-bottom: 1px solid #e4e7ed;
+    background-color: var(--el-bg-color);
+    border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .layout__actions {
@@ -152,10 +151,10 @@ async function handleCommand(command: string): Promise<void> {
 .layout__user {
     cursor: pointer;
     outline: none;
-    color: #303133;
+    color: var(--el-text-color-primary);
 }
 
 .layout__main {
-    background-color: #f0f2f5;
+    background-color: var(--el-bg-color-page);
 }
 </style>

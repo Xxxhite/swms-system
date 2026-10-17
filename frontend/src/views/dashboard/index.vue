@@ -78,23 +78,23 @@ const roleNames = computed(() => userStore.profile?.roleNames.join('„ÄÅ') || 'Êú
 }
 .dashboard__welcome {
     padding: 28px;
-    border: 1px solid #d9e7f2;
+    border: 1px solid var(--el-border-color-light);
     border-radius: 8px;
-    background: linear-gradient(120deg, #fff 35%, #ecf5ff);
+    background: linear-gradient(120deg, var(--el-bg-color) 35%, var(--el-color-primary-light-9));
 }
 .dashboard__eyebrow {
     margin: 0 0 8px;
-    color: #337ecc;
+    color: var(--el-color-primary-dark-2);
     font-size: 13px;
 }
 .dashboard__welcome h1 {
     margin: 0;
     font-size: 26px;
-    color: #303133;
+    color: var(--el-text-color-primary);
 }
 .dashboard__intro {
     margin: 10px 0 24px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 }
 .dashboard__identity {
     display: flex;
@@ -105,17 +105,17 @@ const roleNames = computed(() => userStore.profile?.roleNames.join('„ÄÅ') || 'Êú
 .dashboard__identity dt {
     margin-bottom: 6px;
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 }
 .dashboard__identity dd {
     margin: 0;
-    color: #303133;
+    color: var(--el-text-color-primary);
     font-weight: 500;
 }
 .dashboard__section-title {
     margin: 0 0 14px;
     font-size: 18px;
-    color: #303133;
+    color: var(--el-text-color-primary);
 }
 .dashboard__shortcuts {
     display: grid;
@@ -124,9 +124,9 @@ const roleNames = computed(() => userStore.profile?.roleNames.join('„ÄÅ') || 'Êú
 }
 .dashboard__module {
     padding: 16px;
-    border: 1px solid #e4e7ed;
+    border: 1px solid var(--el-border-color-light);
     border-radius: 8px;
-    background: #fff;
+    background: var(--el-bg-color);
 }
 .dashboard__module--group {
     grid-column: 1 / -1;
@@ -134,7 +134,7 @@ const roleNames = computed(() => userStore.profile?.roleNames.join('„ÄÅ') || 'Êú
 .dashboard__module h3 {
     margin: 0 0 14px;
     font-size: 16px;
-    color: #303133;
+    color: var(--el-text-color-primary);
 }
 .dashboard__module-items {
     display: grid;

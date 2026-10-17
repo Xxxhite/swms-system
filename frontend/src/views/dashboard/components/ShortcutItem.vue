@@ -24,7 +24,7 @@ defineProps<{ node: MenuNode }>()
 }
 .shortcut-group__title {
     margin: 4px 0 10px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     font-weight: 600;
 }
 .shortcut-group__items {
@@ -38,19 +38,19 @@ defineProps<{ node: MenuNode }>()
     justify-content: space-between;
     gap: 12px;
     padding: 12px 14px;
-    border: 1px solid #dcdfe6;
+    border: 1px solid var(--el-border-color);
     border-radius: 6px;
-    color: #303133;
+    color: var(--el-text-color-primary);
     text-decoration: none;
-    background: #fff;
+    background: var(--el-bg-color);
 }
 .shortcut-link:hover {
-    color: #337ecc;
-    border-color: #a0cfff;
-    background: #ecf5ff;
+    color: var(--el-color-primary);
+    border-color: var(--el-color-primary-light-5);
+    background: var(--el-color-primary-light-9);
 }
 .shortcut-link:focus-visible {
-    outline: 2px solid #409eff;
+    outline: 2px solid var(--el-color-primary);
     outline-offset: 2px;
 }
 </style>

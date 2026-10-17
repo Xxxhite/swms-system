@@ -11,37 +11,37 @@
 .not-found {
     padding: 64px 24px;
     text-align: center;
-    background: #fff;
-    border: 1px solid #e4e7ed;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
     border-radius: 8px;
 }
 .not-found__code {
     margin: 0;
-    color: #409eff;
+    color: var(--el-color-primary);
     font-size: 64px;
     font-weight: 700;
 }
 .not-found h1 {
     font-size: 22px;
-    color: #303133;
+    color: var(--el-text-color-primary);
 }
 .not-found__description {
     margin-bottom: 28px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 }
 .not-found__link {
     display: inline-block;
     padding: 10px 20px;
     border-radius: 4px;
-    background: #409eff;
-    color: #fff;
+    background: var(--el-color-primary);
+    color: var(--el-color-white);
     text-decoration: none;
 }
 .not-found__link:hover {
-    background: #337ecc;
+    background: var(--el-color-primary-dark-2);
 }
 .not-found__link:focus-visible {
-    outline: 2px solid #22303f;
+    outline: 2px solid var(--swms-sidebar-bg);
     outline-offset: 3px;
 }
 </style>

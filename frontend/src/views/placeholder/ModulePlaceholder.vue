@@ -24,7 +24,7 @@ const title = computed(() => route.meta.title ?? '页面')
 <style scoped>
 .placeholder__tip {
     margin-bottom: 16px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     line-height: 1.8;
 }
 </style>

@@ -10,6 +10,7 @@ import { useUserStore } from '@/stores/user'
 import App from './App.vue'
 
 import '@/style.css'
+import '@/styles/theme.css'
 
 const app = createApp(App)
 

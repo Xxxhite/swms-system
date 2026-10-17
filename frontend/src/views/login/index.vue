@@ -92,7 +92,7 @@ async function submit(): Promise<void> {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #22303f 0%, #3d5568 100%);
+    background: linear-gradient(135deg, var(--swms-sidebar-bg) 0%, var(--swms-sidebar-hover) 100%);
 }
 
 .login__card {
@@ -108,7 +108,7 @@ async function submit(): Promise<void> {
 .login__subtitle {
     margin: 6px 0 24px;
     font-size: 12px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     text-align: center;
 }
 
@@ -119,14 +119,14 @@ async function submit(): Promise<void> {
 .login__hint {
     margin-top: 20px;
     padding-top: 16px;
-    border-top: 1px dashed #dcdfe6;
+    border-top: 1px dashed var(--el-border-color);
     font-size: 12px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 }
 
 .login__hint-title {
     margin-bottom: 8px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
 }
 
 .login__hint-row {
@@ -135,6 +135,6 @@ async function submit(): Promise<void> {
 
 .login__hint-tip {
     margin-top: 8px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
 }
 </style>

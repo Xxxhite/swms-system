@@ -1,0 +1,40 @@
+/*
+ * Element Plus 主题变量。
+ * 主色为青绿，侧栏使用深青与暖金强调；当前仅启用浅色主题。
+ * 使用 html:root 提高优先级，确保覆盖 Element Plus 默认变量。
+ */
+html:root {
+    --el-color-primary: #1f7a6e;
+    --el-color-primary-rgb: 31, 122, 110;
+    --el-color-primary-light-3: #62a29a;
+    --el-color-primary-light-5: #8fbcb7;
+    --el-color-primary-light-7: #bcd7d4;
+    --el-color-primary-light-8: #d2e4e2;
+    --el-color-primary-light-9: #e9f2f1;
+    --el-color-primary-dark-2: #196258;
+
+    --el-bg-color-page: #f4f8f7;
+    --el-bg-color: #ffffff;
+    --el-bg-color-overlay: #ffffff;
+
+    --el-text-color-primary: #1f2d2b;
+    --el-text-color-regular: #4b5f5b;
+    --el-text-color-secondary: #5f736e;
+    --el-text-color-placeholder: #8aa19b;
+    --el-text-color-disabled: #b3c3be;
+
+    --el-border-color: #cfdfda;
+    --el-border-color-light: #d9e7e3;
+    --el-border-color-lighter: #e5efec;
+    --el-border-color-extra-light: #eff6f4;
+
+    --el-fill-color: #eef4f2;
+    --el-fill-color-light: #f0f6f4;
+    --el-fill-color-lighter: #f7faf9;
+    --el-fill-color-extra-light: #fbfdfc;
+
+    --swms-sidebar-bg: #173b3f;
+    --swms-sidebar-text: #cfe3df;
+    --swms-sidebar-active: #e9c46a;
+    --swms-sidebar-hover: #1f4a4f;
+}

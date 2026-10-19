@@ -7,7 +7,7 @@ import { clearLayout, installLayout } from '@/router'
 import { filterMenuTree, menuTree } from '@/router/routes'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 
-/** 数据范围的中文说法，界面上直接展示，答辩时也用来说明权限设计 */
+/** 数据范围编码对应的界面展示文本 */
 const dataScopeLabels: Record<DataScope, string> = {
     ALL: '全部数据',
     TEAM: '本团队数据',
@@ -17,10 +17,11 @@ const dataScopeLabels: Record<DataScope, string> = {
 export const useUserStore = defineStore('user', () => {
     const token = ref(getToken())
     const profile = ref<CurrentUser | null>(null)
-    /** 用户资料是否已加载：刷新页面后靠它决定要不要补拉一次 */
+    /** 用户资料加载标志；路由守卫据此决定是否恢复资料与权限路由 */
     const loaded = ref(false)
 
     const permissions = computed(() => profile.value?.permissions ?? [])
+    // 侧栏与工作台共用过滤后的菜单，保持功能入口与动态路由权限一致。
     const menus = computed(() => filterMenuTree(menuTree, permissions.value))
     const dataScopeText = computed(() => {
         const scope = profile.value?.dataScope
@@ -35,6 +36,7 @@ export const useUserStore = defineStore('user', () => {
         return !code || permissions.value.includes(code)
     }
 
+    /** 应用用户资料时同步安装权限路由，避免资料与可访问页面不一致。 */
     function applyProfile(user: CurrentUser): void {
         profile.value = user
         loaded.value = true
@@ -57,7 +59,7 @@ export const useUserStore = defineStore('user', () => {
         applyProfile(user)
     }
 
-    /** 失效与主动退出共用清理逻辑，不再依赖登出接口成功。 */
+    /** 清理本地凭证、用户资料与动态路由，供会话失效和主动退出共用。 */
     function resetSession(): void {
         removeToken()
         token.value = ''
@@ -70,6 +72,7 @@ export const useUserStore = defineStore('user', () => {
         try {
             await authApi.logout()
         } finally {
+            // 登出接口失败时仍清理本地会话。
             resetSession()
         }
     }

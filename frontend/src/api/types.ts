@@ -14,10 +14,10 @@ export interface PageResult<T> {
 }
 
 /**
- * 数据范围（权限粒度的第二个维度，见项目说明）。
- * - SELF 只能看本人
- * - TEAM 只能看本团队
- * - ALL  不限（督导、总部、机构管理员）
+ * 数据访问范围，与功能权限分别配置；服务端需按该范围过滤业务数据。
+ * - SELF：本人数据
+ * - TEAM：本团队数据
+ * - ALL：全部数据
  */
 export type DataScope = 'SELF' | 'TEAM' | 'ALL'
 

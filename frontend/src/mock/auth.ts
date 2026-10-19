@@ -4,7 +4,7 @@ import { PERM, ROLE } from '@/api/permissions'
 import type { ApiResponse, CurrentUser } from '@/api/types'
 
 /**
- * 本地 mock 账号。只用于前端联调演示，真实后端接上以后整份文件都不再被引用。
+ * 本地认证模拟数据，供 mock 登录、用户资料查询和登录页账号提示使用。
  * 密码统一 123456，登录页会给出提示。
  */
 interface MockAccount {
@@ -94,7 +94,7 @@ function readBody(config: AxiosRequestConfig): Record<string, unknown> {
     return raw as Record<string, unknown>
 }
 
-/** 从 mock token 反查账号，替代真实后端的 JWT 校验 */
+/** 从请求头中的模拟 token 查找本地账号；仅用于 mock 认证流程 */
 function currentAccount(config: AxiosRequestConfig): MockAccount | null {
     const header = (config.headers?.Authorization ?? config.headers?.authorization) as
         string | undefined

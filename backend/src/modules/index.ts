@@ -1,7 +1,7 @@
 import type { AnyElysia } from "elysia"
 
 /**
- * 业务模块注册表。新增模块时只改这一个文件，app.ts 不用动。
+ * 业务模块注册入口，由 app.ts 统一挂载。
  *
  * 模块约定（每个模块一个目录，导出三个文件）：
  * - xxx.route.ts        Elysia 实例，只做路由声明和参数校验，prefix 由模块自带
@@ -11,6 +11,6 @@ import type { AnyElysia } from "elysia"
  * 所有模块统一挂在 /api 下，例如 service 模块声明 prefix "/service"，
  * 最终路径就是 /api/service/...。
  *
- * 当前为空：业务模块的表结构要等机构调研结果，模块骨架先不挂假路由。
+ * 仅注册已实现的模块；待业务需求与表结构确认后再接入模块骨架。
  */
 export const modules: AnyElysia[] = []

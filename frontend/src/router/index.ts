@@ -4,7 +4,7 @@ import { filterMenuTree, LAYOUT_NAME, menuToRoutes, menuTree, publicRoutes } fro
 
 /**
  * 路由表分两部分：
- * - 免登录路由（登录页、脚手架验证页）在这里静态注册
+ * - 免登录路由（登录页、测试页）在这里静态注册
  * - 业务路由由登录后的权限动态装配（见 installLayout）
  */
 const APP_TITLE = '温馨社工服务信息管理系统'
@@ -21,7 +21,7 @@ router.afterEach((to) => {
 
 /**
  * 按当前用户的权限装配布局路由与业务路由。
- * 每次重新登录都先移除旧的再挂新的，避免上一轮的菜单残留。
+ * 安装前移除旧布局及其子路由，防止切换账号后残留上一账号的访问入口。
  */
 export function installLayout(permissions: string[]): void {
     if (router.hasRoute(LAYOUT_NAME)) router.removeRoute(LAYOUT_NAME)

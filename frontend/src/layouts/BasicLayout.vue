@@ -65,7 +65,7 @@ async function handleCommand(command: string): Promise<void> {
                 </el-breadcrumb>
 
                 <div class="layout__actions">
-                    <!-- 数据范围是权限设计的第二维度，这里直接露出来，演示和答辩都能用 -->
+                    <!-- 展示当前用户的数据访问范围 -->
                     <el-tag type="warning" effect="plain">{{ userStore.dataScopeText }}</el-tag>
 
                     <el-dropdown @command="handleCommand">

@@ -1,8 +1,8 @@
 /**
  * 接口层开关。
  *
- * 默认走本地 mock（src/mock），这样在后端表结构落地前也能把页面和权限跑起来。
- * 要连真实后端，把 frontend/.env 里的 VITE_USE_MOCK 设成 false 即可，页面代码不用动。
+ * VITE_USE_MOCK 仅在值为字符串 false 时关闭，其余情况使用本地 mock 适配器。
+ * 请求接口保持一致，由请求层选择 mock 或真实 HTTP 传输。
  */
 export const useMock = import.meta.env.VITE_USE_MOCK !== 'false'
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MenuNode } from '@/router/routes'
 
-// 递归组件：给个显式名字，模板里用自己的标签名渲染子级
+// 显式声明组件名，供模板递归渲染子菜单。
 defineOptions({ name: 'SidebarItem' })
 
 defineProps<{ node: MenuNode }>()

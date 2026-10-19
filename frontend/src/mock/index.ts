@@ -8,7 +8,7 @@ type MockHandler = (config: AxiosRequestConfig) => ApiResponse<unknown>
 
 /**
  * mock 路由表。key 是「方法 + 路径」，路径要和 src/api/modules 里写的请求地址一致。
- * 新增接口时在这里补一行；真实后端接上后，这个文件整体不再被引用。
+ * 请求层仅在 useMock 开启时选择此适配器，真实 HTTP 请求使用默认适配器。
  */
 const routes: Record<string, MockHandler> = {
     'POST /auth/login': mockLogin,
@@ -23,7 +23,7 @@ export async function mockAdapter(config: AxiosRequestConfig): Promise<AxiosResp
     const key = `${method} ${url}`
     const handler = routes[key]
 
-    // 模拟一点网络延迟，方便看出 loading 状态
+    // 模拟请求延迟，用于展示加载状态
     await new Promise((resolve) => setTimeout(resolve, 250))
 
     const body: ApiResponse<unknown> = handler

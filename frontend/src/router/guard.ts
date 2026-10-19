@@ -27,10 +27,11 @@ export function setupRouterGuard(targetRouter: Router = router): void {
             try {
                 await userStore.loadProfile()
             } catch {
-                // 资料拉不到（token 失效等）就当未登录处理，提示由响应拦截器负责
+                // 资料恢复失败时清理会话并保留目标地址，接口错误提示由请求层负责。
                 userStore.resetSession()
                 return { path: '/login', query: { redirect: to.fullPath }, replace: true }
             }
+            // 动态路由已安装，重新匹配目标地址并替换本次导航记录。
             return { ...to, replace: true }
         }
 

@@ -1,7 +1,7 @@
 /**
  * 登录凭证的本地存取。
- * 当前方案：JWT 放请求头（Authorization: Bearer xxx），所以存在 localStorage 里，
- * 由 src/api/request.ts 的请求拦截器统一附加。
+ * token 存储在 localStorage，用于刷新页面后恢复会话。
+ * src/api/client.ts 的请求拦截器读取 token，并附加 Authorization: Bearer 请求头。
  */
 const TOKEN_KEY = 'swms_token'
 

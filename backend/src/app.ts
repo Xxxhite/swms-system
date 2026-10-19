@@ -8,15 +8,14 @@ import { env } from "@/utils/env"
 import { ok } from "@/utils/response"
 
 /**
- * 应用装配。只负责把插件、健康检查、业务模块拼起来，不监听端口，
- * 这样测试可以直接 app.handle(request) 走完整链路。
+ * 装配公共插件、健康检查与业务模块；端口监听由 index.ts 负责。
+ * 导出的应用可通过 app.handle(request) 直接验证请求处理链路。
  */
 export const app = new Elysia()
   .use(errorHandler)
   .use(
     cors({
-      // 凭证走请求头（Authorization: Bearer），不依赖 Cookie，所以显式关掉 credentials
-      // 注意：@elysiajs/cors 的 credentials 默认是 true，不写这行浏览器仍会收到凭证许可
+      // 使用 Bearer 请求头认证，显式关闭 Cookie 等跨域凭证支持。
       credentials: false,
       origin: env.corsOrigins,
     }),

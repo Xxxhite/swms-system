@@ -4,7 +4,7 @@ import { AppError, ErrorCode } from "@/utils/errors"
 import { fail } from "@/utils/response"
 
 /**
- * 全局错误处理。挂载顺序要早于业务模块，注册成 global 后对所有路由生效。
+ * 全局错误处理。先于业务模块挂载，通过 global 作用域统一处理路由异常。
  *
  * 分流规则：
  * - AppError          → 业务异常，用自带的错误码和 HTTP 状态

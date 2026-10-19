@@ -12,8 +12,8 @@ export interface MenuNode {
 }
 
 /**
- * 菜单树，按选题介绍的八个模块组织。
- * 目前每个叶子都指向同一个占位页，等数据库表结构定下来后逐个换成真实页面。
+ * 业务菜单树，统一提供侧栏、工作台快捷入口及动态路由的数据源。
+ * 菜单对应的页面组件由 menuToRoutes 指定。
  */
 export const menuTree: MenuNode[] = [
     {
@@ -84,7 +84,7 @@ export const menuTree: MenuNode[] = [
     { path: '/system', title: '系统管理', permission: PERM.SYSTEM },
 ]
 
-/** 按权限过滤菜单树；子节点全被过滤掉的父节点也不再展示 */
+/** 按权限递归过滤菜单并创建节点副本；无可见子节点的分组一并移除 */
 export function filterMenuTree(nodes: MenuNode[], permissions: string[]): MenuNode[] {
     const result: MenuNode[] = []
     for (const node of nodes) {
@@ -103,7 +103,7 @@ export function filterMenuTree(nodes: MenuNode[], permissions: string[]): MenuNo
 
 /**
  * 菜单树拍平成路由：嵌套菜单在侧边栏保留层级，但路由全部挂成布局的一级子路由，
- * 这样占位页不需要自己再套一层 router-view。
+ * 上级标题保存在 meta.parents 中，供面包屑展示，无需嵌套页面容器。
  */
 function flattenMenu(
     nodes: MenuNode[],
@@ -119,6 +119,7 @@ function flattenMenu(
     return flat
 }
 
+/** 为每个可见菜单节点生成路由；业务页面接入时在此替换对应占位组件。 */
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
     return flattenMenu(nodes).map(({ node, parents }) => ({
         path: node.path,

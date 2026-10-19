@@ -1,10 +1,9 @@
 /*
  * 全局基础样式。
- * 这里替换掉了 Vite 模板自带的居中布局（body flex + #app max-width），
- * 那套样式会和全屏后台布局冲突；现在只保留最小重置，交给 Element Plus 接管外观。
+ * 提供全屏布局所需的基础重置；组件外观由 Element Plus 与主题变量控制。
  */
 :root {
-    /* 固定为浅色：Element Plus 在这里用浅色主题，交给系统自动切深色会两边打架 */
+    /* 浏览器原生控件使用浅色配色，与应用主题保持一致。 */
     color-scheme: light;
     font-family:
         system-ui,

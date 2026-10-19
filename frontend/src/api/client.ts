@@ -31,6 +31,7 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
         timeout: 15000,
         ...(options.adapter ? { adapter: options.adapter } : {}),
     })
+    // 会话清理后抑制后续重复的未授权处理与提示。
     let unauthorizedHandled = false
 
     function report(message: string, unauthorized = false): void {
@@ -45,6 +46,7 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
     instance.interceptors.request.use((config) => {
         const token = options.getToken()
         if (token) {
+            // 带凭证的新请求重新启用未授权处理，以覆盖再次登录后的会话失效。
             unauthorizedHandled = false
             config.headers.Authorization = `Bearer ${token}`
         }
@@ -59,6 +61,7 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
                 report(message)
                 return Promise.reject(new Error(message))
             }
+            // mock 适配器也可能将业务失败送入成功分支，因此仍需检查业务码。
             if (body.code !== ErrorCode.OK) {
                 const message = body.message || '请求失败'
                 report(
@@ -100,7 +103,7 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
     return instance
 }
 
-/** 拆掉响应信封，调用方直接拿 data。 */
+/** 从已通过响应拦截器校验的响应中提取业务数据。 */
 export function createHttp(instance: AxiosInstance) {
     async function unwrap<T>(promise: Promise<{ data: ApiResponse<T> }>): Promise<T> {
         return (await promise).data.data as T

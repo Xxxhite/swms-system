@@ -3,6 +3,7 @@
  * 约定：新增环境变量时同步更新 backend/.env.example（仓库约定，见 AGENTS 约定文档）。
  */
 
+/** 读取正整数配置；空值、非整数或非法值使用指定默认值。 */
 function toPositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value)
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback

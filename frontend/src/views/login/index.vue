@@ -25,6 +25,7 @@ const rules: FormRules = {
     password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
+/** 校验表单并登录，受限账号进入审核页，启用账号恢复合法站内目标或工作台。 */
 async function submit(): Promise<void> {
     const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) return

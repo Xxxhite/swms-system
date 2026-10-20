@@ -2,7 +2,7 @@
  * 统一业务错误码。
  *
  * 约定：0 表示成功；错误码按段划分，HTTP 状态码由错误码推导（见 httpStatusOf），
- * 前端只判断 code 是否为 0，不需要解析 HTTP 状态码。
+ * 前端请求层结合业务 code 与 HTTP 状态识别失败，统一显示错误文案。
  */
 export const ErrorCode = {
   OK: 0,
@@ -54,26 +54,32 @@ export class AppError extends Error {
     this.httpStatus = httpStatus ?? httpStatusOf(code)
   }
 
+  /** 创建参数或请求格式错误，默认映射为 HTTP 400。 */
   static badRequest(message = "请求参数不合法"): AppError {
     return new AppError(ErrorCode.PARAM_INVALID, message)
   }
 
+  /** 创建未登录错误，提示客户端先完成认证。 */
   static unauthorized(message = "请先登录"): AppError {
     return new AppError(ErrorCode.UNAUTHORIZED, message)
   }
 
+  /** 创建凭证失效错误，供客户端清理会话并重新登录。 */
   static tokenExpired(message = "登录状态已过期，请重新登录"): AppError {
     return new AppError(ErrorCode.TOKEN_EXPIRED, message)
   }
 
+  /** 创建已无操作权限的错误，默认映射为 HTTP 403。 */
   static forbidden(message = "没有权限执行该操作"): AppError {
     return new AppError(ErrorCode.FORBIDDEN, message)
   }
 
+  /** 创建业务资源不存在的错误，默认映射为 HTTP 404。 */
   static notFound(message = "数据不存在"): AppError {
     return new AppError(ErrorCode.NOT_FOUND, message)
   }
 
+  /** 创建版本、唯一性或状态冲突错误，默认映射为 HTTP 409。 */
   static conflict(message = "数据状态冲突，请刷新后重试"): AppError {
     return new AppError(ErrorCode.CONFLICT, message)
   }

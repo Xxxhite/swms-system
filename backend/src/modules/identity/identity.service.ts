@@ -89,6 +89,7 @@ function fresh(state: IdentityState, actor: Actor, permission: string): Actor {
   requireAdmin(current, permission)
   return current
 }
+/** 校验完整授权集合：条目不重复，角色及组织启用，权限编码存在，子树范围有根节点。 */
 export function validateAuthorization(state: IdentityState, input: AuthorizationInput) {
   if (
     new Set(input.roleIds).size !== input.roleIds.length ||
@@ -113,6 +114,7 @@ export function validateAuthorization(state: IdentityState, input: Authorization
   if (input.dataScope === "SUBTREE" && !input.managedOrgIds.length)
     throw AppError.badRequest("请选择负责组织")
 }
+/** 找出同时满足账号启用、管理员角色启用及角色已分配的人员。 */
 function administratorIds(state: IdentityState): number[] {
   const role = state.roles.find((item) => item.code === "admin" && item.status === "ACTIVE")
   return state.users
@@ -140,6 +142,7 @@ function protectAdministrator(
     throw AppError.conflict("必须保留至少一名启用的机构管理员")
 }
 export type Placement = { orgId: number; positionCode: string; supervisorId: number | null }
+/** 校验任职组织、岗位和直接主管链，阻止无效任职与循环主管关系。 */
 function validatePlacement(state: IdentityState, target: User, input: Placement) {
   if (!state.orgs.some((org) => org.id === input.orgId && org.status === "ACTIVE"))
     throw AppError.badRequest("请选择启用的组织")
@@ -157,19 +160,23 @@ function validatePlacement(state: IdentityState, target: User, input: Placement)
     id = supervisor.supervisorId
   }
 }
+/** 校验可选服务领域是否来自固定字典，空值表示尚未补填。 */
 export function validateServiceField(value: string | null | undefined) {
   if (value && !dictionaries.serviceFields.some((item) => item.code === value))
     throw AppError.badRequest("服务领域不存在")
 }
 
+/** 身份业务服务：负责有效授权、组织人员维护、注册审核及角色管理规则。 */
 export class IdentityService {
   constructor(readonly repository: IdentityRepository = identityRepository) {}
+  /** 按当前数据库状态构建操作人上下文，供认证插件及业务授权使用。 */
   async actor(id: number) {
     const state = await this.repository.state()
     const user = state.users.find((item) => item.id === id)
     if (!user) throw AppError.unauthorized()
     return actorFrom(state, user)
   }
+  /** 返回当前范围内的组织平面列表，修整不可见父节点，供前端组装树。 */
   async orgs(actor: Actor) {
     const state = await this.repository.state()
     const visible =
@@ -186,11 +193,13 @@ export class IdentityService {
         parentId: visible.some((item) => item.id === org.parentId) ? org.parentId : null,
       }))
   }
+  /** 校验人员查询或注册审核权限，再由仓储按数据范围分页过滤。 */
   listUsers(actor: Actor, query: ListQuery, registrations = false) {
     if (registrations) requireAdmin(actor, "system:registration:view")
     else requirePermission(actor, "system:user:view")
     return this.repository.listUsers(actor, query, registrations)
   }
+  /** 校验单个人员的查询范围，并补充角色和附加权限等详情字段。 */
   async user(actor: Actor, id: number, registration = false) {
     if (registration) requireAdmin(actor, "system:registration:view")
     else requirePermission(actor, "system:user:view")
@@ -208,6 +217,7 @@ export class IdentityService {
       managedOrgIds: state.managed.filter((item) => item.userId === id).map((item) => item.orgId),
     }
   }
+  /** 批准待审核账号并设置任职及授权；相同授权的重复批准按幂等请求处理。 */
   approve(actor: Actor, id: number, input: AuthorizationInput & Placement & { version: number }) {
     requireAdmin(actor, "system:registration:approve")
     return this.repository.changeUser(
@@ -270,6 +280,7 @@ export class IdentityService {
       },
     )
   }
+  /** 将待审核申请驳回并保留审核人、时间和必填意见，供员工修改后重提。 */
   reject(actor: Actor, id: number, input: { version: number; comment: string }) {
     requireAdmin(actor, "system:registration:approve")
     return this.repository.changeUser(id, actor.user.id, "reject-registration", (state, target) => {
@@ -288,6 +299,7 @@ export class IdentityService {
       }
     })
   }
+  /** 维护已完成审核人员的基本资料及任职关系，身份授权通过独立接口处理。 */
   updateUser(
     actor: Actor,
     id: number,
@@ -321,6 +333,7 @@ export class IdentityService {
       }
     })
   }
+  /** 切换账号启停或离职状态，检查下属及最后管理员约束，并使旧凭证失效。 */
   status(
     actor: Actor,
     id: number,
@@ -342,6 +355,7 @@ export class IdentityService {
       return { patch: { status: input.status, authVersion: target.authVersion + 1 } }
     })
   }
+  /** 整体设置启用人员的角色、附加权限及数据范围，保留至少一名启用管理员。 */
   authorize(actor: Actor, id: number, input: AuthorizationInput & { version: number }) {
     requireAdmin(actor, "system:user:authorize")
     return this.repository.changeUser(id, actor.user.id, "authorize-user", (state, target) => {
@@ -354,6 +368,7 @@ export class IdentityService {
       return { patch: { dataScope: input.dataScope }, authorization: input }
     })
   }
+  /** 校验组织版本、父级关系和引用，新增或更新节点时禁止循环及团队嵌套。 */
   saveOrg(
     actor: Actor,
     id: number | null,
@@ -409,6 +424,7 @@ export class IdentityService {
       }
     })
   }
+  /** 仅删除没有人员、下级和负责范围引用的组织，保留引用完整性。 */
   deleteOrg(actor: Actor, id: number, version: number) {
     requireAdmin(actor, "system:org:manage")
     return this.repository.changeOrg(id, actor.user.id, null, (state) => {
@@ -424,6 +440,7 @@ export class IdentityService {
         throw AppError.conflict("组织仍被引用，请先调整关联")
     })
   }
+  /** 查询角色及各角色已分配的权限编码，供管理员维护表单使用。 */
   async roleList(actor: Actor) {
     requireAdmin(actor, "system:role:manage")
     const state = await this.repository.state()
@@ -434,10 +451,12 @@ export class IdentityService {
         .map((row) => row.permissionCode),
     }))
   }
+  /** 返回可分配的权限目录，供管理员选择角色或个人附加权限。 */
   async permissionList(actor: Actor) {
     requireAdmin(actor, "system:role:manage")
     return (await this.repository.state()).permissions
   }
+  /** 新增或更新角色资料，保护内建编码及管理员角色的启用状态。 */
   saveRole(
     actor: Actor,
     id: number | null,
@@ -462,6 +481,7 @@ export class IdentityService {
       }
     })
   }
+  /** 替换角色的完整权限集合，校验编码及版本，并保护内建管理员权限。 */
   rolePermissions(actor: Actor, id: number, codes: string[], version: number) {
     requireAdmin(actor, "system:role:manage")
     return this.repository.changeRole(id, actor.user.id, null, codes, (state) => {
@@ -477,6 +497,7 @@ export class IdentityService {
         throw AppError.badRequest("权限编码不存在或重复")
     })
   }
+  /** 删除未分配的自定义角色，内建角色及已有人员引用的角色保留。 */
   deleteRole(actor: Actor, id: number, version: number) {
     requireAdmin(actor, "system:role:manage")
     return this.repository.changeRole(id, actor.user.id, null, undefined, (state) => {

@@ -54,6 +54,7 @@ const form = reactive({
 })
 // 查询或切换入口可能产生重叠请求，仅最新请求可更新列表及 loading 状态。
 let generation = 0
+/** 按当前入口和筛选加载人员列表，仅使用最后发起请求的结果。 */
 async function load() {
     if (useMock) return
     const request = ++generation
@@ -103,6 +104,7 @@ async function options() {
     }
     directory.value = all
 }
+/** 读取完整人员详情，按弹窗模式加载必要选项并回填编辑字段。 */
 async function open(row: UserSummary, nextMode: typeof mode.value) {
     if (busy.value) return
     busy.value = true
@@ -133,6 +135,7 @@ async function open(row: UserSummary, nextMode: typeof mode.value) {
         busy.value = false
     }
 }
+/** 按编辑、审核或授权模式组装字段，携带版本提交并刷新列表及本人身份。 */
 async function save() {
     if (busy.value || !target.value) return
     if (['edit', 'approve'].includes(mode.value) && (!form.orgId || !form.positionCode)) {
@@ -197,6 +200,7 @@ async function save() {
         busy.value = false
     }
 }
+/** 确认账号状态变更，再按记录版本提交启用、停用或离职操作。 */
 async function changeStatus(row: UserSummary, status: 'ACTIVE' | 'DISABLED' | 'LEFT') {
     if (busy.value) return
     try {
@@ -219,6 +223,7 @@ async function changeStatus(row: UserSummary, status: 'ACTIVE' | 'DISABLED' | 'L
         busy.value = false
     }
 }
+/** 从第一页执行新的筛选，避免沿用旧页码导致结果为空。 */
 function search() {
     query.page = 1
     void load()

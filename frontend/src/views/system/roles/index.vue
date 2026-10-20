@@ -20,6 +20,7 @@ const selected = ref<Role | null>(null)
 const busy = ref(false)
 const form = reactive({ code: '', name: '', description: '', status: 'ACTIVE' as Role['status'] })
 const codes = ref<string[]>([])
+/** 并行加载角色与权限目录，供角色列表和权限分组表单使用。 */
 async function load() {
     if (useMock) return
     try {
@@ -31,6 +32,7 @@ async function load() {
         /* 请求层统一提示 */
     }
 }
+/** 打开角色资料弹窗，新增时使用空表单，编辑时复制所选角色字段。 */
 function edit(row: Role | null) {
     selected.value = row
     Object.assign(
@@ -41,11 +43,16 @@ function edit(row: Role | null) {
     )
     dialog.value = true
 }
+/** 复制角色权限到独立选中集合，取消编辑时不影响列表原数据。 */
 function editPermissions(row: Role) {
     selected.value = row
     codes.value = [...row.permissionCodes]
     permissionDialog.value = true
 }
+/**
+ * 保存角色资料或完整权限集合，成功后重新读取最新版本。
+ * @param permissionMode 为 true 时保存权限集合，否则保存角色基本资料。
+ */
 async function save(permissionMode = false) {
     if (busy.value) return
     if (!permissionMode && (!/^[a-z][a-z0-9_-]{0,31}$/.test(form.code) || !form.name.trim())) {
@@ -75,6 +82,7 @@ async function save(permissionMode = false) {
         busy.value = false
     }
 }
+/** 确认删除角色，并由后端校验内建角色及人员引用约束。 */
 async function remove(row: Role) {
     try {
         await ElMessageBox.confirm(`删除角色“${row.name}”？已分配角色需先解除关联。`, '删除角色', {

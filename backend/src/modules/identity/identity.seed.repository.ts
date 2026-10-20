@@ -4,6 +4,11 @@ import * as s from "@/db/schema"
 import { hashPassword } from "@/utils/password"
 import { permissionCatalog } from "./identity.constants"
 
+/**
+ * 初始化必要身份目录、组织和管理员，保留已有账号密码。
+ * @param database 要执行初始化的数据库实例，可注入独立测试库。
+ * @param input 管理员账号及显式密码；提供 demoPassword 时另外创建虚构演示账号。
+ */
 export async function seedIdentity(
   database: Database,
   input: { adminUsername: string; adminPassword: string; demoPassword?: string },
@@ -28,6 +33,7 @@ export async function seedIdentity(
         .insert(s.permissions)
         .values(permission)
         .onDuplicateKeyUpdate({ set: { name: permission.name } })
+    /** 按唯一编码复用或新增组织，返回主键供后续人员和下级节点关联。 */
     const org = async (
       code: string,
       name: string,
@@ -85,6 +91,7 @@ export async function seedIdentity(
       }
       roleIds.set(role.code, role.id)
     }
+    /** 按账号复用或新增种子人员；新增时设置角色及范围，管理员账号另校验已有身份。 */
     const person = async (
       username: string,
       name: string,

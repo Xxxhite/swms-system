@@ -22,6 +22,7 @@ const form = reactive({
     version: 1,
 })
 const typeNames = { HEADQUARTERS: '总部', DEPARTMENT: '部门', TEAM: '团队' }
+/** 读取可见组织列表，树形展示由计算属性统一转换。 */
 async function load() {
     if (useMock) return
     try {
@@ -30,6 +31,7 @@ async function load() {
         /* 请求层统一提示 */
     }
 }
+/** 打开组织新增或编辑弹窗，复制字段并保留修改所需的版本。 */
 function edit(row?: Organization) {
     selectedId.value = row?.id ?? null
     Object.assign(
@@ -56,6 +58,7 @@ function edit(row?: Organization) {
     )
     dialog.value = true
 }
+/** 校验组织编码及名称，提交新增或修改后刷新组织树。 */
 async function save() {
     if (busy.value) return
     if (!form.name.trim() || !/^[a-zA-Z0-9_-]{1,32}$/.test(form.code)) {
@@ -78,6 +81,7 @@ async function save() {
         busy.value = false
     }
 }
+/** 确认删除组织，提交版本并由后端检查人员和下级引用。 */
 async function remove(row: Organization) {
     try {
         await ElMessageBox.confirm(

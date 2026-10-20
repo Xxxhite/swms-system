@@ -34,6 +34,7 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
     // 会话清理后抑制后续重复的未授权处理与提示。
     let unauthorizedHandled = false
 
+    /** 统一报告请求错误；同一轮并发凭证失效只触发一次会话清理和提示。 */
     function report(message: string, unauthorized = false): void {
         if (unauthorized) {
             if (unauthorizedHandled) return
@@ -105,19 +106,24 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
 
 /** 从已通过响应拦截器校验的响应中提取业务数据。 */
 export function createHttp(instance: AxiosInstance) {
+    /** 从已通过响应拦截器校验的响应中提取 data，保留调用方的业务类型。 */
     async function unwrap<T>(promise: Promise<{ data: ApiResponse<T> }>): Promise<T> {
         return (await promise).data.data as T
     }
     return {
+        /** 发送带查询参数的 GET 请求并返回业务数据。 */
         get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
             return unwrap<T>(instance.get<ApiResponse<T>>(url, { params }))
         },
+        /** 发送 POST 请求，允许按需传入额外 Axios 配置。 */
         post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
             return unwrap<T>(instance.post<ApiResponse<T>>(url, data, config))
         },
+        /** 发送 PUT 请求，提交业务更新数据。 */
         put<T>(url: string, data?: unknown): Promise<T> {
             return unwrap<T>(instance.put<ApiResponse<T>>(url, data))
         },
+        /** 发送 DELETE 请求，将版本等校验参数放入查询字符串。 */
         delete<T>(url: string, params?: Record<string, unknown>): Promise<T> {
             return unwrap<T>(instance.delete<ApiResponse<T>>(url, { params }))
         },

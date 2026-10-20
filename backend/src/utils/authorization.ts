@@ -62,6 +62,7 @@ export function teamFor(orgs: Organization[], orgId: number | null): Organizatio
     orgId = org.parentId
   }
 }
+/** 要求账号已启用且拥有指定功能动作，用于服务端业务入口鉴权。 */
 export function requirePermission(actor: Actor, permission: string): void {
   if (actor.user.status !== "ACTIVE" || !actor.profile.permissions.includes(permission)) {
     throw AppError.forbidden()

@@ -13,6 +13,7 @@ const detail = ref<PersonalProfile>()
 const form = reactive({ phone: '', socialWorkerNo: '' })
 const passwords = reactive({ oldPassword: '', newPassword: '', confirm: '' })
 const busy = ref(false)
+/** 加载本人资料及版本，回填个人中心可编辑的联系信息。 */
 async function load() {
     if (useMock) return
     try {
@@ -23,6 +24,7 @@ async function load() {
         /* 请求层统一提示 */
     }
 }
+/** 提交本人联系资料并刷新版本，避免后续保存沿用旧版本。 */
 async function save() {
     if (busy.value || !detail.value) return
     if (!form.phone.trim()) {
@@ -44,6 +46,7 @@ async function save() {
         busy.value = false
     }
 }
+/** 校验两次新密码后申请改密，成功即清理本地会话并返回登录页。 */
 async function changePassword() {
     if (busy.value) return
     if (

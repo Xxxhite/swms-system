@@ -9,9 +9,13 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core"
 
+/** 账号状态：区分待审核、被驳回、启用、停用和离职。 */
 export const accountStatuses = ["PENDING", "REJECTED", "ACTIVE", "DISABLED", "LEFT"] as const
+/** 数据范围编码：与角色功能权限分开保存，用于服务端过滤业务记录。 */
 export const dataScopes = ["SELF", "TEAM", "SUBTREE", "ALL"] as const
+/** 组织节点类型：总部、部门和团队共用同一棵组织树。 */
 export const orgTypes = ["HEADQUARTERS", "DEPARTMENT", "TEAM"] as const
+/** 生成共用时间字段和初始资料版本，更新时间由 ORM 写入钩子维护。 */
 const timestamps = () => ({
   createdAt: datetime("created_at", { mode: "date", fsp: 3 })
     .notNull()
@@ -23,6 +27,7 @@ const timestamps = () => ({
   version: int("version", { unsigned: true }).notNull().default(1),
 })
 
+/** 组织表（organizations）：保存组织树、节点类型和启停状态，作为人员归属及范围计算依据。 */
 export const organizations = mysqlTable("organizations", {
   id: int("id", { unsigned: true }).autoincrement().primaryKey(),
   parentId: int("parent_id", { unsigned: true }).references((): AnyMySqlColumn => organizations.id),
@@ -34,6 +39,7 @@ export const organizations = mysqlTable("organizations", {
   ...timestamps(),
 })
 
+/** 人员表（users）：合并保存注册资料、任职关系、审核结果、密码哈希及认证版本。 */
 export const users = mysqlTable("users", {
   id: int("id", { unsigned: true }).autoincrement().primaryKey(),
   username: varchar("username", { length: 32 }).notNull().unique(),
@@ -60,6 +66,7 @@ export const users = mysqlTable("users", {
   ...timestamps(),
 })
 
+/** 角色表（roles）：定义可分配的系统职责，岗位职务单独保存在人员记录中。 */
 export const roles = mysqlTable("roles", {
   id: int("id", { unsigned: true }).autoincrement().primaryKey(),
   code: varchar("code", { length: 32 }).notNull().unique(),
@@ -70,6 +77,7 @@ export const roles = mysqlTable("roles", {
   ...timestamps(),
 })
 
+/** 权限目录表（permissions）：保存菜单入口及具体功能动作的编码与名称。 */
 export const permissions = mysqlTable("permissions", {
   code: varchar("code", { length: 100 }).primaryKey(),
   module: varchar("module", { length: 50 }).notNull(),
@@ -77,6 +85,7 @@ export const permissions = mysqlTable("permissions", {
   action: varchar("action", { length: 32 }).notNull(),
   name: varchar("name", { length: 100 }).notNull(),
 })
+/** 角色权限关联表（role_permissions）：定义每个角色拥有的功能权限，复合主键防止重复授权。 */
 export const rolePermissions = mysqlTable(
   "role_permissions",
   {
@@ -89,6 +98,7 @@ export const rolePermissions = mysqlTable(
   },
   (t) => [primaryKey({ columns: [t.roleId, t.permissionCode] })],
 )
+/** 人员角色关联表（user_roles）：允许一人拥有多个角色，角色权限在认证时合并。 */
 export const userRoles = mysqlTable(
   "user_roles",
   {
@@ -101,6 +111,7 @@ export const userRoles = mysqlTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.roleId] })],
 )
+/** 个人附加权限表（user_extra_permissions）：在角色权限之外为指定人员增加功能权限。 */
 export const userExtraPermissions = mysqlTable(
   "user_extra_permissions",
   {
@@ -113,6 +124,7 @@ export const userExtraPermissions = mysqlTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.permissionCode] })],
 )
+/** 人员负责组织表（user_managed_orgs）：保存 SUBTREE 范围的根节点，查询时展开其下级组织。 */
 export const userManagedOrgs = mysqlTable(
   "user_managed_orgs",
   {

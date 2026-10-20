@@ -25,6 +25,7 @@ const rules: FormRules = {
         { required: true, min: 8, max: 128, message: '密码须为 8—128 字符', trigger: 'blur' },
     ],
 }
+/** 校验并提交注册资料，成功后跳转登录页并带回账号。 */
 async function submit() {
     if (busy.value || useMock || !(await formRef.value?.validate().catch(() => false))) return
     busy.value = true

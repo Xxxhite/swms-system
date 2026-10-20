@@ -7,10 +7,12 @@ export interface ApiResponse<T> {
   data: T | null
 }
 
+/** 构造成功响应，业务数据统一放入 data。 */
 export function ok<T>(data: T, message = "ok"): ApiResponse<T> {
   return { code: ErrorCode.OK, message, data }
 }
 
+/** 构造失败响应，保留业务错误码与可展示文案。 */
 export function fail(code: number, message: string, data: unknown = null): ApiResponse<unknown> {
   return { code, message, data }
 }
@@ -23,6 +25,7 @@ export interface PageResult<T> {
   pageSize: number
 }
 
+/** 将列表、总数和分页参数封装成统一成功响应。 */
 export function page<T>(
   list: T[],
   total: number,

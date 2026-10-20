@@ -19,6 +19,7 @@ const breadcrumb = computed(() =>
 const userName = computed(() => userStore.profile?.name ?? '')
 const roleNames = computed(() => userStore.profile?.roleNames.join('/') ?? '')
 
+/** 处理用户菜单命令：确认退出并清理会话，或打开个人中心。 */
 async function handleCommand(command: string): Promise<void> {
     if (command === 'logout') {
         try {

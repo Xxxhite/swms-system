@@ -6,6 +6,7 @@ import { env } from "@/utils/env"
 import { AppError } from "@/utils/errors"
 import { ok } from "@/utils/response"
 
+/** 创建认证路由：声明注册、登录、本人资料及改密接口，并按账号状态选择鉴权方式。 */
 export function createAuthRoutes(service: AuthService = authService) {
   return new Elysia({ prefix: "/auth", tags: ["基本信息"] })
     .use(createAuthentication(service.identities))

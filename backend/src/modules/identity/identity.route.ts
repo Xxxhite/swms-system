@@ -16,6 +16,7 @@ import {
   version,
 } from "./identity.validation"
 
+/** 创建组织、人员、注册审核和角色路由；本层声明参数规则，业务校验交给服务层。 */
 export function createIdentityRoutes(service: IdentityService = identityService) {
   return new Elysia({ tags: ["系统管理"] })
     .use(createAuthentication(service))

@@ -14,6 +14,7 @@ const detail = ref<PersonalProfile>()
 const form = reactive(personnelDefaults())
 const formRef = ref<FormInstance>()
 const busy = ref(false)
+/** 读取本人的审核状态及最新资料，回填可编辑的申请字段。 */
 async function load() {
     try {
         detail.value = await authApi.detail()
@@ -44,6 +45,7 @@ async function save(resubmit = false) {
         busy.value = false
     }
 }
+/** 退出受限会话并返回登录页，接口失败时仍完成本地清理。 */
 async function logout() {
     try {
         await store.logout()

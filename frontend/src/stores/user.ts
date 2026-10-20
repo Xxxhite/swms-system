@@ -50,6 +50,7 @@ export const useUserStore = defineStore('user', () => {
         else clearLayout()
     }
 
+    /** 登录成功后先保存凭证，再应用身份资料并装配对应权限路由。 */
     async function login(payload: LoginPayload): Promise<void> {
         const result = await authApi.login(payload)
         setToken(result.token)
@@ -75,6 +76,7 @@ export const useUserStore = defineStore('user', () => {
         clearLayout()
     }
 
+    /** 记录退出并确保清理本地会话，接口失败也完成退出。 */
     async function logout(): Promise<void> {
         try {
             await authApi.logout()

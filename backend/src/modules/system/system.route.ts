@@ -4,6 +4,7 @@ import { identityService, type IdentityService } from "@/modules/identity/identi
 import { ok } from "@/utils/response"
 import { SystemService } from "./system.service"
 import { SystemRepository } from "./system.repository"
+/** 创建系统日志查询路由，复用同一身份服务进行认证与管理员权限校验。 */
 export function createSystemRoutes(identities: IdentityService = identityService) {
   const service = new SystemService(new SystemRepository(identities.repository))
   return new Elysia({ prefix: "/system", tags: ["系统管理"] })

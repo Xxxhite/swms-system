@@ -16,6 +16,7 @@ const query = reactive({
     dateFrom: '',
     dateTo: '',
 })
+/** 移除空筛选条件后分页查询日志，mock 模式不请求真实管理接口。 */
 async function load() {
     if (useMock || loading.value) return
     loading.value = true
@@ -33,10 +34,12 @@ async function load() {
         loading.value = false
     }
 }
+/** 重置页码并执行日志筛选。 */
 function search() {
     query.page = 1
     void load()
 }
+/** 选中日志并打开脱敏变更详情弹窗。 */
 function showDetail(row: AuditLog) {
     selected.value = row
     dialog.value = true

@@ -55,6 +55,7 @@ export class AuthService {
     await this.repository.record(user.id, "login")
     return actor
   }
+  /** 组合本人可展示资料和有效身份信息，返回前移除密码哈希。 */
   profile(actor: Actor) {
     return { ...safeUser(actor.user), ...actor.profile }
   }
@@ -99,6 +100,7 @@ export class AuthService {
       },
     )
   }
+  /** 验证原密码后更新密码哈希和认证版本，撤销该账号的全部旧凭证。 */
   async password(actor: Actor, oldPassword: string, newPassword: string) {
     if (!(await verifyPassword(oldPassword, actor.user.passwordHash)))
       throw AppError.badRequest("原密码不正确")

@@ -40,6 +40,7 @@ export interface ListQuery {
   status?: string
 }
 
+/** 使用当前事务追加审计，使业务修改与对应日志一起提交或回滚。 */
 async function audit(
   tx: Transaction,
   actorId: number | null,
@@ -53,6 +54,7 @@ async function audit(
     .insert(s.auditLogs)
     .values({ actorId, action, entityType, entityId, beforeData: before, afterData: after })
 }
+/** 检查驱动错误及其 cause，识别数据库唯一键重复异常。 */
 function isDuplicate(error: unknown): boolean {
   if (!error || typeof error !== "object") return false
   return (
@@ -70,17 +72,22 @@ async function unique<T>(operation: Promise<T>): Promise<T> {
   }
 }
 
+/** 身份仓储：集中处理身份关联数据读取、范围过滤、事务写入和审计持久化。 */
 export class IdentityRepository {
   constructor(readonly database: Database = db) {}
+  /** 读取组织、人员和授权关系的完整状态，供服务层计算有效身份。 */
   state() {
     return loadState(this.database)
   }
+  /** 按人员主键读取原始记录；对外响应的脱敏由调用方负责。 */
   async findUser(id: number) {
     return (await this.database.select().from(s.users).where(eq(s.users.id, id)))[0]
   }
+  /** 按唯一账号读取原始记录，主要用于登录及初始化检查。 */
   async findUsername(username: string) {
     return (await this.database.select().from(s.users).where(eq(s.users.username, username)))[0]
   }
+  /** 在同一事务中创建人员并记录注册事件，账号重复由唯一约束兜底。 */
   async register(values: typeof s.users.$inferInsert) {
     return unique(
       this.database.transaction(async (tx) => {
@@ -126,6 +133,8 @@ export class IdentityRepository {
   /**
    * 人员变更的共用事务：prepare 校验最新状态并返回补丁，仓储负责持久化和审计。
    * 账号字段、角色关系及审计一起提交，任一步失败则整体回滚。
+   * @param prepare 在锁定后的身份状态上校验，返回字段补丁及可选的完整授权集合。
+   * @returns 已移除密码哈希的最新人员记录。
    */
   async changeUser(
     id: number,
@@ -181,6 +190,7 @@ export class IdentityRepository {
       }),
     )
   }
+  /** 执行组织新增、更新或删除；prepare 在持锁后校验引用与版本，values=null 表示删除。 */
   async changeOrg(
     id: number | null,
     actorId: number,
@@ -256,6 +266,7 @@ export class IdentityRepository {
       }),
     )
   }
+  /** 按操作人、动作、对象及日期筛选日志，列表和总条数使用相同条件。 */
   async logs(
     query: ListQuery,
     filters: {
@@ -288,6 +299,7 @@ export class IdentityRepository {
     const [total] = await this.database.select({ count: count() }).from(s.auditLogs).where(where)
     return { list, total: total.count, page: query.page, pageSize: query.pageSize }
   }
+  /** 记录登录、退出等没有业务字段变更的账号事件。 */
   async record(actorId: number, action: string) {
     await this.database.transaction((tx) => audit(tx, actorId, action, "user", actorId, null, null))
   }

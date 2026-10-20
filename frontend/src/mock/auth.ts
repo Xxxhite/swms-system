@@ -18,6 +18,13 @@ const accounts: Record<string, MockAccount> = {
     admin: {
         password: '123456',
         user: {
+            status: 'ACTIVE',
+            reviewComment: null,
+            orgId: 1,
+            orgName: '总部',
+            positionCode: null,
+            supervisorId: null,
+            managedOrgIds: [],
             id: 1,
             username: 'admin',
             name: '机构管理员',
@@ -32,6 +39,13 @@ const accounts: Record<string, MockAccount> = {
     supervisor: {
         password: '123456',
         user: {
+            status: 'ACTIVE',
+            reviewComment: null,
+            orgId: 1,
+            orgName: '总部',
+            positionCode: null,
+            supervisorId: null,
+            managedOrgIds: [],
             id: 2,
             username: 'supervisor',
             name: '项目督导',
@@ -46,6 +60,13 @@ const accounts: Record<string, MockAccount> = {
     leader: {
         password: '123456',
         user: {
+            status: 'ACTIVE',
+            reviewComment: null,
+            orgId: 1,
+            orgName: '总部',
+            positionCode: null,
+            supervisorId: null,
+            managedOrgIds: [],
             id: 3,
             username: 'leader',
             name: '海珠团队主任',
@@ -68,6 +89,13 @@ const accounts: Record<string, MockAccount> = {
     social: {
         password: '123456',
         user: {
+            status: 'ACTIVE',
+            reviewComment: null,
+            orgId: 1,
+            orgName: '总部',
+            positionCode: null,
+            supervisorId: null,
+            managedOrgIds: [],
             id: 4,
             username: 'social',
             name: '一线社工',

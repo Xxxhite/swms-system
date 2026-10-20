@@ -81,7 +81,22 @@ export const menuTree: MenuNode[] = [
     { path: '/resource', title: '资源管理', permission: PERM.RESOURCE },
     { path: '/analysis', title: '数据分析', permission: PERM.ANALYSIS },
     { path: '/knowledge', title: '知识管理', permission: PERM.KNOWLEDGE },
-    { path: '/system', title: '系统管理', permission: PERM.SYSTEM },
+    {
+        path: '/system',
+        title: '系统管理',
+        permission: PERM.SYSTEM,
+        children: [
+            { path: '/system/organizations', title: '组织管理', permission: PERM.ORG_MANAGE },
+            { path: '/system/users', title: '人员管理', permission: PERM.USER_VIEW },
+            {
+                path: '/system/registrations',
+                title: '注册审核',
+                permission: PERM.REGISTRATION_VIEW,
+            },
+            { path: '/system/roles', title: '角色权限', permission: PERM.ROLE_MANAGE },
+            { path: '/system/logs', title: '操作日志', permission: PERM.LOG_VIEW },
+        ],
+    },
 ]
 
 /** 按权限递归过滤菜单并创建节点副本；无可见子节点的分组一并移除 */
@@ -121,16 +136,35 @@ function flattenMenu(
 
 /** 为每个可见菜单节点生成路由；业务页面接入时在此替换对应占位组件。 */
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
+    const pages: Record<string, RouteRecordRaw['component']> = {
+        '/system/organizations': () => import('@/views/system/organizations/index.vue'),
+        '/system/users': () => import('@/views/system/users/index.vue'),
+        '/system/registrations': () => import('@/views/system/users/index.vue'),
+        '/system/roles': () => import('@/views/system/roles/index.vue'),
+        '/system/logs': () => import('@/views/system/audit/index.vue'),
+    }
     return flattenMenu(nodes).map(({ node, parents }) => ({
         path: node.path,
         name: `menu:${node.path}`,
-        component: () => import('@/views/placeholder/ModulePlaceholder.vue'),
+        component: pages[node.path] ?? (() => import('@/views/placeholder/ModulePlaceholder.vue')),
         meta: { title: node.title, parents },
     }))
 }
 
 /** 不需要登录的路由 */
 export const publicRoutes: RouteRecordRaw[] = [
+    {
+        path: '/register',
+        name: 'Register',
+        component: () => import('@/views/register/index.vue'),
+        meta: { title: '员工注册', public: true },
+    },
+    {
+        path: '/account-status',
+        name: 'AccountStatus',
+        component: () => import('@/views/account-status/index.vue'),
+        meta: { title: '注册审核状态' },
+    },
     {
         path: '/login',
         name: 'Login',

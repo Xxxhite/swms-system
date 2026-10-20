@@ -7,7 +7,9 @@ import ShortcutItem from './components/ShortcutItem.vue'
 
 const userStore = useUserStore()
 const displayName = computed(() => userStore.profile?.name?.trim() || '用户')
-const teamName = computed(() => userStore.profile?.teamName?.trim() || '未设置')
+const teamName = computed(
+    () => userStore.profile?.teamName?.trim() || userStore.profile?.orgName || '未设置',
+)
 const roleNames = computed(() => userStore.profile?.roleNames.join('、') || '未设置')
 </script>
 

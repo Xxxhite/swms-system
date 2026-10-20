@@ -36,6 +36,12 @@ export function installLayout(permissions: string[]): void {
         },
         ...menuToRoutes(menus),
         {
+            path: 'profile',
+            name: 'Profile',
+            component: () => import('@/views/profile/index.vue'),
+            meta: { title: '个人中心' },
+        },
+        {
             // 未知地址与当前账号未注册的业务地址共用兜底页。
             path: ':pathMatch(.*)*',
             name: 'NotFound',

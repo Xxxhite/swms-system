@@ -16,8 +16,8 @@ const formRef = ref<FormInstance>()
 const submitting = ref(false)
 
 const form = reactive({
-    username: 'admin',
-    password: '123456',
+    username: useMock ? 'admin' : '',
+    password: useMock ? '123456' : '',
 })
 
 const rules: FormRules = {
@@ -33,7 +33,14 @@ async function submit(): Promise<void> {
     try {
         await userStore.login({ username: form.username, password: form.password })
         ElMessage.success('登录成功')
-        const redirect = (route.query.redirect as string) || '/dashboard'
+        const target = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+        const redirect = userStore.restricted
+            ? '/account-status'
+            : target.startsWith('/') &&
+                !target.startsWith('//') &&
+                !['/login', '/register', '/account-status'].includes(target.split('?')[0]!)
+              ? target
+              : '/dashboard'
         await router.replace(redirect)
     } catch {
         // 失败提示由响应拦截器统一给出，这里不重复弹
@@ -70,6 +77,7 @@ async function submit(): Promise<void> {
                     登 录
                 </el-button>
             </el-form>
+            <p class="login__register"><router-link to="/register">员工注册</router-link></p>
 
             <div v-if="useMock" class="login__hint">
                 <div class="login__hint-title">
@@ -122,6 +130,12 @@ async function submit(): Promise<void> {
     border-top: 1px dashed var(--el-border-color);
     font-size: 12px;
     color: var(--el-text-color-regular);
+}
+.login__register {
+    text-align: center;
+}
+.login__register a {
+    color: var(--el-color-primary);
 }
 
 .login__hint-title {

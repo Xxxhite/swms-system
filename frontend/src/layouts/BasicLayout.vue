@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 
@@ -35,7 +35,7 @@ async function handleCommand(command: string): Promise<void> {
         }
         return
     }
-    ElMessage.info('个人中心待接入')
+    await router.push('/profile')
 }
 </script>
 

@@ -15,6 +15,14 @@ export const PERM = {
     ANALYSIS: 'analysis:view',
     KNOWLEDGE: 'knowledge:view',
     SYSTEM: 'system:view',
+    ORG_MANAGE: 'system:org:manage',
+    USER_VIEW: 'system:user:view',
+    USER_MANAGE: 'system:user:manage',
+    USER_AUTHORIZE: 'system:user:authorize',
+    REGISTRATION_VIEW: 'system:registration:view',
+    REGISTRATION_APPROVE: 'system:registration:approve',
+    ROLE_MANAGE: 'system:role:manage',
+    LOG_VIEW: 'system:log:view',
 } as const
 
 /** 角色编码 */

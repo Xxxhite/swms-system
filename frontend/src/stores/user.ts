@@ -11,6 +11,7 @@ import { getToken, removeToken, setToken } from '@/utils/auth'
 const dataScopeLabels: Record<DataScope, string> = {
     ALL: '全部数据',
     TEAM: '本团队数据',
+    SUBTREE: '负责组织及下级数据',
     SELF: '仅本人数据',
 }
 
@@ -20,7 +21,11 @@ export const useUserStore = defineStore('user', () => {
     /** 用户资料加载标志；路由守卫据此决定是否恢复资料与权限路由 */
     const loaded = ref(false)
 
-    const permissions = computed(() => profile.value?.permissions ?? [])
+    // 账号能登录不一定已获业务访问资格，待审核和被驳回账号统一进入审核状态页。
+    const restricted = computed(() => profile.value !== null && profile.value.status !== 'ACTIVE')
+    const homePath = computed(() => (restricted.value ? '/account-status' : '/dashboard'))
+    // 即使受限身份响应误带权限，前端也保持菜单和业务入口为空。
+    const permissions = computed(() => (restricted.value ? [] : (profile.value?.permissions ?? [])))
     // 侧栏与工作台共用过滤后的菜单，保持功能入口与动态路由权限一致。
     const menus = computed(() => filterMenuTree(menuTree, permissions.value))
     const dataScopeText = computed(() => {
@@ -31,7 +36,7 @@ export const useUserStore = defineStore('user', () => {
             : dataScopeLabels[scope]
     })
 
-    /** 按钮级权限判断，用法：v-if="userStore.hasPermission('system:view')" */
+    /** 控制前端按钮展示；实际操作还需通过后端的动作权限和数据范围校验。 */
     function hasPermission(code?: string): boolean {
         return !code || permissions.value.includes(code)
     }
@@ -40,7 +45,9 @@ export const useUserStore = defineStore('user', () => {
     function applyProfile(user: CurrentUser): void {
         profile.value = user
         loaded.value = true
-        installLayout(user.permissions)
+        // 资料刷新也可能使账号转为受限状态，此时需移除上一份身份安装的业务路由。
+        if (user.status === 'ACTIVE') installLayout(user.permissions)
+        else clearLayout()
     }
 
     async function login(payload: LoginPayload): Promise<void> {
@@ -80,6 +87,8 @@ export const useUserStore = defineStore('user', () => {
     return {
         token,
         profile,
+        restricted,
+        homePath,
         loaded,
         permissions,
         menus,

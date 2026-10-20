@@ -32,5 +32,7 @@ export default [
         },
     },
     { files: ['vite.config.ts', '**/*.mjs'], languageOptions: { globals: globals.node } },
+    // /test 按仓库约定保留为空白临时页。
+    { files: ['src/views/test/index.vue'], rules: { 'vue/valid-template-root': 'off' } },
     prettier,
 ]

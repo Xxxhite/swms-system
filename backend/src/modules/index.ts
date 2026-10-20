@@ -1,4 +1,7 @@
 import type { AnyElysia } from "elysia"
+import { createAuthRoutes } from "./auth/auth.route"
+import { createIdentityRoutes } from "./identity/identity.route"
+import { createSystemRoutes } from "./system/system.route"
 
 /**
  * 业务模块注册入口，由 app.ts 统一挂载。
@@ -13,4 +16,8 @@ import type { AnyElysia } from "elysia"
  *
  * 仅注册已实现的模块；待业务需求与表结构确认后再接入模块骨架。
  */
-export const modules: AnyElysia[] = []
+export const modules: AnyElysia[] = [
+  createAuthRoutes(),
+  createIdentityRoutes(),
+  createSystemRoutes(),
+]

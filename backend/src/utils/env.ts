@@ -5,12 +5,14 @@
 
 function toPositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: toPositiveInt(process.env.PORT, 3000),
+  jwtSecret: process.env.JWT_SECRET?.trim() ?? "",
+  jwtExpiresSeconds: toPositiveInt(process.env.JWT_EXPIRES_SECONDS, 28800),
   /**
    * 允许跨域的前端地址，多个用英文逗号分隔。
    * 默认放本机 Vite 的 localhost 与 127.0.0.1 两种访问地址；

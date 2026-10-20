@@ -9,12 +9,19 @@ const user: CurrentUser = {
     id: 1,
     username: 'admin',
     name: '测试用户',
+    status: 'ACTIVE',
+    reviewComment: null,
+    orgId: 1,
+    orgName: '总部',
+    positionCode: null,
+    supervisorId: null,
+    managedOrgIds: [],
     roles: ['ADMIN'],
     roleNames: ['管理员'],
     teamId: null,
     teamName: '总部',
     dataScope: 'ALL',
-    permissions: ['system:view'],
+    permissions: ['system:view', 'system:user:view'],
 }
 const login = mock(async () => ({ token: 'test-token', user }))
 const profile = mock(async (): Promise<CurrentUser> => user)
@@ -137,5 +144,63 @@ describe('登录状态与路由守卫', () => {
         expect(store.loaded).toBe(false)
         expect(store.profile).toBeNull()
         expect(installLayout).toHaveBeenCalledTimes(1)
+    })
+
+    test('受限账号清理业务路由，即使响应中误带权限也不显示菜单', async () => {
+        const store = useUserStore()
+        login.mockResolvedValueOnce({
+            token: 'pending-token',
+            user: { ...user, status: 'PENDING' },
+        })
+        await store.login({ username: 'pending', password: 'test' })
+        expect(store.homePath).toBe('/account-status')
+        expect(store.permissions).toEqual([])
+        expect(store.menus).toEqual([])
+        expect(installLayout).not.toHaveBeenCalled()
+        expect(clearLayout).toHaveBeenCalledTimes(1)
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/account-status', component: {} },
+                { path: '/private', component: {} },
+                { path: '/login', component: {}, meta: { public: true } },
+            ],
+        })
+        setupRouterGuard(router)
+        await router.push('/private')
+        expect(router.currentRoute.value.path).toBe('/account-status')
+        await router.push('/login')
+        expect(router.currentRoute.value.path).toBe('/account-status')
+    })
+
+    test('刷新后被驳回账号恢复到审核页，批准后新登录进入工作台', async () => {
+        storage.set('swms_token', 'rejected-token')
+        profile.mockResolvedValueOnce({ ...user, status: 'REJECTED', reviewComment: '补充资料' })
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                { path: '/account-status', component: {} },
+                { path: '/dashboard', component: {} },
+                { path: '/login', component: {}, meta: { public: true } },
+            ],
+        })
+        setupRouterGuard(router)
+        await router.push('/dashboard')
+        expect(router.currentRoute.value.path).toBe('/account-status')
+        const store = useUserStore()
+        await store.login({ username: 'admin', password: 'test' })
+        await router.push('/account-status?refresh=1')
+        expect(router.currentRoute.value.path).toBe('/dashboard')
+    })
+
+    test('组织子树范围正确展示，额外权限不改变范围', async () => {
+        login.mockResolvedValueOnce({
+            token: 'department-token',
+            user: { ...user, dataScope: 'SUBTREE', managedOrgIds: [2] },
+        })
+        const store = useUserStore()
+        await store.login({ username: 'department', password: 'test' })
+        expect(store.dataScopeText).toBe('负责组织及下级数据')
+        expect(store.profile?.dataScope).toBe('SUBTREE')
     })
 })

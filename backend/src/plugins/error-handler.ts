@@ -24,7 +24,7 @@ export const errorHandler = new Elysia({ name: "error-handler" }).onError(
     switch (code) {
       case "VALIDATION": {
         set.status = 422
-        return fail(ErrorCode.PARAM_INVALID, error.message)
+        return fail(ErrorCode.PARAM_INVALID, "请求参数不合法，请检查填写内容")
       }
       case "NOT_FOUND": {
         set.status = 404

@@ -11,6 +11,8 @@ function toPositiveInt(value: string | undefined, fallback: number): number {
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
+  // 线上由本机 Nginx 转发；显式指定 HOST 可调整监听地址。
+  host: process.env.HOST?.trim() || "127.0.0.1",
   port: toPositiveInt(process.env.PORT, 3000),
   jwtSecret: process.env.JWT_SECRET?.trim() ?? "",
   jwtExpiresSeconds: toPositiveInt(process.env.JWT_EXPIRES_SECONDS, 28800),

@@ -1,0 +1,27 @@
+[Unit]
+Description=SWMS API
+After=network.target mysql.service
+Requires=mysql.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=Xxxhite
+Group=Xxxhite
+WorkingDirectory=/srv/swms/current/backend
+EnvironmentFile=/srv/swms/shared/backend.env
+ExecStart=/srv/swms/runtime/bun/bin/bun run src/index.ts
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

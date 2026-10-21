@@ -175,23 +175,24 @@ function removeIndicator(row: Indicator) {
 onMounted(load)
 </script>
 <template>
-    <el-card v-if="project"
-        ><template #header
-            ><div class="page-header">
+    <el-card v-if="project">
+        <template #header>
+            <div class="page-header">
                 <span>{{ project.name }}</span>
                 <div class="page-actions">
-                    <el-button @click="router.push('/project')">返回项目</el-button
-                    ><el-button @click="load">刷新</el-button
-                    ><el-button
+                    <el-button @click="router.push('/project')">返回项目</el-button>
+                    <el-button @click="load">刷新</el-button>
+                    <el-button
                         v-if="project.status === 'DRAFT' && has('project:record:update')"
                         type="primary"
                         :loading="busy"
                         @click="activateProject()"
-                        >启用项目</el-button
                     >
+                        启用项目
+                    </el-button>
                 </div>
-            </div></template
-        >
+            </div>
+        </template>
         <el-alert
             :title="`项目${businessStatus[project.status]}；${project.statisticsScope === 'PROJECT' ? '可查看完整项目配置和统计' : '仅查看授权团队，其他团队和合同目标不展示'}`"
             :type="project.statisticsScope === 'PROJECT' ? 'info' : 'warning'"
@@ -199,55 +200,52 @@ onMounted(load)
             class="notice"
         />
         <el-tabs>
-            <el-tab-pane label="基础信息"
-                ><template v-if="has('project:record:update')"
-                    ><project-form v-model="base" :candidates="candidates" /><el-button
-                        type="primary"
-                        :loading="busy"
-                        @click="saveBase()"
-                        >保存基础信息</el-button
-                    ></template
-                ><el-descriptions v-else :column="2" border
-                    ><el-descriptions-item label="项目编码">{{ project.code }}</el-descriptions-item
-                    ><el-descriptions-item label="主服务领域">{{
-                        project.serviceFieldCode
-                    }}</el-descriptions-item></el-descriptions
-                ></el-tab-pane
-            >
-            <el-tab-pane label="合同资料"
-                ><el-form label-width="110px" :disabled="!has('project:record:update')"
-                    ><el-form-item label="合同编号"
-                        ><el-input v-model="contract.contractNo" maxlength="100" /></el-form-item
-                    ><el-form-item label="合作方" required
-                        ><el-input v-model="contract.partnerName" maxlength="150" /></el-form-item
-                    ><el-form-item label="开始日期" required
-                        ><el-date-picker
-                            v-model="contract.startDate"
-                            value-format="YYYY-MM-DD" /></el-form-item
-                    ><el-form-item label="结束日期" required
-                        ><el-date-picker
-                            v-model="contract.endDate"
-                            value-format="YYYY-MM-DD" /></el-form-item
-                    ><el-form-item label="合同金额" required
-                        ><el-input
-                            v-model="contract.amount"
-                            placeholder="如 10000.00" /></el-form-item
-                    ><el-form-item label="服务区域" required
-                        ><el-input v-model="contract.serviceArea" maxlength="100" /></el-form-item
-                    ><el-form-item label="说明"
-                        ><el-input
-                            v-model="contract.note"
-                            type="textarea"
-                            maxlength="5000" /></el-form-item
-                    ><el-form-item v-if="has('project:record:update')" class="form-actions"
-                        ><el-button type="primary" :loading="busy" @click="saveContract()"
-                            >保存合同</el-button
-                        ></el-form-item
-                    ></el-form
-                ></el-tab-pane
-            >
-            <el-tab-pane label="承担团队"
-                ><p>每个团队指定一名填报负责人；出现指标目标后，团队关系须保留。</p>
+            <el-tab-pane label="基础信息">
+                <template v-if="has('project:record:update')">
+                    <project-form v-model="base" :candidates="candidates" />
+                    <el-button type="primary" :loading="busy" @click="saveBase()">
+                        保存基础信息
+                    </el-button>
+                </template>
+                <el-descriptions v-else :column="2" border>
+                    <el-descriptions-item label="项目编码">{{ project.code }}</el-descriptions-item>
+                    <el-descriptions-item label="主服务领域">
+                        {{ project.serviceFieldCode }}
+                    </el-descriptions-item>
+                </el-descriptions>
+            </el-tab-pane>
+            <el-tab-pane label="合同资料">
+                <el-form label-width="110px" :disabled="!has('project:record:update')">
+                    <el-form-item label="合同编号">
+                        <el-input v-model="contract.contractNo" maxlength="100" />
+                    </el-form-item>
+                    <el-form-item label="合作方" required>
+                        <el-input v-model="contract.partnerName" maxlength="150" />
+                    </el-form-item>
+                    <el-form-item label="开始日期" required>
+                        <el-date-picker v-model="contract.startDate" value-format="YYYY-MM-DD" />
+                    </el-form-item>
+                    <el-form-item label="结束日期" required>
+                        <el-date-picker v-model="contract.endDate" value-format="YYYY-MM-DD" />
+                    </el-form-item>
+                    <el-form-item label="合同金额" required>
+                        <el-input v-model="contract.amount" placeholder="如 10000.00" />
+                    </el-form-item>
+                    <el-form-item label="服务区域" required>
+                        <el-input v-model="contract.serviceArea" maxlength="100" />
+                    </el-form-item>
+                    <el-form-item label="说明">
+                        <el-input v-model="contract.note" type="textarea" maxlength="5000" />
+                    </el-form-item>
+                    <el-form-item v-if="has('project:record:update')" class="form-actions">
+                        <el-button type="primary" :loading="busy" @click="saveContract()">
+                            保存合同
+                        </el-button>
+                    </el-form-item>
+                </el-form>
+            </el-tab-pane>
+            <el-tab-pane label="承担团队">
+                <p>每个团队指定一名填报负责人；出现指标目标后，团队关系须保留。</p>
                 <div
                     v-for="(team, index) in teams"
                     v-show="has('project:record:update')"
@@ -258,196 +256,218 @@ onMounted(load)
                         v-model="team.teamId"
                         :disabled="!has('project:record:update')"
                         placeholder="承担团队"
-                        ><el-option
+                    >
+                        <el-option
                             v-for="o in candidates.organizations.filter((o) => o.type === 'TEAM')"
                             :key="o.id"
                             :label="o.name"
-                            :value="o.id" /></el-select
-                    ><el-select
+                            :value="o.id"
+                        />
+                    </el-select>
+                    <el-select
                         v-model="team.reporterId"
                         :disabled="!has('project:record:update')"
                         placeholder="填报负责人"
                         filterable
-                        ><el-option
+                    >
+                        <el-option
                             v-for="u in candidates.users.filter((u) => u.teamId === team.teamId)"
                             :key="u.id"
                             :label="u.name"
-                            :value="u.id" /></el-select
-                    ><el-button
+                            :value="u.id"
+                        />
+                    </el-select>
+                    <el-button
                         v-if="has('project:record:update')"
                         type="danger"
                         plain
                         @click="teams.splice(index, 1)"
-                        >移除</el-button
                     >
+                        移除
+                    </el-button>
                 </div>
                 <div v-if="has('project:record:update')" class="page-actions">
-                    <el-button @click="teams.push({ teamId: 0, reporterId: 0 })">添加团队</el-button
-                    ><el-button type="primary" :loading="busy" @click="saveTeams()"
-                        >保存团队</el-button
-                    >
+                    <el-button @click="teams.push({ teamId: 0, reporterId: 0 })">
+                        添加团队
+                    </el-button>
+                    <el-button type="primary" :loading="busy" @click="saveTeams()">
+                        保存团队
+                    </el-button>
                 </div>
-                <template v-else
-                    ><p v-for="team in project.teams" :key="team.teamId">
+                <template v-else>
+                    <p v-for="team in project.teams" :key="team.teamId">
                         {{ team.teamName }}：{{ team.reporterName }}
-                    </p></template
-                ></el-tab-pane
-            >
-            <el-tab-pane label="服务点"
-                ><div v-for="(point, index) in points" :key="index" class="edit-row">
+                    </p>
+                </template>
+            </el-tab-pane>
+            <el-tab-pane label="服务点">
+                <div v-for="(point, index) in points" :key="index" class="edit-row">
                     <el-input
                         v-model="point.name"
                         :disabled="!has('project:record:update')"
                         placeholder="服务点名称"
                         maxlength="100"
-                    /><el-input
+                    />
+                    <el-input
                         v-model="point.address"
                         :disabled="!has('project:record:update')"
                         placeholder="地址"
                         maxlength="255"
-                    /><el-input
+                    />
+                    <el-input
                         v-model="point.note"
                         :disabled="!has('project:record:update')"
                         placeholder="说明"
                         maxlength="1000"
-                    /><el-button
-                        v-if="has('project:record:update')"
-                        @click="points.splice(index, 1)"
-                        >移除</el-button
-                    >
+                    />
+                    <el-button v-if="has('project:record:update')" @click="points.splice(index, 1)">
+                        移除
+                    </el-button>
                 </div>
                 <div v-if="has('project:record:update')" class="page-actions">
-                    <el-button @click="points.push({ name: '', address: '', note: '' })"
-                        >添加服务点</el-button
-                    ><el-button type="primary" :loading="busy" @click="savePoints()"
-                        >保存服务点</el-button
-                    >
-                </div></el-tab-pane
-            >
-            <el-tab-pane label="指标及目标"
-                ><el-button
+                    <el-button @click="points.push({ name: '', address: '', note: '' })">
+                        添加服务点
+                    </el-button>
+                    <el-button type="primary" :loading="busy" @click="savePoints()">
+                        保存服务点
+                    </el-button>
+                </div>
+            </el-tab-pane>
+            <el-tab-pane label="指标及目标">
+                <el-button
                     v-if="has('service:indicator:manage')"
                     type="primary"
                     class="notice"
                     @click="editIndicator()"
-                    >新增指标</el-button
-                ><el-table :data="project.indicators"
-                    ><!-- @vue-generic {Indicator} --><el-table-column
-                        prop="name"
-                        label="指标"
-                        min-width="160"
-                    /><!-- @vue-generic {Indicator} --><el-table-column
-                        prop="unit"
-                        label="单位"
-                        width="80"
-                    /><!-- @vue-generic {Indicator} --><el-table-column
+                >
+                    新增指标
+                </el-button>
+                <el-table :data="project.indicators">
+                    <!-- @vue-generic {Indicator} -->
+                    <el-table-column prop="name" label="指标" min-width="160" />
+                    <!-- @vue-generic {Indicator} -->
+                    <el-table-column prop="unit" label="单位" width="80" />
+                    <!-- @vue-generic {Indicator} -->
+                    <el-table-column
                         prop="definition"
                         label="统计口径"
                         min-width="180"
                         show-overflow-tooltip
-                    /><!-- @vue-generic {Indicator} --><el-table-column
+                    />
+                    <!-- @vue-generic {Indicator} -->
+                    <el-table-column
                         v-if="project.statisticsScope === 'PROJECT'"
                         prop="targetValue"
                         label="合同目标"
                         width="110"
-                    /><!-- @vue-generic {Indicator} --><el-table-column label="状态" width="90"
-                        ><template #default="{ row }">{{
-                            businessStatus[row.status]
-                        }}</template></el-table-column
-                    ><!-- @vue-generic {Indicator} --><el-table-column
-                        label="操作"
-                        min-width="280"
-                        fixed="right"
-                        ><template #default="{ row }"
-                            ><el-button
+                    />
+                    <!-- @vue-generic {Indicator} -->
+                    <el-table-column label="状态" width="90">
+                        <template #default="{ row }">{{ businessStatus[row.status] }}</template>
+                    </el-table-column>
+                    <!-- @vue-generic {Indicator} -->
+                    <el-table-column label="操作" min-width="280" fixed="right">
+                        <template #default="{ row }">
+                            <el-button
                                 v-if="has('service:indicator:manage')"
                                 link
                                 type="primary"
                                 @click="editIndicator(row)"
-                                >编辑</el-button
-                            ><el-button
+                            >
+                                编辑
+                            </el-button>
+                            <el-button
                                 v-if="has('service:indicator:allocate')"
                                 link
                                 type="primary"
                                 @click="editAllocations(row)"
-                                >{{ row.status === 'ACTIVE' ? '调整目标' : '分配目标' }}</el-button
-                            ><el-button
+                            >
+                                {{ row.status === 'ACTIVE' ? '调整目标' : '分配目标' }}
+                            </el-button>
+                            <el-button
                                 v-if="row.status === 'DRAFT' && has('service:indicator:manage')"
                                 link
                                 type="primary"
                                 @click="activateIndicator(row)"
-                                >启用</el-button
-                            ><el-button
+                            >
+                                启用
+                            </el-button>
+                            <el-button
                                 v-if="row.status === 'DRAFT' && has('service:indicator:manage')"
                                 link
                                 type="danger"
                                 @click="removeIndicator(row)"
-                                >删除</el-button
-                            ></template
-                        ></el-table-column
-                    ></el-table
-                >
+                            >
+                                删除
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
                 <p v-for="i in project.indicators" :key="i.id">
-                    {{ i.name }}：<span v-for="a in i.allocations" :key="a.teamId"
-                        >{{ project.teams.find((t) => t.teamId === a.teamId)?.teamName }}
-                        {{ a.targetValue }}{{ i.unit }}；</span
-                    >
-                </p></el-tab-pane
-            >
+                    {{ i.name }}：
+                    <span v-for="a in i.allocations" :key="a.teamId">
+                        {{ project.teams.find((t) => t.teamId === a.teamId)?.teamName }}
+                        {{ a.targetValue }}{{ i.unit }}；
+                    </span>
+                </p>
+            </el-tab-pane>
         </el-tabs>
         <el-dialog
             v-model="indicatorDialog"
             :title="selected ? '编辑指标' : '新增指标'"
             width="580px"
-            ><el-form label-width="100px"
-                ><el-form-item label="名称" required
-                    ><el-input v-model="indicator.name" maxlength="150" /></el-form-item
-                ><el-form-item label="单位" required
-                    ><el-input v-model="indicator.unit" maxlength="20" /></el-form-item
-                ><el-form-item label="统计口径" required
-                    ><el-input
-                        v-model="indicator.definition"
-                        type="textarea"
-                        maxlength="5000" /></el-form-item
-                ><el-form-item label="合同目标" required
-                    ><el-input
-                        v-model="indicator.targetValue"
-                        :disabled="selected?.status === 'ACTIVE'" /></el-form-item></el-form
-            ><template #footer
-                ><el-button @click="indicatorDialog = false">取消</el-button
-                ><el-button type="primary" :loading="busy" @click="saveIndicator()"
-                    >保存</el-button
-                ></template
-            ></el-dialog
         >
-        <el-dialog v-model="allocationDialog" title="团队目标方案" width="620px"
-            ><el-alert
+            <el-form label-width="100px">
+                <el-form-item label="名称" required>
+                    <el-input v-model="indicator.name" maxlength="150" />
+                </el-form-item>
+                <el-form-item label="单位" required>
+                    <el-input v-model="indicator.unit" maxlength="20" />
+                </el-form-item>
+                <el-form-item label="统计口径" required>
+                    <el-input v-model="indicator.definition" type="textarea" maxlength="5000" />
+                </el-form-item>
+                <el-form-item label="合同目标" required>
+                    <el-input
+                        v-model="indicator.targetValue"
+                        :disabled="selected?.status === 'ACTIVE'"
+                    />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="indicatorDialog = false">取消</el-button>
+                <el-button type="primary" :loading="busy" @click="saveIndicator()">保存</el-button>
+            </template>
+        </el-dialog>
+        <el-dialog v-model="allocationDialog" title="团队目标方案" width="620px">
+            <el-alert
                 title="启用时团队目标总和须等于合同目标；已有月报的团队不可取消分配。"
                 type="info"
                 :closable="false"
                 class="notice"
-            /><el-form label-width="100px"
-                ><el-form-item label="合同目标"
-                    ><el-input
+            />
+            <el-form label-width="100px">
+                <el-form-item label="合同目标">
+                    <el-input
                         v-model="targetPlan.targetValue"
-                        :disabled="selected?.status !== 'ACTIVE'" /></el-form-item
-                ><el-form-item v-if="selected?.status === 'ACTIVE'" label="调整原因" required
-                    ><el-input
-                        v-model="targetPlan.reason"
-                        type="textarea"
-                        maxlength="1000" /></el-form-item
-            ></el-form>
+                        :disabled="selected?.status !== 'ACTIVE'"
+                    />
+                </el-form-item>
+                <el-form-item v-if="selected?.status === 'ACTIVE'" label="调整原因" required>
+                    <el-input v-model="targetPlan.reason" type="textarea" maxlength="1000" />
+                </el-form-item>
+            </el-form>
             <div v-for="a in allocations" :key="a.teamId" class="edit-row">
-                <el-checkbox v-model="a.selected">{{ a.teamName }}</el-checkbox
-                ><el-input v-model="a.targetValue" :disabled="!a.selected" placeholder="团队目标" />
+                <el-checkbox v-model="a.selected">{{ a.teamName }}</el-checkbox>
+                <el-input v-model="a.targetValue" :disabled="!a.selected" placeholder="团队目标" />
             </div>
-            <template #footer
-                ><el-button @click="allocationDialog = false">取消</el-button
-                ><el-button type="primary" :loading="busy" @click="saveAllocations"
-                    >保存完整方案</el-button
-                ></template
-            ></el-dialog
-        >
+            <template #footer>
+                <el-button @click="allocationDialog = false">取消</el-button>
+                <el-button type="primary" :loading="busy" @click="saveAllocations">
+                    保存完整方案
+                </el-button>
+            </template>
+        </el-dialog>
     </el-card>
 </template>
 <style scoped>

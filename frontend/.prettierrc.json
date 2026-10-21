@@ -4,5 +4,8 @@
   "semi": false,
   "printWidth": 100,
   "endOfLine": "lf",
-  "overrides": [{ "files": "*.json", "options": { "tabWidth": 2 } }]
+  "overrides": [
+    { "files": "*.json", "options": { "tabWidth": 2 } },
+    { "files": "*.vue", "options": { "htmlWhitespaceSensitivity": "ignore" } }
+  ]
 }

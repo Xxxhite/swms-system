@@ -186,129 +186,141 @@ onMounted(async () => {
 })
 </script>
 <template>
-    <el-card
-        ><template #header
-            ><div class="page-header">
-                <span>月度填报</span
-                ><el-button
+    <el-card>
+        <template #header>
+            <div class="page-header">
+                <span>月度填报</span>
+                <el-button
                     v-if="!useMock && store.hasPermission('service:monthly:create')"
                     type="primary"
                     @click="edit()"
-                    >新增月报</el-button
                 >
-            </div></template
-        ><el-alert
+                    新增月报
+                </el-button>
+            </div>
+        </template>
+        <el-alert
             v-if="useMock"
             title="月度填报请使用真实接口模式。"
             type="info"
             :closable="false"
-        /><template v-else
-            ><el-alert
+        />
+        <template v-else>
+            <el-alert
                 title="填写当月新增完成量；草稿不计累计，提交后更正、撤销及恢复须主管确认。"
                 type="info"
                 :closable="false"
                 class="notice"
             />
-            <el-form class="filter-form" @submit.prevent="search"
-                ><el-form-item label="项目／指标"
-                    ><el-input v-model="query.keyword" clearable /></el-form-item
-                ><el-form-item label="填报月份"
-                    ><el-date-picker
-                        v-model="query.month"
-                        type="month"
-                        value-format="YYYY-MM" /></el-form-item
-                ><el-form-item label="状态"
-                    ><el-select v-model="query.status" clearable
-                        ><el-option
+            <el-form class="filter-form" @submit.prevent="search">
+                <el-form-item label="项目／指标">
+                    <el-input v-model="query.keyword" clearable />
+                </el-form-item>
+                <el-form-item label="填报月份">
+                    <el-date-picker v-model="query.month" type="month" value-format="YYYY-MM" />
+                </el-form-item>
+                <el-form-item label="状态">
+                    <el-select v-model="query.status" clearable>
+                        <el-option
                             v-for="value in ['DRAFT', 'SUBMITTED', 'VOID']"
                             :key="value"
                             :value="value"
-                            :label="businessStatus[value]" /></el-select></el-form-item
-                ><el-form-item label="项目"
-                    ><el-select v-model="query.projectId" clearable filterable
-                        ><el-option
+                            :label="businessStatus[value]"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="项目">
+                    <el-select v-model="query.projectId" clearable filterable>
+                        <el-option
                             v-for="p in filterProjects"
                             :key="p.id"
                             :label="p.name"
-                            :value="p.id" /></el-select></el-form-item
-                ><el-form-item label="团队"
-                    ><el-select v-model="query.teamId" clearable filterable
-                        ><el-option
+                            :value="p.id"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="团队">
+                    <el-select v-model="query.teamId" clearable filterable>
+                        <el-option
                             v-for="t in filterTeams"
                             :key="t.id"
                             :label="t.name"
-                            :value="t.id" /></el-select></el-form-item
-                ><el-form-item class="filter-form__actions"
-                    ><el-button type="primary" native-type="submit">查询</el-button
-                    ><el-button @click="reset">重置</el-button></el-form-item
-                ></el-form
-            >
-            <el-table v-loading="loading" :data="rows"
-                ><!-- @vue-generic {Monthly} --><el-table-column
+                            :value="t.id"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item class="filter-form__actions">
+                    <el-button type="primary" native-type="submit">查询</el-button>
+                    <el-button @click="reset">重置</el-button>
+                </el-form-item>
+            </el-form>
+            <el-table v-loading="loading" :data="rows">
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column
                     prop="projectName"
                     label="项目"
                     min-width="160"
                     show-overflow-tooltip
-                /><!-- @vue-generic {Monthly} --><el-table-column
+                />
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column
                     prop="indicatorName"
                     label="指标"
                     min-width="140"
                     show-overflow-tooltip
-                /><!-- @vue-generic {Monthly} --><el-table-column
-                    prop="teamName"
-                    label="团队"
-                    min-width="130"
-                /><!-- @vue-generic {Monthly} --><el-table-column
-                    prop="month"
-                    label="月份"
-                    width="110"
-                /><!-- @vue-generic {Monthly} --><el-table-column
-                    prop="actualValue"
-                    label="当月新增"
-                    width="100"
-                /><!-- @vue-generic {Monthly} --><el-table-column
-                    prop="unit"
-                    label="单位"
-                    width="70"
-                /><!-- @vue-generic {Monthly} --><el-table-column label="状态" width="100"
-                    ><template #default="{ row }"
-                        >{{ businessStatus[row.status]
-                        }}<span v-if="row.changes.some((c) => c.pendingReportId)"
-                            >／变更待审</span
-                        ></template
-                    ></el-table-column
-                ><!-- @vue-generic {Monthly} --><el-table-column
-                    label="操作"
-                    min-width="280"
-                    fixed="right"
-                    ><template #default="{ row }"
-                        ><el-button link type="primary" @click="showHistory(row)">详情</el-button
-                        ><template v-if="row.status === 'DRAFT' && row.canMaintain"
-                            ><el-button
+                />
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column prop="teamName" label="团队" min-width="130" />
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column prop="month" label="月份" width="110" />
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column prop="actualValue" label="当月新增" width="100" />
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column prop="unit" label="单位" width="70" />
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                        {{ businessStatus[row.status] }}
+                        <span v-if="row.changes.some((c) => c.pendingReportId)">／变更待审</span>
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column label="操作" min-width="280" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="showHistory(row)">详情</el-button>
+                        <template v-if="row.status === 'DRAFT' && row.canMaintain">
+                            <el-button
                                 v-if="store.hasPermission('service:monthly:update')"
                                 link
                                 type="primary"
                                 @click="edit(row)"
-                                >编辑</el-button
-                            ><el-button
+                            >
+                                编辑
+                            </el-button>
+                            <el-button
                                 v-if="store.hasPermission('service:monthly:submit')"
                                 link
                                 type="primary"
                                 :disabled="busy"
                                 @click="submitMonthly(row)"
-                                >提交</el-button
-                            ><el-button
+                            >
+                                提交
+                            </el-button>
+                            <el-button
                                 v-if="store.hasPermission('service:monthly:delete')"
                                 link
                                 type="danger"
                                 @click="removeMonthly(row)"
-                                >删除</el-button
-                            ></template
-                        ><template
+                            >
+                                删除
+                            </el-button>
+                        </template>
+                        <template
                             v-else-if="
                                 row.canMaintain && !row.changes.some((c) => c.pendingReportId)
                             "
-                            ><el-button
+                        >
+                            <el-button
                                 v-if="
                                     row.status === 'SUBMITTED' &&
                                     store.hasPermission('service:monthly:update')
@@ -316,8 +328,10 @@ onMounted(async () => {
                                 link
                                 type="primary"
                                 @click="openChange(row, 'CORRECT')"
-                                >申请更正</el-button
-                            ><el-button
+                            >
+                                申请更正
+                            </el-button>
+                            <el-button
                                 v-if="
                                     row.status === 'SUBMITTED' &&
                                     store.hasPermission('service:monthly:delete')
@@ -325,8 +339,10 @@ onMounted(async () => {
                                 link
                                 type="danger"
                                 @click="openChange(row, 'DELETE')"
-                                >申请撤销</el-button
-                            ><el-button
+                            >
+                                申请撤销
+                            </el-button>
+                            <el-button
                                 v-if="
                                     row.status === 'VOID' &&
                                     store.hasPermission('service:monthly:update')
@@ -334,12 +350,14 @@ onMounted(async () => {
                                 link
                                 type="primary"
                                 @click="openChange(row, 'RESTORE')"
-                                >申请恢复</el-button
-                            ></template
-                        ></template
-                    ></el-table-column
-                ></el-table
-            ><el-pagination
+                            >
+                                申请恢复
+                            </el-button>
+                        </template>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
                 v-model:current-page="query.page"
                 class="table-pagination"
                 :total="total"
@@ -348,76 +366,79 @@ onMounted(async () => {
                 @current-change="load"
             />
         </template>
-        <el-dialog v-model="dialog" title="月报草稿" width="600px"
-            ><el-form label-width="100px"
-                ><el-form-item label="指标及团队" required
-                    ><el-select
+        <el-dialog v-model="dialog" title="月报草稿" width="600px">
+            <el-form label-width="100px">
+                <el-form-item label="指标及团队" required>
+                    <el-select
                         v-model="slot"
                         :disabled="!!selected"
                         filterable
                         @change="chooseSlot"
-                        ><el-option
+                    >
+                        <el-option
                             v-for="r in slotOptions"
                             :key="`${r.indicatorId}:${r.teamId}`"
                             :value="`${r.indicatorId}:${r.teamId}`"
-                            :label="`${r.projectName}／${r.indicatorName}／${r.teamName}`" /></el-select></el-form-item
-                ><el-form-item label="月份" required
-                    ><el-date-picker
+                            :label="`${r.projectName}／${r.indicatorName}／${r.teamName}`"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="月份" required>
+                    <el-date-picker
                         v-model="form.month"
                         type="month"
                         value-format="YYYY-MM"
-                        :disabled="!!selected" /></el-form-item
-                ><el-form-item label="当月新增" required
-                    ><el-input
-                        v-model="form.actualValue"
-                        placeholder="非负数，最多两位小数" /></el-form-item
-                ><el-form-item label="说明"
-                    ><el-input
-                        v-model="form.note"
-                        type="textarea"
-                        maxlength="1000" /></el-form-item></el-form
-            ><template #footer
-                ><el-button @click="dialog = false">取消</el-button
-                ><el-button type="primary" :loading="busy" @click="saveMonthly()"
-                    >保存草稿</el-button
-                ></template
-            ></el-dialog
-        >
+                        :disabled="!!selected"
+                    />
+                </el-form-item>
+                <el-form-item label="当月新增" required>
+                    <el-input v-model="form.actualValue" placeholder="非负数，最多两位小数" />
+                </el-form-item>
+                <el-form-item label="说明">
+                    <el-input v-model="form.note" type="textarea" maxlength="1000" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="dialog = false">取消</el-button>
+                <el-button type="primary" :loading="busy" @click="saveMonthly()">
+                    保存草稿
+                </el-button>
+            </template>
+        </el-dialog>
         <el-dialog
             v-model="changeDialog"
             :title="`申请${businessStatus[change.operation]}`"
             width="560px"
-            ><el-form label-width="100px"
-                ><el-form-item v-if="change.operation === 'CORRECT'" label="更正后新增" required
-                    ><el-input v-model="change.actualValue" /></el-form-item
-                ><el-form-item label="原因" required
-                    ><el-input
-                        v-model="change.reason"
-                        type="textarea"
-                        maxlength="1000" /></el-form-item
-                ><el-form-item v-if="change.operation === 'CORRECT'" label="更新说明"
-                    ><el-input
-                        v-model="change.note"
-                        type="textarea"
-                        maxlength="1000" /></el-form-item></el-form
-            ><template #footer
-                ><el-button @click="changeDialog = false">取消</el-button
-                ><el-button type="primary" :loading="busy" @click="saveChange()"
-                    >提交主管确认</el-button
-                ></template
-            ></el-dialog
         >
-        <el-dialog v-model="historyDialog" title="月报及变更历史" width="700px"
-            ><template v-if="history"
-                ><p>
+            <el-form label-width="100px">
+                <el-form-item v-if="change.operation === 'CORRECT'" label="更正后新增" required>
+                    <el-input v-model="change.actualValue" />
+                </el-form-item>
+                <el-form-item label="原因" required>
+                    <el-input v-model="change.reason" type="textarea" maxlength="1000" />
+                </el-form-item>
+                <el-form-item v-if="change.operation === 'CORRECT'" label="更新说明">
+                    <el-input v-model="change.note" type="textarea" maxlength="1000" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="changeDialog = false">取消</el-button>
+                <el-button type="primary" :loading="busy" @click="saveChange()">
+                    提交主管确认
+                </el-button>
+            </template>
+        </el-dialog>
+        <el-dialog v-model="historyDialog" title="月报及变更历史" width="700px">
+            <template v-if="history">
+                <p>
                     {{ history.projectName }}／{{ history.indicatorName }}／{{ history.month }}：{{
                         history.actualValue
                     }}{{ history.unit }}
                 </p>
                 <p>{{ history.note }}</p>
-                <el-timeline
-                    ><el-timeline-item v-for="c in history.changes" :key="c.id"
-                        ><p>
+                <el-timeline>
+                    <el-timeline-item v-for="c in history.changes" :key="c.id">
+                        <p>
                             {{ businessStatus[c.operation] }}：{{ c.reason }}；{{
                                 businessStatus[c.instance.status]
                             }}
@@ -434,12 +455,13 @@ onMounted(async () => {
                             v-if="c.pendingReportId && c.instance.applicantId === store.profile?.id"
                             :disabled="busy"
                             @click="withdraw(c.id)"
-                            >撤回申请</el-button
-                        ></el-timeline-item
-                    ></el-timeline
-                ></template
-            ></el-dialog
-        >
+                        >
+                            撤回申请
+                        </el-button>
+                    </el-timeline-item>
+                </el-timeline>
+            </template>
+        </el-dialog>
     </el-card>
 </template>
 <style scoped>

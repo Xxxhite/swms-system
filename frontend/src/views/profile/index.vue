@@ -75,18 +75,16 @@ onMounted(load)
 <template>
     <el-card>
         <template #header>个人中心</template>
-        <el-descriptions :column="2" border
-            ><el-descriptions-item label="姓名">{{ store.profile?.name }}</el-descriptions-item
-            ><el-descriptions-item label="所属组织">{{
-                store.profile?.orgName ?? '未分配'
-            }}</el-descriptions-item
-            ><el-descriptions-item label="角色">{{
-                store.profile?.roleNames.join('、')
-            }}</el-descriptions-item
-            ><el-descriptions-item label="数据范围">{{
-                store.dataScopeText
-            }}</el-descriptions-item></el-descriptions
-        >
+        <el-descriptions :column="2" border>
+            <el-descriptions-item label="姓名">{{ store.profile?.name }}</el-descriptions-item>
+            <el-descriptions-item label="所属组织">
+                {{ store.profile?.orgName ?? '未分配' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="角色">
+                {{ store.profile?.roleNames.join('、') }}
+            </el-descriptions-item>
+            <el-descriptions-item label="数据范围">{{ store.dataScopeText }}</el-descriptions-item>
+        </el-descriptions>
         <el-alert
             v-if="useMock"
             class="notice"
@@ -95,45 +93,42 @@ onMounted(load)
             :closable="false"
         />
         <div v-else class="forms">
-            <el-form label-width="110px" @submit.prevent="save"
-                ><h2>个人资料</h2>
-                <el-form-item label="联系电话"
-                    ><el-input v-model="form.phone" maxlength="32" /></el-form-item
-                ><el-form-item label="社工号"
-                    ><el-input v-model="form.socialWorkerNo" maxlength="100" /></el-form-item
-                ><el-form-item class="form-actions"
-                    ><el-button
+            <el-form label-width="110px" @submit.prevent="save">
+                <h2>个人资料</h2>
+                <el-form-item label="联系电话">
+                    <el-input v-model="form.phone" maxlength="32" />
+                </el-form-item>
+                <el-form-item label="社工号">
+                    <el-input v-model="form.socialWorkerNo" maxlength="100" />
+                </el-form-item>
+                <el-form-item class="form-actions">
+                    <el-button
                         type="primary"
                         native-type="submit"
                         :disabled="!detail"
                         :loading="busy"
-                        >保存资料</el-button
-                    ></el-form-item
-                ></el-form
-            >
-            <el-form label-width="110px" @submit.prevent="changePassword"
-                ><h2>修改密码</h2>
-                <el-form-item label="原密码"
-                    ><el-input
-                        v-model="passwords.oldPassword"
-                        type="password"
-                        show-password /></el-form-item
-                ><el-form-item label="新密码"
-                    ><el-input
-                        v-model="passwords.newPassword"
-                        type="password"
-                        show-password /></el-form-item
-                ><el-form-item label="确认新密码"
-                    ><el-input
-                        v-model="passwords.confirm"
-                        type="password"
-                        show-password /></el-form-item
-                ><el-form-item class="form-actions"
-                    ><el-button type="primary" native-type="submit" :loading="busy"
-                        >修改密码</el-button
-                    ></el-form-item
-                ></el-form
-            >
+                    >
+                        保存资料
+                    </el-button>
+                </el-form-item>
+            </el-form>
+            <el-form label-width="110px" @submit.prevent="changePassword">
+                <h2>修改密码</h2>
+                <el-form-item label="原密码">
+                    <el-input v-model="passwords.oldPassword" type="password" show-password />
+                </el-form-item>
+                <el-form-item label="新密码">
+                    <el-input v-model="passwords.newPassword" type="password" show-password />
+                </el-form-item>
+                <el-form-item label="确认新密码">
+                    <el-input v-model="passwords.confirm" type="password" show-password />
+                </el-form-item>
+                <el-form-item class="form-actions">
+                    <el-button type="primary" native-type="submit" :loading="busy">
+                        修改密码
+                    </el-button>
+                </el-form-item>
+            </el-form>
         </div>
     </el-card>
 </template>

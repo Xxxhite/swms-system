@@ -100,132 +100,150 @@ onMounted(async () => {
 })
 </script>
 <template>
-    <el-card
-        ><template #header
-            ><div class="page-header">
-                <span>{{ analysis ? '月度指标预警表' : '指标监测' }}</span
-                ><el-button
+    <el-card>
+        <template #header>
+            <div class="page-header">
+                <span>{{ analysis ? '月度指标预警表' : '指标监测' }}</span>
+                <el-button
                     v-if="!useMock && store.hasPermission('analysis:report:export')"
                     :loading="exporting"
                     @click="download"
-                    >导出 Excel</el-button
                 >
-            </div></template
-        ><el-alert
+                    导出 Excel
+                </el-button>
+            </div>
+        </template>
+        <el-alert
             v-if="useMock"
             title="指标统计请使用真实接口模式。"
             type="info"
-            :closable="false" /><template v-else
-            ><el-alert
+            :closable="false"
+        />
+        <template v-else>
+            <el-alert
                 title="按现有有效记录回算：草稿及撤销不计累计。合同与团队行分别展示，不混合求和；本人局部数据不计算团队完成率。"
                 type="info"
                 :closable="false"
-                class="notice" />
-            <el-form class="filter-form" @submit.prevent="search(analysis)"
-                ><el-form-item label="项目／指标"
-                    ><el-input v-model="query.keyword" clearable /></el-form-item
-                ><el-form-item label="服务领域"
-                    ><el-input v-model="query.serviceFieldCode" clearable /></el-form-item
-                ><el-form-item label="区域"
-                    ><el-input v-model="query.serviceArea" clearable /></el-form-item
-                ><el-form-item label="业务日期"
-                    ><el-date-picker
+                class="notice"
+            />
+            <el-form class="filter-form" @submit.prevent="search(analysis)">
+                <el-form-item label="项目／指标">
+                    <el-input v-model="query.keyword" clearable />
+                </el-form-item>
+                <el-form-item label="服务领域">
+                    <el-input v-model="query.serviceFieldCode" clearable />
+                </el-form-item>
+                <el-form-item label="区域">
+                    <el-input v-model="query.serviceArea" clearable />
+                </el-form-item>
+                <el-form-item label="业务日期">
+                    <el-date-picker
                         v-model="query.asOfDate"
                         value-format="YYYY-MM-DD"
-                        :clearable="false" /></el-form-item
-                ><el-form-item label="预警"
-                    ><el-select v-model="query.warningLevel" clearable
-                        ><el-option
+                        :clearable="false"
+                    />
+                </el-form-item>
+                <el-form-item label="预警">
+                    <el-select v-model="query.warningLevel" clearable>
+                        <el-option
                             v-for="(label, value) in warningLabels"
                             :key="value"
                             :label="label"
-                            :value="value" /></el-select></el-form-item
-                ><el-form-item label="项目"
-                    ><el-select v-model="query.projectId" clearable filterable
-                        ><el-option
+                            :value="value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="项目">
+                    <el-select v-model="query.projectId" clearable filterable>
+                        <el-option
                             v-for="p in filterProjects"
                             :key="p.id"
                             :label="p.name"
-                            :value="p.id" /></el-select></el-form-item
-                ><el-form-item label="团队"
-                    ><el-select v-model="query.teamId" clearable filterable
-                        ><el-option
+                            :value="p.id"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="团队">
+                    <el-select v-model="query.teamId" clearable filterable>
+                        <el-option
                             v-for="t in filterTeams"
                             :key="t.id"
                             :label="t.name"
-                            :value="t.id" /></el-select></el-form-item
-                ><el-form-item class="filter-form__actions"
-                    ><el-button type="primary" native-type="submit">查询</el-button
-                    ><el-button @click="reset(analysis)">重置</el-button></el-form-item
-                ></el-form
-            >
-            <el-table v-loading="loading" :data="rows"
-                ><!-- @vue-generic {Progress} --><el-table-column
+                            :value="t.id"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item class="filter-form__actions">
+                    <el-button type="primary" native-type="submit">查询</el-button>
+                    <el-button @click="reset(analysis)">重置</el-button>
+                </el-form-item>
+            </el-form>
+            <el-table v-loading="loading" :data="rows">
+                <!-- @vue-generic {Progress} -->
+                <el-table-column
                     prop="projectName"
                     label="项目"
                     min-width="180"
                     show-overflow-tooltip
-                /><!-- @vue-generic {Progress} --><el-table-column
+                />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column
                     prop="indicatorName"
                     label="指标"
                     min-width="150"
                     show-overflow-tooltip
-                /><!-- @vue-generic {Progress} --><el-table-column
+                />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column
                     prop="definition"
                     label="统计口径"
                     min-width="160"
                     show-overflow-tooltip
-                /><!-- @vue-generic {Progress} --><el-table-column
-                    prop="teamName"
-                    label="统计范围"
-                    min-width="120"
-                /><!-- @vue-generic {Progress} --><el-table-column
-                    prop="unit"
-                    label="单位"
-                    width="70"
-                /><!-- @vue-generic {Progress} --><el-table-column
-                    prop="targetValue"
-                    label="目标"
-                    width="100"
-                /><!-- @vue-generic {Progress} --><el-table-column
-                    prop="monthlyValue"
-                    label="当月新增"
-                    width="110"
-                /><!-- @vue-generic {Progress} --><el-table-column
-                    prop="cumulative"
-                    label="累计完成"
-                    width="110"
-                /><!-- @vue-generic {Progress} --><el-table-column label="完成率" width="100"
-                    ><template #default="{ row }">{{
-                        row.completionRate == null
-                            ? '本人局部'
-                            : `${row.completionRate.toFixed(2)}%`
-                    }}</template></el-table-column
-                ><!-- @vue-generic {Progress} --><el-table-column
-                    prop="endDate"
-                    label="到期日"
-                    width="120"
-                /><!-- @vue-generic {Progress} --><el-table-column
-                    label="预警"
-                    width="180"
-                    fixed="right"
-                    ><template #default="{ row }"
-                        ><el-tag v-if="row.warningLevel" :type="warningTypes[row.warningLevel]">{{
-                            warningLabels[row.warningLevel]
-                        }}</el-tag
-                        ><span v-else>本人局部数据</span><span v-if="row.overdue"> 已逾期</span
-                        ><span v-if="row.notStarted"> 未开始</span></template
-                    ></el-table-column
-                ></el-table
-            >
+                />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column prop="teamName" label="统计范围" min-width="120" />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column prop="unit" label="单位" width="70" />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column prop="targetValue" label="目标" width="100" />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column prop="monthlyValue" label="当月新增" width="110" />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column prop="cumulative" label="累计完成" width="110" />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column label="完成率" width="100">
+                    <template #default="{ row }">
+                        {{
+                            row.completionRate == null
+                                ? '本人局部'
+                                : `${row.completionRate.toFixed(2)}%`
+                        }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {Progress} -->
+                <el-table-column prop="endDate" label="到期日" width="120" />
+                <!-- @vue-generic {Progress} -->
+                <el-table-column label="预警" width="180" fixed="right">
+                    <template #default="{ row }">
+                        <el-tag v-if="row.warningLevel" :type="warningTypes[row.warningLevel]">
+                            {{ warningLabels[row.warningLevel] }}
+                        </el-tag>
+                        <span v-else>本人局部数据</span>
+                        <span v-if="row.overdue">已逾期</span>
+                        <span v-if="row.notStarted">未开始</span>
+                    </template>
+                </el-table-column>
+            </el-table>
             <el-pagination
                 v-model:current-page="query.page"
                 class="table-pagination"
                 :total="total"
                 :page-size="query.pageSize"
                 layout="total, prev, pager, next"
-                @current-change="load(analysis)" /></template
-    ></el-card>
+                @current-change="load(analysis)"
+            />
+        </template>
+    </el-card>
 </template>
 <style scoped>
 .notice {

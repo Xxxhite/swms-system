@@ -84,7 +84,8 @@ async function submit(): Promise<void> {
                     当前是本地 mock 模式，可用账号（密码都是 123456）
                 </div>
                 <div v-for="item in mockAccountsHint" :key="item.username" class="login__hint-row">
-                    <code>{{ item.username }}</code> — {{ item.roleName }}
+                    <code>{{ item.username }}</code>
+                    — {{ item.roleName }}
                 </div>
                 <div class="login__hint-tip">
                     不同角色登录后看到的菜单不同，工作台会显示该账号的数据范围。

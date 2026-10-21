@@ -98,8 +98,8 @@ async function remove(row: Role) {
 onMounted(load)
 </script>
 <template>
-    <el-card
-        ><template #header>
+    <el-card>
+        <template #header>
             <div class="page-header">
                 <span>角色与权限</span>
                 <div v-if="!useMock" class="page-actions">
@@ -115,96 +115,95 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <el-table :data="rows"
-                ><!-- @vue-generic {Role} -->
-                <el-table-column
-                    prop="name"
-                    label="角色名称"
-                    min-width="140"
-                /><!-- @vue-generic {Role} -->
-                <el-table-column
-                    prop="code"
-                    label="编码"
-                    min-width="120"
-                /><!-- @vue-generic {Role} -->
-                <el-table-column
-                    prop="description"
-                    label="说明"
-                    min-width="160"
-                /><!-- @vue-generic {Role} -->
-                <el-table-column label="状态" width="100"
-                    ><template #default="{ row }">{{
-                        row.status === 'ACTIVE' ? '启用' : '停用'
-                    }}</template></el-table-column
-                ><!-- @vue-generic {Role} -->
-                <el-table-column label="操作" fixed="right" width="230"
-                    ><template #default="{ row }"
-                        ><el-button link type="primary" @click="edit(row)">编辑</el-button
-                        ><el-button link type="primary" @click="editPermissions(row)"
-                            >权限</el-button
-                        ><el-button v-if="!row.builtIn" link type="danger" @click="remove(row)"
-                            >删除</el-button
-                        ></template
-                    ></el-table-column
-                ></el-table
-            ></template
-        >
-        <el-dialog v-model="dialog" :title="selected ? '编辑角色' : '新增角色'" width="520px"
-            ><el-form label-width="90px"
-                ><el-form-item label="编码" required
-                    ><el-input
+            <el-table :data="rows">
+                <!-- @vue-generic {Role} -->
+                <el-table-column prop="name" label="角色名称" min-width="140" />
+                <!-- @vue-generic {Role} -->
+                <el-table-column prop="code" label="编码" min-width="120" />
+                <!-- @vue-generic {Role} -->
+                <el-table-column prop="description" label="说明" min-width="160" />
+                <!-- @vue-generic {Role} -->
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                        {{ row.status === 'ACTIVE' ? '启用' : '停用' }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {Role} -->
+                <el-table-column label="操作" fixed="right" width="230">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="edit(row)">编辑</el-button>
+                        <el-button link type="primary" @click="editPermissions(row)">
+                            权限
+                        </el-button>
+                        <el-button v-if="!row.builtIn" link type="danger" @click="remove(row)">
+                            删除
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </template>
+        <el-dialog v-model="dialog" :title="selected ? '编辑角色' : '新增角色'" width="520px">
+            <el-form label-width="90px">
+                <el-form-item label="编码" required>
+                    <el-input
                         v-model="form.code"
                         :disabled="Boolean(selected?.builtIn)"
-                        maxlength="32" /></el-form-item
-                ><el-form-item label="名称" required
-                    ><el-input v-model="form.name" maxlength="100" /></el-form-item
-                ><el-form-item label="说明"
-                    ><el-input
-                        v-model="form.description"
-                        type="textarea"
-                        maxlength="1000" /></el-form-item
-                ><el-form-item label="状态"
-                    ><el-select v-model="form.status" :disabled="selected?.code === 'admin'"
-                        ><el-option label="启用" value="ACTIVE" /><el-option
-                            label="停用"
-                            value="DISABLED" /></el-select></el-form-item></el-form
-            ><template #footer
-                ><el-button @click="dialog = false">取消</el-button
-                ><el-button type="primary" :loading="busy" @click="save(false)"
-                    >保存</el-button
-                ></template
-            ></el-dialog
-        >
+                        maxlength="32"
+                    />
+                </el-form-item>
+                <el-form-item label="名称" required>
+                    <el-input v-model="form.name" maxlength="100" />
+                </el-form-item>
+                <el-form-item label="说明">
+                    <el-input v-model="form.description" type="textarea" maxlength="1000" />
+                </el-form-item>
+                <el-form-item label="状态">
+                    <el-select v-model="form.status" :disabled="selected?.code === 'admin'">
+                        <el-option label="启用" value="ACTIVE" />
+                        <el-option label="停用" value="DISABLED" />
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="dialog = false">取消</el-button>
+                <el-button type="primary" :loading="busy" @click="save(false)">保存</el-button>
+            </template>
+        </el-dialog>
         <el-dialog
             v-model="permissionDialog"
             :title="`${selected?.name ?? ''}：动作权限`"
             width="700px"
-            ><el-alert
+        >
+            <el-alert
                 v-if="selected?.code === 'admin'"
                 title="内建管理员保留完整系统权限。"
                 type="info"
                 :closable="false"
-            /><el-checkbox-group v-model="codes" :disabled="selected?.code === 'admin'"
-                ><section v-for="group in groups" :key="group.module">
+            />
+            <el-checkbox-group v-model="codes" :disabled="selected?.code === 'admin'">
+                <section v-for="group in groups" :key="group.module">
                     <h3>{{ group.module }}</h3>
                     <el-checkbox
                         v-for="permission in group.items"
                         :key="permission.code"
                         :value="permission.code"
-                        >{{ permission.name }}</el-checkbox
                     >
-                </section></el-checkbox-group
-            ><template #footer
-                ><el-button @click="permissionDialog = false">关闭</el-button
-                ><el-button
+                        {{ permission.name }}
+                    </el-checkbox>
+                </section>
+            </el-checkbox-group>
+            <template #footer>
+                <el-button @click="permissionDialog = false">关闭</el-button>
+                <el-button
                     v-if="selected?.code !== 'admin'"
                     type="primary"
                     :loading="busy"
                     @click="save(true)"
-                    >保存权限</el-button
-                ></template
-            ></el-dialog
-        >
+                >
+                    保存权限
+                </el-button>
+            </template>
+        </el-dialog>
     </el-card>
 </template>
 <style scoped>

@@ -141,20 +141,22 @@ onMounted(async () => {
 })
 </script>
 <template>
-    <el-card
-        ><template #header
-            ><div class="page-header">
+    <el-card>
+        <template #header>
+            <div class="page-header">
                 <span>项目管理</span>
                 <div v-if="!useMock" class="page-actions">
                     <el-button
                         v-if="store.hasPermission('project:record:create')"
                         type="primary"
                         @click="create"
-                        >登记项目</el-button
-                    ><el-button @click="load">刷新</el-button>
+                    >
+                        登记项目
+                    </el-button>
+                    <el-button @click="load">刷新</el-button>
                 </div>
-            </div></template
-        >
+            </div>
+        </template>
         <el-alert
             v-if="useMock"
             title="项目业务请切换真实接口模式使用。"
@@ -162,78 +164,88 @@ onMounted(async () => {
             :closable="false"
         />
         <template v-else>
-            <el-form class="filter-form" @submit.prevent="search"
-                ><el-form-item label="项目名称／编码"
-                    ><el-input v-model="query.keyword" clearable /></el-form-item
-                ><el-form-item label="分类"
-                    ><el-select v-model="query.category" clearable
-                        ><el-option
+            <el-form class="filter-form" @submit.prevent="search">
+                <el-form-item label="项目名称／编码">
+                    <el-input v-model="query.keyword" clearable />
+                </el-form-item>
+                <el-form-item label="分类">
+                    <el-select v-model="query.category" clearable>
+                        <el-option
                             v-for="(label, value) in projectCategories"
                             :key="value"
                             :value="value"
-                            :label="label" /></el-select></el-form-item
-                ><el-form-item label="状态"
-                    ><el-select v-model="query.status" clearable
-                        ><el-option label="草稿" value="DRAFT" /><el-option
-                            label="已启用"
-                            value="ACTIVE" /></el-select></el-form-item
-                ><el-form-item label="服务领域"
-                    ><el-input v-model="query.serviceFieldCode" clearable /></el-form-item
-                ><el-form-item label="区域"
-                    ><el-input v-model="query.serviceArea" clearable /></el-form-item
-                ><el-form-item label="合同区间起"
-                    ><el-date-picker
-                        v-model="query.dateFrom"
-                        value-format="YYYY-MM-DD" /></el-form-item
-                ><el-form-item label="合同区间止"
-                    ><el-date-picker
-                        v-model="query.dateTo"
-                        value-format="YYYY-MM-DD" /></el-form-item
-                ><el-form-item label="团队"
-                    ><el-select v-model="query.teamId" clearable filterable
-                        ><el-option
+                            :label="label"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="状态">
+                    <el-select v-model="query.status" clearable>
+                        <el-option label="草稿" value="DRAFT" />
+                        <el-option label="已启用" value="ACTIVE" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="服务领域">
+                    <el-input v-model="query.serviceFieldCode" clearable />
+                </el-form-item>
+                <el-form-item label="区域">
+                    <el-input v-model="query.serviceArea" clearable />
+                </el-form-item>
+                <el-form-item label="合同区间起">
+                    <el-date-picker v-model="query.dateFrom" value-format="YYYY-MM-DD" />
+                </el-form-item>
+                <el-form-item label="合同区间止">
+                    <el-date-picker v-model="query.dateTo" value-format="YYYY-MM-DD" />
+                </el-form-item>
+                <el-form-item label="团队">
+                    <el-select v-model="query.teamId" clearable filterable>
+                        <el-option
                             v-for="t in filterTeams"
                             :key="t.id"
                             :label="t.name"
-                            :value="t.id" /></el-select></el-form-item
-                ><el-form-item class="filter-form__actions"
-                    ><el-button type="primary" native-type="submit">查询</el-button
-                    ><el-button @click="reset">重置</el-button></el-form-item
-                ></el-form
-            >
-            <el-table v-loading="loading" :data="rows"
-                ><!-- @vue-generic {Project} --><el-table-column
-                    prop="code"
-                    label="编码"
-                    min-width="140"
-                    show-overflow-tooltip
-                /><!-- @vue-generic {Project} --><el-table-column
+                            :value="t.id"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item class="filter-form__actions">
+                    <el-button type="primary" native-type="submit">查询</el-button>
+                    <el-button @click="reset">重置</el-button>
+                </el-form-item>
+            </el-form>
+            <el-table v-loading="loading" :data="rows">
+                <!-- @vue-generic {Project} -->
+                <el-table-column prop="code" label="编码" min-width="140" show-overflow-tooltip />
+                <!-- @vue-generic {Project} -->
+                <el-table-column
                     prop="name"
                     label="项目名称"
                     min-width="200"
                     show-overflow-tooltip
-                /><!-- @vue-generic {Project} --><el-table-column label="分类" width="110"
-                    ><template #default="{ row }">{{
-                        projectCategories[row.category]
-                    }}</template></el-table-column
-                ><!-- @vue-generic {Project} --><el-table-column label="合同周期" min-width="220"
-                    ><template #default="{ row }">{{
-                        row.contract
-                            ? `${row.contract.startDate} 至 ${row.contract.endDate}`
-                            : '待补齐'
-                    }}</template></el-table-column
-                ><!-- @vue-generic {Project} --><el-table-column label="状态" width="100"
-                    ><template #default="{ row }">{{
-                        businessStatus[row.status]
-                    }}</template></el-table-column
-                ><!-- @vue-generic {Project} --><el-table-column
-                    label="操作"
-                    width="160"
-                    fixed="right"
-                    ><template #default="{ row }"
-                        ><el-button link type="primary" @click="router.push(`/project/${row.id}`)"
-                            >查看配置</el-button
-                        ><el-button
+                />
+                <!-- @vue-generic {Project} -->
+                <el-table-column label="分类" width="110">
+                    <template #default="{ row }">{{ projectCategories[row.category] }}</template>
+                </el-table-column>
+                <!-- @vue-generic {Project} -->
+                <el-table-column label="合同周期" min-width="220">
+                    <template #default="{ row }">
+                        {{
+                            row.contract
+                                ? `${row.contract.startDate} 至 ${row.contract.endDate}`
+                                : '待补齐'
+                        }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {Project} -->
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">{{ businessStatus[row.status] }}</template>
+                </el-table-column>
+                <!-- @vue-generic {Project} -->
+                <el-table-column label="操作" width="160" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="router.push(`/project/${row.id}`)">
+                            查看配置
+                        </el-button>
+                        <el-button
                             v-if="
                                 row.status === 'DRAFT' &&
                                 store.hasPermission('project:record:delete')
@@ -241,11 +253,12 @@ onMounted(async () => {
                             link
                             type="danger"
                             @click="remove(row)"
-                            >删除</el-button
-                        ></template
-                    ></el-table-column
-                ></el-table
-            >
+                        >
+                            删除
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
             <el-pagination
                 v-model:current-page="query.page"
                 class="table-pagination"
@@ -255,13 +268,12 @@ onMounted(async () => {
                 @current-change="load"
             />
         </template>
-        <el-dialog v-model="dialog" title="登记项目" width="660px"
-            ><project-form v-model="form" :candidates="candidates" /><template #footer
-                ><el-button @click="dialog = false">取消</el-button
-                ><el-button type="primary" :loading="busy" @click="save"
-                    >保存草稿</el-button
-                ></template
-            ></el-dialog
-        >
+        <el-dialog v-model="dialog" title="登记项目" width="660px">
+            <project-form v-model="form" :candidates="candidates" />
+            <template #footer>
+                <el-button @click="dialog = false">取消</el-button>
+                <el-button type="primary" :loading="busy" @click="save">保存草稿</el-button>
+            </template>
+        </el-dialog>
     </el-card>
 </template>

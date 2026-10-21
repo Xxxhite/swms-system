@@ -45,22 +45,23 @@ async function submit() {
                 :disabled="useMock"
                 @submit.prevent="submit"
             >
-                <el-form-item label="账号" prop="username"
-                    ><el-input v-model="form.username" maxlength="32" autocomplete="username"
-                /></el-form-item>
-                <el-form-item label="密码" prop="password"
-                    ><el-input
+                <el-form-item label="账号" prop="username">
+                    <el-input v-model="form.username" maxlength="32" autocomplete="username" />
+                </el-form-item>
+                <el-form-item label="密码" prop="password">
+                    <el-input
                         v-model="form.password"
                         type="password"
                         show-password
                         autocomplete="new-password"
                         placeholder="8—128 个字符"
-                /></el-form-item>
+                    />
+                </el-form-item>
                 <personnel-fields :model-value="form" />
                 <el-form-item class="form-actions">
-                    <el-button type="primary" :loading="busy" native-type="submit"
-                        >提交注册</el-button
-                    >
+                    <el-button type="primary" :loading="busy" native-type="submit">
+                        提交注册
+                    </el-button>
                 </el-form-item>
             </el-form>
             <p><router-link to="/login">返回登录</router-link></p>

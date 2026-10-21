@@ -118,75 +118,74 @@ onMounted(load)
         <template v-else>
             <el-table :data="tree" row-key="id" default-expand-all>
                 <!-- @vue-generic {Organization} -->
-                <el-table-column
-                    prop="name"
-                    label="组织名称"
-                    min-width="180"
-                /><!-- @vue-generic {Organization} -->
+                <el-table-column prop="name" label="组织名称" min-width="180" />
+                <!-- @vue-generic {Organization} -->
                 <el-table-column prop="code" label="编码" min-width="140" />
                 <!-- @vue-generic {Organization} -->
-                <el-table-column label="类型" width="100"
-                    ><template #default="{ row }">{{
-                        typeNames[row.type as Organization['type']]
-                    }}</template></el-table-column
-                >
+                <el-table-column label="类型" width="100">
+                    <template #default="{ row }">
+                        {{ typeNames[row.type as Organization['type']] }}
+                    </template>
+                </el-table-column>
                 <!-- @vue-generic {Organization} -->
-                <el-table-column label="状态" width="100"
-                    ><template #default="{ row }">{{
-                        row.status === 'ACTIVE' ? '启用' : '停用'
-                    }}</template></el-table-column
-                >
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                        {{ row.status === 'ACTIVE' ? '启用' : '停用' }}
+                    </template>
+                </el-table-column>
                 <!-- @vue-generic {Organization} -->
-                <el-table-column label="操作" fixed="right" width="160"
-                    ><template #default="{ row }"
-                        ><el-button link type="primary" @click="edit(row)">编辑</el-button
-                        ><el-button link type="danger" @click="remove(row)"
-                            >删除</el-button
-                        ></template
-                    ></el-table-column
-                >
+                <el-table-column label="操作" fixed="right" width="160">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="edit(row)">编辑</el-button>
+                        <el-button link type="danger" @click="remove(row)">删除</el-button>
+                    </template>
+                </el-table-column>
             </el-table>
         </template>
         <el-dialog v-model="dialog" :title="selectedId ? '编辑组织' : '新增组织'" width="520px">
             <el-form label-width="90px" @submit.prevent="save">
-                <el-form-item label="组织编码" required
-                    ><el-input v-model="form.code" maxlength="32"
-                /></el-form-item>
-                <el-form-item label="组织名称" required
-                    ><el-input v-model="form.name" maxlength="100"
-                /></el-form-item>
-                <el-form-item label="上级组织"
-                    ><el-select v-model="form.parentId" clearable @clear="form.parentId = null"
-                        ><el-option
+                <el-form-item label="组织编码" required>
+                    <el-input v-model="form.code" maxlength="32" />
+                </el-form-item>
+                <el-form-item label="组织名称" required>
+                    <el-input v-model="form.name" maxlength="100" />
+                </el-form-item>
+                <el-form-item label="上级组织">
+                    <el-select v-model="form.parentId" clearable @clear="form.parentId = null">
+                        <el-option
                             v-for="org in rows.filter(
                                 (item) => item.id !== selectedId && item.status === 'ACTIVE',
                             )"
                             :key="org.id"
                             :value="org.id"
-                            :label="org.name" /></el-select
-                ></el-form-item>
-                <el-form-item label="组织类型"
-                    ><el-select v-model="form.type"
-                        ><el-option
+                            :label="org.name"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="组织类型">
+                    <el-select v-model="form.type">
+                        <el-option
                             v-for="(label, value) in typeNames"
                             :key="value"
                             :label="label"
-                            :value="value" /></el-select
-                ></el-form-item>
-                <el-form-item label="状态"
-                    ><el-select v-model="form.status"
-                        ><el-option label="启用" value="ACTIVE" /><el-option
-                            label="停用"
-                            value="DISABLED" /></el-select
-                ></el-form-item>
-                <el-form-item label="排序"
-                    ><el-input-number v-model="form.sortOrder" :precision="0"
-                /></el-form-item>
+                            :value="value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="状态">
+                    <el-select v-model="form.status">
+                        <el-option label="启用" value="ACTIVE" />
+                        <el-option label="停用" value="DISABLED" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="排序">
+                    <el-input-number v-model="form.sortOrder" :precision="0" />
+                </el-form-item>
             </el-form>
-            <template #footer
-                ><el-button @click="dialog = false">取消</el-button
-                ><el-button type="primary" :loading="busy" @click="save">保存</el-button></template
-            >
+            <template #footer>
+                <el-button @click="dialog = false">取消</el-button>
+                <el-button type="primary" :loading="busy" @click="save">保存</el-button>
+            </template>
         </el-dialog>
     </el-card>
 </template>

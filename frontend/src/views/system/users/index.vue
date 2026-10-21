@@ -259,57 +259,59 @@ watch(
             :closable="false"
         />
         <template v-else>
-            <el-form class="filter-form" @submit.prevent="search"
-                ><el-form-item label="姓名或账号"
-                    ><el-input v-model="query.keyword" clearable maxlength="100" /></el-form-item
-                ><el-form-item label="状态"
-                    ><el-select v-model="query.status" clearable
-                        ><el-option
+            <el-form class="filter-form" @submit.prevent="search">
+                <el-form-item label="姓名或账号">
+                    <el-input v-model="query.keyword" clearable maxlength="100" />
+                </el-form-item>
+                <el-form-item label="状态">
+                    <el-select v-model="query.status" clearable>
+                        <el-option
                             v-for="(label, status) in statusLabels"
                             v-show="!registrations || ['PENDING', 'REJECTED'].includes(status)"
                             :key="status"
                             :label="label"
-                            :value="status" /></el-select></el-form-item
-                ><el-form-item class="filter-form__actions">
+                            :value="status"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item class="filter-form__actions">
                     <el-button type="primary" native-type="submit">查询</el-button>
                     <el-button @click="resetSearch">重置</el-button>
-                </el-form-item></el-form
-            >
+                </el-form-item>
+            </el-form>
             <p v-if="!registrations" class="approval-hint">
                 待审核账号须在“注册审核”中批准并分配任职与权限；已驳回账号须由申请人修改后重新提交。
             </p>
             <el-table v-loading="loading" :data="rows">
                 <!-- @vue-generic {UserSummary} -->
-                <el-table-column
-                    prop="name"
-                    label="姓名"
-                    min-width="120"
-                    show-overflow-tooltip
-                /><!-- @vue-generic {UserSummary} -->
+                <el-table-column prop="name" label="姓名" min-width="120" show-overflow-tooltip />
+                <!-- @vue-generic {UserSummary} -->
                 <el-table-column
                     prop="username"
                     label="账号"
                     min-width="180"
                     show-overflow-tooltip
-                /><!-- @vue-generic {UserSummary} -->
+                />
+                <!-- @vue-generic {UserSummary} -->
                 <el-table-column prop="phone" label="电话" min-width="140" />
                 <!-- @vue-generic {UserSummary} -->
-                <el-table-column label="状态" width="100"
-                    ><template #default="{ row }">{{
-                        statusLabels[row.status as keyof typeof statusLabels]
-                    }}</template></el-table-column
-                >
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                        {{ statusLabels[row.status as keyof typeof statusLabels] }}
+                    </template>
+                </el-table-column>
                 <!-- @vue-generic {UserSummary} -->
                 <el-table-column
                     prop="proposedPosition"
                     label="申请岗位"
                     min-width="180"
                     show-overflow-tooltip
-                /><!-- @vue-generic {UserSummary} -->
+                />
+                <!-- @vue-generic {UserSummary} -->
                 <el-table-column prop="dataScope" label="范围" width="100" />
                 <!-- @vue-generic {UserSummary} -->
-                <el-table-column label="操作" width="300" fixed="right"
-                    ><template #default="{ row }">
+                <el-table-column label="操作" width="300" fixed="right">
+                    <template #default="{ row }">
                         <el-button link type="primary" @click="open(row, 'view')">详情</el-button>
                         <el-button
                             v-if="
@@ -321,20 +323,23 @@ watch(
                             link
                             type="primary"
                             @click="router.push('/system/registrations')"
-                            >前往审核</el-button
                         >
+                            前往审核
+                        </el-button>
                         <template
                             v-if="
                                 registrations &&
                                 row.status === 'PENDING' &&
                                 store.hasPermission(PERM.REGISTRATION_APPROVE)
                             "
-                            ><el-button link type="primary" @click="open(row, 'approve')"
-                                >批准</el-button
-                            ><el-button link type="danger" @click="open(row, 'reject')"
-                                >驳回</el-button
-                            ></template
                         >
+                            <el-button link type="primary" @click="open(row, 'approve')">
+                                批准
+                            </el-button>
+                            <el-button link type="danger" @click="open(row, 'reject')">
+                                驳回
+                            </el-button>
+                        </template>
                         <template
                             v-if="!registrations && !['PENDING', 'REJECTED'].includes(row.status)"
                         >
@@ -343,8 +348,9 @@ watch(
                                 link
                                 type="primary"
                                 @click="open(row, 'edit')"
-                                >编辑</el-button
                             >
+                                编辑
+                            </el-button>
                             <el-button
                                 v-if="
                                     row.status === 'ACTIVE' &&
@@ -353,32 +359,38 @@ watch(
                                 link
                                 type="primary"
                                 @click="open(row, 'authorize')"
-                                >授权</el-button
                             >
-                            <template v-if="store.hasPermission(PERM.USER_MANAGE)"
-                                ><el-button
+                                授权
+                            </el-button>
+                            <template v-if="store.hasPermission(PERM.USER_MANAGE)">
+                                <el-button
                                     v-if="row.status !== 'ACTIVE'"
                                     link
                                     type="primary"
                                     @click="changeStatus(row, 'ACTIVE')"
-                                    >启用</el-button
-                                ><el-button
+                                >
+                                    启用
+                                </el-button>
+                                <el-button
                                     v-if="row.status === 'ACTIVE'"
                                     link
                                     type="warning"
                                     @click="changeStatus(row, 'DISABLED')"
-                                    >停用</el-button
-                                ><el-button
+                                >
+                                    停用
+                                </el-button>
+                                <el-button
                                     v-if="row.status !== 'LEFT'"
                                     link
                                     type="danger"
                                     @click="changeStatus(row, 'LEFT')"
-                                    >离职</el-button
-                                ></template
-                            >
+                                >
+                                    离职
+                                </el-button>
+                            </template>
                         </template>
-                    </template></el-table-column
-                >
+                    </template>
+                </el-table-column>
             </el-table>
             <el-pagination
                 v-model:current-page="query.page"
@@ -403,130 +415,157 @@ watch(
             width="680px"
         >
             <template v-if="target">
-                <el-descriptions :column="2" border
-                    ><el-descriptions-item label="姓名">{{ target.name }}</el-descriptions-item
-                    ><el-descriptions-item label="账号">{{ target.username }}</el-descriptions-item
-                    ><el-descriptions-item label="联系电话">{{ target.phone }}</el-descriptions-item
-                    ><el-descriptions-item label="到岗日期">{{
-                        target.arrivalDate
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="专业">{{ target.major }}</el-descriptions-item
-                    ><el-descriptions-item label="申请岗位">{{
-                        target.proposedPosition
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="最高学历">{{
-                        target.education
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="政治面貌">{{
-                        target.politicalStatus
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="拟团队">{{
-                        target.proposedTeam ?? '未填写'
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="社工号">{{
-                        target.socialWorkerNo ?? '未填写'
-                    }}</el-descriptions-item
-                    ><el-descriptions-item v-if="target.reviewComment" label="审核意见" :span="2">{{
-                        target.reviewComment
-                    }}</el-descriptions-item></el-descriptions
-                >
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="姓名">{{ target.name }}</el-descriptions-item>
+                    <el-descriptions-item label="账号">{{ target.username }}</el-descriptions-item>
+                    <el-descriptions-item label="联系电话">{{ target.phone }}</el-descriptions-item>
+                    <el-descriptions-item label="到岗日期">
+                        {{ target.arrivalDate }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="专业">{{ target.major }}</el-descriptions-item>
+                    <el-descriptions-item label="申请岗位">
+                        {{ target.proposedPosition }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="最高学历">
+                        {{ target.education }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="政治面貌">
+                        {{ target.politicalStatus }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="拟团队">
+                        {{ target.proposedTeam ?? '未填写' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="社工号">
+                        {{ target.socialWorkerNo ?? '未填写' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item v-if="target.reviewComment" label="审核意见" :span="2">
+                        {{ target.reviewComment }}
+                    </el-descriptions-item>
+                </el-descriptions>
                 <el-form
                     v-if="mode !== 'view'"
                     label-width="110px"
                     class="detail-form"
                     @submit.prevent="save"
                 >
-                    <template v-if="mode === 'edit'"
-                        ><el-form-item label="姓名" required
-                            ><el-input v-model="form.name" maxlength="50" /></el-form-item
-                        ><el-form-item label="联系电话" required
-                            ><el-input v-model="form.phone" maxlength="32" /></el-form-item
-                        ><el-form-item label="社工号"
-                            ><el-input
-                                v-model="form.socialWorkerNo"
-                                maxlength="100" /></el-form-item
-                        ><el-form-item label="服务领域"
-                            ><el-select v-model="form.serviceFieldCode" clearable
-                                ><el-option
+                    <template v-if="mode === 'edit'">
+                        <el-form-item label="姓名" required>
+                            <el-input v-model="form.name" maxlength="50" />
+                        </el-form-item>
+                        <el-form-item label="联系电话" required>
+                            <el-input v-model="form.phone" maxlength="32" />
+                        </el-form-item>
+                        <el-form-item label="社工号">
+                            <el-input v-model="form.socialWorkerNo" maxlength="100" />
+                        </el-form-item>
+                        <el-form-item label="服务领域">
+                            <el-select v-model="form.serviceFieldCode" clearable>
+                                <el-option
                                     v-for="field in fields"
                                     :key="field.code"
                                     :value="field.code"
-                                    :label="field.name" /></el-select></el-form-item
-                    ></template>
-                    <template v-if="['edit', 'approve'].includes(mode)"
-                        ><el-form-item label="任职组织" required
-                            ><el-select v-model="form.orgId"
-                                ><el-option
+                                    :label="field.name"
+                                />
+                            </el-select>
+                        </el-form-item>
+                    </template>
+                    <template v-if="['edit', 'approve'].includes(mode)">
+                        <el-form-item label="任职组织" required>
+                            <el-select v-model="form.orgId">
+                                <el-option
                                     v-for="org in orgs.filter((item) => item.status === 'ACTIVE')"
                                     :key="org.id"
                                     :value="org.id"
-                                    :label="`${org.name}（${org.code}）`" /></el-select></el-form-item
-                        ><el-form-item label="岗位" required
-                            ><el-select v-model="form.positionCode"
-                                ><el-option
+                                    :label="`${org.name}（${org.code}）`"
+                                />
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="岗位" required>
+                            <el-select v-model="form.positionCode">
+                                <el-option
                                     v-for="position in positions"
                                     :key="position.code"
                                     :value="position.code"
-                                    :label="position.name" /></el-select></el-form-item
-                        ><el-form-item label="直接主管"
-                            ><el-select
+                                    :label="position.name"
+                                />
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="直接主管">
+                            <el-select
                                 v-model="form.supervisorId"
                                 clearable
                                 filterable
                                 @clear="form.supervisorId = null"
-                                ><el-option
+                            >
+                                <el-option
                                     v-for="person in directory.filter(
                                         (item) => item.id !== target?.id,
                                     )"
                                     :key="person.id"
                                     :value="person.id"
-                                    :label="`${person.name}（${person.username}）`" /></el-select></el-form-item
-                    ></template>
-                    <template v-if="['approve', 'authorize'].includes(mode)"
-                        ><el-form-item label="角色"
-                            ><el-select v-model="form.roleIds" multiple
-                                ><el-option
+                                    :label="`${person.name}（${person.username}）`"
+                                />
+                            </el-select>
+                        </el-form-item>
+                    </template>
+                    <template v-if="['approve', 'authorize'].includes(mode)">
+                        <el-form-item label="角色">
+                            <el-select v-model="form.roleIds" multiple>
+                                <el-option
                                     v-for="role in roles.filter((item) => item.status === 'ACTIVE')"
                                     :key="role.id"
                                     :value="role.id"
-                                    :label="role.name" /></el-select></el-form-item
-                        ><el-form-item label="个人附加权限"
-                            ><el-select v-model="form.extraPermissions" multiple filterable
-                                ><el-option
+                                    :label="role.name"
+                                />
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="个人附加权限">
+                            <el-select v-model="form.extraPermissions" multiple filterable>
+                                <el-option
                                     v-for="permission in permissions"
                                     :key="permission.code"
                                     :value="permission.code"
-                                    :label="`${permission.name}（${permission.code}）`" /></el-select></el-form-item
-                        ><el-form-item label="数据范围"
-                            ><el-select v-model="form.dataScope"
-                                ><el-option
+                                    :label="`${permission.name}（${permission.code}）`"
+                                />
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="数据范围">
+                            <el-select v-model="form.dataScope">
+                                <el-option
                                     v-for="scope in scopeOptions"
                                     :key="scope.value"
                                     :value="scope.value"
-                                    :label="scope.label" /></el-select></el-form-item
-                        ><el-form-item v-if="form.dataScope === 'SUBTREE'" label="负责组织" required
-                            ><el-select v-model="form.managedOrgIds" multiple
-                                ><el-option
+                                    :label="scope.label"
+                                />
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item v-if="form.dataScope === 'SUBTREE'" label="负责组织" required>
+                            <el-select v-model="form.managedOrgIds" multiple>
+                                <el-option
                                     v-for="org in orgs.filter((item) => item.status === 'ACTIVE')"
                                     :key="org.id"
                                     :value="org.id"
-                                    :label="org.name" /></el-select></el-form-item
-                    ></template>
-                    <el-form-item v-if="mode === 'reject'" label="驳回意见" required
-                        ><el-input
+                                    :label="org.name"
+                                />
+                            </el-select>
+                        </el-form-item>
+                    </template>
+                    <el-form-item v-if="mode === 'reject'" label="驳回意见" required>
+                        <el-input
                             v-model="form.comment"
                             type="textarea"
                             maxlength="1000"
                             :rows="4"
-                    /></el-form-item>
+                        />
+                    </el-form-item>
                 </el-form>
             </template>
-            <template #footer
-                ><el-button @click="dialog = false">关闭</el-button
-                ><el-button v-if="mode !== 'view'" type="primary" :loading="busy" @click="save">{{
-                    mode === 'approve' ? '确认批准' : mode === 'reject' ? '确认驳回' : '保存'
-                }}</el-button></template
-            >
+            <template #footer>
+                <el-button @click="dialog = false">关闭</el-button>
+                <el-button v-if="mode !== 'view'" type="primary" :loading="busy" @click="save">
+                    {{ mode === 'approve' ? '确认批准' : mode === 'reject' ? '确认驳回' : '保存' }}
+                </el-button>
+            </template>
         </el-dialog>
     </el-card>
 </template>

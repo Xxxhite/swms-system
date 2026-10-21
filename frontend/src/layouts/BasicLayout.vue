@@ -82,9 +82,9 @@ async function handleCommand(command: string): Promise<void> {
                         <template #dropdown>
                             <el-dropdown-menu>
                                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                                <el-dropdown-item command="logout" divided
-                                    >退出登录</el-dropdown-item
-                                >
+                                <el-dropdown-item command="logout" divided>
+                                    退出登录
+                                </el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>

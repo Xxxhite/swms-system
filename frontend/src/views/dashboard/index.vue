@@ -68,13 +68,15 @@ onMounted(async () => {
             <el-button
                 v-if="userStore.hasPermission('service:monthly:approve')"
                 @click="$router.push('/approvals')"
-                >月报变更待办 {{ pendingCount }} 条</el-button
             >
+                月报变更待办 {{ pendingCount }} 条
+            </el-button>
             <el-button
                 v-if="userStore.hasPermission('service:indicator:view')"
                 @click="$router.push('/service/monitor')"
-                >红色预警 {{ redCount }} 条</el-button
             >
+                红色预警 {{ redCount }} 条
+            </el-button>
         </div>
         <section aria-labelledby="shortcuts-title">
             <h2 id="shortcuts-title" class="dashboard__section-title">常用功能</h2>

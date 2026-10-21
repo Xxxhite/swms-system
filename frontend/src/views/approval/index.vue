@@ -75,120 +75,137 @@ async function decide(approved: boolean) {
 onMounted(load)
 </script>
 <template>
-    <el-card
-        ><template #header>月报变更待办</template
-        ><el-alert
+    <el-card>
+        <template #header>月报变更待办</template>
+        <el-alert
             v-if="useMock"
             title="审批任务请使用真实接口模式。"
             type="info"
             :closable="false"
-        /><template v-else
-            ><el-form class="filter-form" @submit.prevent="search"
-                ><el-form-item label="任务状态"
-                    ><el-select v-model="query.status" clearable
-                        ><el-option
+        />
+        <template v-else>
+            <el-form class="filter-form" @submit.prevent="search">
+                <el-form-item label="任务状态">
+                    <el-select v-model="query.status" clearable>
+                        <el-option
                             v-for="status in ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']"
                             :key="status"
                             :value="status"
-                            :label="businessStatus[status]" /></el-select></el-form-item
-                ><el-form-item class="filter-form__actions"
-                    ><el-button type="primary" native-type="submit">查询</el-button
-                    ><el-button @click="reset">重置</el-button></el-form-item
-                ></el-form
-            ><el-table v-loading="loading" :data="rows"
-                ><!-- @vue-generic {ApprovalTask} --><el-table-column label="项目" min-width="170"
-                    ><template #default="{ row }">{{
-                        row.instance?.businessSnapshot.projectName
-                    }}</template></el-table-column
-                ><!-- @vue-generic {ApprovalTask} --><el-table-column label="指标" min-width="140"
-                    ><template #default="{ row }">{{
-                        row.instance?.businessSnapshot.indicatorName
-                    }}</template></el-table-column
-                ><!-- @vue-generic {ApprovalTask} --><el-table-column label="月份" width="110"
-                    ><template #default="{ row }">{{
-                        row.instance?.businessSnapshot.month
-                    }}</template></el-table-column
-                ><!-- @vue-generic {ApprovalTask} --><el-table-column
-                    label="申请内容"
-                    min-width="150"
-                    ><template #default="{ row }"
-                        >{{ businessStatus[String(row.instance?.businessSnapshot.operation)] }}
+                            :label="businessStatus[status]"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item class="filter-form__actions">
+                    <el-button type="primary" native-type="submit">查询</el-button>
+                    <el-button @click="reset">重置</el-button>
+                </el-form-item>
+            </el-form>
+            <el-table v-loading="loading" :data="rows">
+                <!-- @vue-generic {ApprovalTask} -->
+                <el-table-column label="项目" min-width="170">
+                    <template #default="{ row }">
+                        {{ row.instance?.businessSnapshot.projectName }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {ApprovalTask} -->
+                <el-table-column label="指标" min-width="140">
+                    <template #default="{ row }">
+                        {{ row.instance?.businessSnapshot.indicatorName }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {ApprovalTask} -->
+                <el-table-column label="月份" width="110">
+                    <template #default="{ row }">
+                        {{ row.instance?.businessSnapshot.month }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {ApprovalTask} -->
+                <el-table-column label="申请内容" min-width="150">
+                    <template #default="{ row }">
+                        {{ businessStatus[String(row.instance?.businessSnapshot.operation)] }}
                         {{ row.instance?.businessSnapshot.beforeValue }} →
-                        {{ row.instance?.businessSnapshot.proposedValue }}</template
-                    ></el-table-column
-                ><!-- @vue-generic {ApprovalTask} --><el-table-column label="状态" width="100"
-                    ><template #default="{ row }">{{
-                        businessStatus[row.status]
-                    }}</template></el-table-column
-                ><!-- @vue-generic {ApprovalTask} --><el-table-column
-                    label="操作"
-                    width="120"
-                    fixed="right"
-                    ><template #default="{ row }"
-                        ><el-button link type="primary" @click="open(row)">{{
-                            row.status === 'PENDING' ? '查看并处理' : '查看记录'
-                        }}</el-button></template
-                    ></el-table-column
-                ></el-table
-            ><el-pagination
+                        {{ row.instance?.businessSnapshot.proposedValue }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {ApprovalTask} -->
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">{{ businessStatus[row.status] }}</template>
+                </el-table-column>
+                <!-- @vue-generic {ApprovalTask} -->
+                <el-table-column label="操作" width="120" fixed="right">
+                    <template #default="{ row }">
+                        <el-button link type="primary" @click="open(row)">
+                            {{ row.status === 'PENDING' ? '查看并处理' : '查看记录' }}
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-pagination
                 v-model:current-page="query.page"
                 :total="total"
                 :page-size="query.pageSize"
                 class="table-pagination"
                 layout="total, prev, pager, next"
                 @current-change="load"
-        /></template>
-        <el-dialog v-model="dialog" title="月报变更申请" width="700px"
-            ><template v-if="detail"
-                ><el-descriptions :column="2" border
-                    ><el-descriptions-item label="项目">{{
-                        detail.businessSnapshot.projectName
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="指标">{{
-                        detail.businessSnapshot.indicatorName
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="团队">{{
-                        detail.businessSnapshot.teamName
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="月份">{{
-                        detail.businessSnapshot.month
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="操作">{{
-                        businessStatus[String(detail.businessSnapshot.operation)]
-                    }}</el-descriptions-item
-                    ><el-descriptions-item label="原值／拟值"
-                        >{{ detail.businessSnapshot.beforeValue }}／{{
+            />
+        </template>
+        <el-dialog v-model="dialog" title="月报变更申请" width="700px">
+            <template v-if="detail">
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="项目">
+                        {{ detail.businessSnapshot.projectName }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="指标">
+                        {{ detail.businessSnapshot.indicatorName }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="团队">
+                        {{ detail.businessSnapshot.teamName }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="月份">
+                        {{ detail.businessSnapshot.month }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="操作">
+                        {{ businessStatus[String(detail.businessSnapshot.operation)] }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="原值／拟值">
+                        {{ detail.businessSnapshot.beforeValue }}／{{
                             detail.businessSnapshot.proposedValue
-                        }}</el-descriptions-item
-                    ><el-descriptions-item label="原因" :span="2">{{
-                        detail.businessSnapshot.reason
-                    }}</el-descriptions-item></el-descriptions
-                ><el-timeline class="history"
-                    ><el-timeline-item
+                        }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="原因" :span="2">
+                        {{ detail.businessSnapshot.reason }}
+                    </el-descriptions-item>
+                </el-descriptions>
+                <el-timeline class="history">
+                    <el-timeline-item
                         v-for="r in detail.records"
                         :key="r.id"
                         :timestamp="formatDateTime(r.createdAt)"
-                        >{{ r.actorName }} · {{ businessStatus[r.action] }}：{{
+                    >
+                        {{ r.actorName }} · {{ businessStatus[r.action] }}：{{
                             r.comment ?? '无补充意见'
-                        }}</el-timeline-item
-                    ></el-timeline
-                ><el-form v-if="selected?.status === 'PENDING'" label-width="80px"
-                    ><el-form-item label="审批意见"
-                        ><el-input
+                        }}
+                    </el-timeline-item>
+                </el-timeline>
+                <el-form v-if="selected?.status === 'PENDING'" label-width="80px">
+                    <el-form-item label="审批意见">
+                        <el-input
                             v-model="comment"
                             type="textarea"
                             maxlength="1000"
-                            placeholder="驳回须填写意见" /></el-form-item></el-form></template
-            ><template #footer
-                ><el-button @click="dialog = false">关闭</el-button
-                ><template v-if="selected?.status === 'PENDING'"
-                    ><el-button type="danger" :loading="busy" @click="decide(false)">驳回</el-button
-                    ><el-button type="primary" :loading="busy" @click="decide(true)"
-                        >通过</el-button
-                    ></template
-                ></template
-            ></el-dialog
-        >
+                            placeholder="驳回须填写意见"
+                        />
+                    </el-form-item>
+                </el-form>
+            </template>
+            <template #footer>
+                <el-button @click="dialog = false">关闭</el-button>
+                <template v-if="selected?.status === 'PENDING'">
+                    <el-button type="danger" :loading="busy" @click="decide(false)">驳回</el-button>
+                    <el-button type="primary" :loading="busy" @click="decide(true)">通过</el-button>
+                </template>
+            </template>
+        </el-dialog>
     </el-card>
 </template>
 <style scoped>

@@ -77,21 +77,22 @@ onMounted(load)
                 @submit.prevent="save(false)"
             >
                 <personnel-fields :model-value="form" />
-                <el-form-item class="form-actions"
-                    ><el-button type="primary" :loading="busy" native-type="submit"
-                        >保存资料</el-button
-                    >
+                <el-form-item class="form-actions">
+                    <el-button type="primary" :loading="busy" native-type="submit">
+                        保存资料
+                    </el-button>
                     <el-button
                         v-if="detail.status === 'REJECTED'"
                         :loading="busy"
                         @click="save(true)"
-                        >修改并重新提交</el-button
                     >
+                        修改并重新提交
+                    </el-button>
                 </el-form-item>
             </el-form>
             <div class="actions page-actions">
-                <el-button @click="load">刷新审核状态</el-button
-                ><el-button @click="logout">退出登录</el-button>
+                <el-button @click="load">刷新审核状态</el-button>
+                <el-button @click="logout">退出登录</el-button>
             </div>
         </el-card>
     </main>

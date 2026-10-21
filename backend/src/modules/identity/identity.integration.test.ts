@@ -511,6 +511,75 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     expect(JSON.stringify(invalid.body)).not.toContain("SuperSecretInvalid")
   })
 
+  test("日志显示当前姓名，姓名筛选保留同名及离职停用人员并正确分页", async () => {
+    const first = await user("intern")
+    const second = await user("other_social")
+    const name = "日志同名%_人员"
+    try {
+      await database
+        .update(schema.users)
+        .set({ name, status: "LEFT" })
+        .where(eq(schema.users.id, first.id))
+      await database
+        .update(schema.users)
+        .set({ name, status: "DISABLED" })
+        .where(eq(schema.users.id, second.id))
+      await database.insert(schema.auditLogs).values([
+        { actorId: first.id, action: "actor-name-test", entityType: "user", entityId: first.id },
+        { actorId: second.id, action: "actor-name-test", entityType: "user", entityId: second.id },
+        { actorId: null, action: "actor-name-test", entityType: "user", entityId: null },
+      ])
+      const find = (actorName: string, page = 1, pageSize = 100) =>
+        request(
+          `/system/logs?${new URLSearchParams({ actorName, page: String(page), pageSize: String(pageSize), action: "actor-name-test" })}`,
+          "GET",
+          adminToken,
+        )
+
+      const exact = await find(name)
+      expect(exact.body.code).toBe(0)
+      expect(exact.body.data.total).toBe(2)
+      expect(exact.body.data.list.map((row: { actorId: number }) => row.actorId).sort()).toEqual(
+        [first.id, second.id].sort(),
+      )
+      expect(
+        exact.body.data.list.every((row: { actorName: string }) => row.actorName === name),
+      ).toBe(true)
+      expect((await find("同名")).body.data.total).toBe(2)
+      expect((await find(`  ${name}  `)).body.data.total).toBe(2)
+      expect((await find("%_")).body.data.total).toBe(2)
+      expect((await find("不存在的操作人")).body.data.total).toBe(0)
+
+      const pageOne = (await find("同名", 1, 1)).body.data
+      const pageTwo = (await find("同名", 2, 1)).body.data
+      expect(pageOne.total).toBe(2)
+      expect(pageOne.list).toHaveLength(1)
+      expect(pageTwo.total).toBe(2)
+      expect(pageTwo.list).toHaveLength(1)
+      expect(pageOne.list[0].id).not.toBe(pageTwo.list[0].id)
+
+      const reset = (await find("")).body.data
+      expect(reset.total).toBe(3)
+      expect(
+        reset.list.some(
+          (row: { actorId: number | null; actorName: string | null }) =>
+            row.actorId === null && row.actorName === null,
+        ),
+      ).toBe(true)
+      expect((await find("  ")).body.data.total).toBe(3)
+      expect(
+        (await request(`/system/logs?actorName=${"a".repeat(51)}`, "GET", adminToken)).body.code,
+      ).toBe(1000)
+    } finally {
+      // 只恢复独立测试库中的人员夹具，不影响后续用例的账号状态。
+      for (const original of [first, second])
+        await database
+          .update(schema.users)
+          .set({ name: original.name, status: original.status })
+          .where(eq(schema.users.id, original.id))
+    }
+  })
+
   test("伪造凭证、非整数分页及字典原型键被拒绝", async () => {
     expect((await request("/auth/profile", "GET", "forged.token.value")).body.code).toBe(2001)
     expect((await request("/users", "GET")).body.code).toBe(2000)

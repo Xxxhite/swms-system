@@ -3,6 +3,7 @@ import type { PageResult } from '@/api/types'
 export interface AuditLog {
     id: number
     actorId: number | null
+    actorName: string | null
     action: string
     entityType: string
     entityId: number | null

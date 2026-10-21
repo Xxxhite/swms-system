@@ -2,6 +2,14 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useMock } from '@/api/config'
 import { systemApi, type AuditLog } from '@/api/modules/system'
+import { APP_TIME_ZONE_LABEL } from '@/constants/time'
+import {
+    AUDIT_ACTION_LABELS,
+    AUDIT_ENTITY_TYPE_LABELS,
+    auditActionLabel,
+    auditEntityTypeLabel,
+} from '@/constants/audit'
+import { formatDateTime } from '@/utils/dateTime'
 const rows = ref<AuditLog[]>([])
 const total = ref(0)
 const loading = ref(false)
@@ -10,7 +18,7 @@ const dialog = ref(false)
 const query = reactive({
     page: 1,
     pageSize: 20,
-    actorId: undefined as number | undefined,
+    actorName: '',
     action: '',
     entityType: '',
     dateFrom: '',
@@ -49,7 +57,7 @@ function search() {
 /** 清空全部手动筛选条件，并立即查询第一页日志。 */
 function resetSearch() {
     Object.assign(query, {
-        actorId: undefined,
+        actorName: '',
         action: '',
         entityType: '',
         dateFrom: '',
@@ -75,23 +83,26 @@ onMounted(load)
         />
         <template v-else
             ><el-form class="filter-form" @submit.prevent="search"
-                ><el-form-item label="操作人 ID"
-                    ><el-input-number
-                        v-model="query.actorId"
-                        :min="1"
-                        :precision="0" /></el-form-item
+                ><el-form-item label="操作人姓名"
+                    ><el-input
+                        v-model="query.actorName"
+                        clearable
+                        maxlength="50"
+                        placeholder="输入姓名，可模糊查询" /></el-form-item
                 ><el-form-item label="动作"
-                    ><el-input
-                        v-model="query.action"
-                        clearable
-                        placeholder="如 approve-registration"
-                        maxlength="100" /></el-form-item
+                    ><el-select v-model="query.action" clearable filterable placeholder="全部动作"
+                        ><el-option
+                            v-for="(label, code) in AUDIT_ACTION_LABELS"
+                            :key="code"
+                            :label="label"
+                            :value="code" /></el-select></el-form-item
                 ><el-form-item label="对象类型"
-                    ><el-input
-                        v-model="query.entityType"
-                        clearable
-                        placeholder="如 user、role"
-                        maxlength="50" /></el-form-item
+                    ><el-select v-model="query.entityType" clearable placeholder="全部对象类型"
+                        ><el-option
+                            v-for="(label, code) in AUDIT_ENTITY_TYPE_LABELS"
+                            :key="code"
+                            :label="label"
+                            :value="code" /></el-select></el-form-item
                 ><el-form-item label="开始日期"
                     ><el-date-picker
                         v-model="query.dateFrom"
@@ -111,25 +122,44 @@ onMounted(load)
                 <el-table-column prop="id" label="ID" width="80" /><!-- @vue-generic {AuditLog} -->
                 <el-table-column
                     prop="createdAt"
-                    label="时间（UTC）"
+                    :label="`时间（${APP_TIME_ZONE_LABEL}）`"
                     min-width="210"
-                /><!-- @vue-generic {AuditLog} -->
+                    ><template #default="{ row }">{{
+                        formatDateTime(row.createdAt)
+                    }}</template> </el-table-column
+                ><!-- @vue-generic {AuditLog} -->
                 <el-table-column
-                    prop="actorId"
-                    label="操作人 ID"
-                    width="110"
-                /><!-- @vue-generic {AuditLog} -->
-                <el-table-column
-                    prop="action"
-                    label="动作"
-                    min-width="180"
+                    prop="actorName"
+                    label="操作人"
+                    min-width="140"
                     show-overflow-tooltip
-                /><!-- @vue-generic {AuditLog} -->
-                <el-table-column
-                    prop="entityType"
-                    label="对象类型"
-                    width="120"
-                /><!-- @vue-generic {AuditLog} -->
+                    ><template #default="{ row }">
+                        <span :title="row.actorId == null ? undefined : `人员 ID：${row.actorId}`">
+                            {{
+                                row.actorName ||
+                                (row.actorId == null
+                                    ? row.action === 'register'
+                                        ? '未登录申请'
+                                        : '系统操作'
+                                    : '未知人员')
+                            }}
+                        </span>
+                    </template> </el-table-column
+                ><!-- @vue-generic {AuditLog} -->
+                <el-table-column prop="action" label="动作" min-width="180" show-overflow-tooltip
+                    ><template #default="{ row }"
+                        ><span :title="row.action">{{
+                            auditActionLabel(row.action)
+                        }}</span></template
+                    > </el-table-column
+                ><!-- @vue-generic {AuditLog} -->
+                <el-table-column prop="entityType" label="对象类型" width="120"
+                    ><template #default="{ row }"
+                        ><span :title="row.entityType">{{
+                            auditEntityTypeLabel(row.entityType)
+                        }}</span></template
+                    > </el-table-column
+                ><!-- @vue-generic {AuditLog} -->
                 <el-table-column
                     prop="entityId"
                     label="对象 ID"

@@ -1,4 +1,17 @@
-import { and, count, desc, eq, gte, lte, inArray, like, or, type SQL } from "drizzle-orm"
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  lte,
+  inArray,
+  like,
+  or,
+  getTableColumns,
+  sql,
+  type SQL,
+} from "drizzle-orm"
 import { db } from "@/db"
 import * as s from "@/db/schema"
 import { safeUser, type Actor, type User } from "@/utils/authorization"
@@ -271,15 +284,19 @@ export class IdentityRepository {
     query: ListQuery,
     filters: {
       actorId?: number
+      actorName?: string
       action?: string
       entityType?: string
       dateFrom?: string
       dateTo?: string
     },
   ) {
+    const actorName = filters.actorName?.trim()
     // 界面提交自然日期，按业务时区 UTC+8 转为起止时刻，再与数据库 UTC 时间比较。
     const where = and(
       filters.actorId ? eq(s.auditLogs.actorId, filters.actorId) : undefined,
+      // 姓名按普通文本包含匹配，输入中的 %、_ 不作为 SQL 通配符。
+      actorName ? sql`instr(${s.users.name}, ${actorName}) > 0` : undefined,
       filters.action ? eq(s.auditLogs.action, filters.action) : undefined,
       filters.entityType ? eq(s.auditLogs.entityType, filters.entityType) : undefined,
       filters.dateFrom
@@ -290,13 +307,19 @@ export class IdentityRepository {
         : undefined,
     )
     const list = await this.database
-      .select()
+      .select({ ...getTableColumns(s.auditLogs), actorName: s.users.name })
       .from(s.auditLogs)
+      // 取当前姓名，不限制账号状态；未登录申请等无操作人的日志仍保留。
+      .leftJoin(s.users, eq(s.auditLogs.actorId, s.users.id))
       .where(where)
       .orderBy(desc(s.auditLogs.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize)
-    const [total] = await this.database.select({ count: count() }).from(s.auditLogs).where(where)
+    const [total] = await this.database
+      .select({ count: count() })
+      .from(s.auditLogs)
+      .leftJoin(s.users, eq(s.auditLogs.actorId, s.users.id))
+      .where(where)
     return { list, total: total.count, page: query.page, pageSize: query.pageSize }
   }
   /** 记录登录、退出等没有业务字段变更的账号事件。 */

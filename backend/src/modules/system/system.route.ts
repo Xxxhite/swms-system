@@ -24,6 +24,7 @@ export function createSystemRoutes(identities: IdentityService = identityService
           page: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
           pageSize: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1, maximum: 100 })),
           actorId: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
+          actorName: t.Optional(t.String({ maxLength: 50 })),
           action: t.Optional(t.String({ maxLength: 100 })),
           entityType: t.Optional(t.String({ maxLength: 50 })),
           dateFrom: t.Optional(t.String({ format: "date" })),

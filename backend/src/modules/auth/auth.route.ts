@@ -13,7 +13,10 @@ export function createAuthRoutes(service: AuthService = authService) {
     .post("/register", async ({ body }) => ok(await service.register(body)), {
       body: t.Object({
         ...registrationFields,
-        username: t.String({ pattern: "^[a-z0-9_]{3,32}$" }),
+        username: t.String({
+          pattern: "^[a-z0-9_]{3,32}$",
+          error: "账号为 3—32 位小写字母、数字或下划线",
+        }),
         password,
       }),
     })

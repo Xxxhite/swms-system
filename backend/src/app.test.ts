@@ -20,6 +20,41 @@ const fixture = new Elysia()
   .compile()
 
 describe("应用基础契约", () => {
+  test("注册无效输入返回字段提示，不进入数据库写入", async () => {
+    const valid = {
+      username: "validation_probe",
+      password: "Validation_2026",
+      name: "测试社工",
+      phone: "13800000000",
+      arrivalDate: "2026-10-21",
+      major: "社会工作",
+      proposedPosition: "社工",
+      education: "本科",
+      politicalStatus: "群众",
+    }
+    const cases = [
+      [{ password: "123456" }, "密码须为 8—128 字符"],
+      [{ password: "a".repeat(129) }, "密码须为 8—128 字符"],
+      [{ username: "Bad!" }, "账号为 3—32 位小写字母、数字或下划线"],
+      [{ name: "   " }, "姓名须为 1—50 字符且不能全为空格"],
+      [{ phone: "" }, "联系电话须为 1—32 字符且不能全为空格"],
+      [{ major: "a".repeat(101) }, "专业须为 1—100 字符且不能全为空格"],
+      [{ arrivalDate: "2026-02-30" }, "请选择有效的到岗日期"],
+      [{ arrivalDate: "2026-02-29" }, "请选择有效的到岗日期"],
+      [{ arrivalDate: "2026-13-01" }, "请选择有效的到岗日期"],
+    ] as const
+    for (const [change, message] of cases) {
+      const response = await app.handle(
+        new Request("http://localhost/api/auth/register", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...valid, ...change }),
+        }),
+      )
+      expect([400, 422]).toContain(response.status)
+      expect(await response.json()).toEqual({ code: 1000, message, data: null })
+    }
+  })
   test("健康检查使用统一成功响应", async () => {
     const response = await app.handle(new Request("http://localhost/health"))
     expect(response.status).toBe(200)

@@ -24,7 +24,13 @@ export const errorHandler = new Elysia({ name: "error-handler" }).onError(
     switch (code) {
       case "VALIDATION": {
         set.status = 422
-        return fail(ErrorCode.PARAM_INVALID, "请求参数不合法，请检查填写内容")
+        // 仅公开 schema 主动声明的字符串提示，不返回框架校验详情或用户输入。
+        return fail(
+          ErrorCode.PARAM_INVALID,
+          typeof error.customError === "string"
+            ? error.customError
+            : "请求参数不合法，请检查填写内容",
+        )
       }
       case "NOT_FOUND": {
         set.status = 404

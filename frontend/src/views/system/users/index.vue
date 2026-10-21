@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
@@ -18,15 +18,22 @@ import {
 } from '@/api/types'
 import { useUserStore } from '@/stores/user'
 import { scopeOptions } from '../shared'
+import { useUserList } from './useUserList'
 const store = useUserStore()
 const route = useRoute()
+const router = useRouter()
 // 人员管理与注册审核复用表格和弹窗，路由决定数据来源及可执行的操作。
 const registrations = computed(() => route.path === '/system/registrations')
 const title = computed(() => (registrations.value ? '注册审核' : '人员管理'))
-const rows = ref<UserSummary[]>([])
-const total = ref(0)
-const query = reactive({ page: 1, pageSize: 20, keyword: '', status: '' })
-const loading = ref(false)
+const {
+    rows,
+    total,
+    query,
+    loading,
+    load: loadUsers,
+    invalidate,
+    applyReview,
+} = useUserList(() => registrations.value, identityApi.users)
 const busy = ref(false)
 const dialog = ref(false)
 // 弹窗模式分别控制展示字段和保存接口，任职资料与功能授权分开提交。
@@ -52,32 +59,10 @@ const form = reactive({
     managedOrgIds: [] as number[],
     comment: '',
 })
-// 查询或切换入口可能产生重叠请求，仅最新请求可更新列表及 loading 状态。
-let generation = 0
-/** 按当前入口和筛选加载人员列表，仅使用最后发起请求的结果。 */
+/** 真实接口模式按当前入口查询；演示模式不发送人员管理请求。 */
 async function load() {
-    if (useMock) return
-    const request = ++generation
-    loading.value = true
-    try {
-        const result = await identityApi.users(
-            {
-                page: query.page,
-                pageSize: query.pageSize,
-                ...(query.keyword ? { keyword: query.keyword } : {}),
-                ...(query.status ? { status: query.status } : {}),
-            },
-            registrations.value,
-        )
-        if (request === generation) {
-            rows.value = result.list
-            total.value = result.total
-        }
-    } catch {
-        /* 请求层统一提示 */
-    } finally {
-        if (request === generation) loading.value = false
-    }
+    if (useMock) return 'superseded'
+    return loadUsers()
 }
 /** 写入弹窗才加载授权选项，只有查询权限的主管查看详情时不请求管理员接口。 */
 async function options() {
@@ -159,6 +144,7 @@ async function save() {
         return
     }
     busy.value = true
+    const sourcePath = route.path
     try {
         const id = target.value.id
         // 使用打开弹窗时取得的版本，让后端发现编辑期间其他人对同一记录的修改。
@@ -175,6 +161,7 @@ async function save() {
             // 切出组织子树范围时清空旧根节点，避免下次切换时沿用过期的负责组织。
             managedOrgIds: form.dataScope === 'SUBTREE' ? form.managedOrgIds : [],
         }
+        let reviewed: UserSummary | undefined
         if (mode.value === 'edit')
             await identityApi.updateUser(id, {
                 ...placement,
@@ -185,15 +172,23 @@ async function save() {
                 serviceFieldCode: form.serviceFieldCode || null,
             })
         else if (mode.value === 'approve')
-            await identityApi.approve(id, { ...placement, ...authorization, version })
+            reviewed = await identityApi.approve(id, { ...placement, ...authorization, version })
         else if (mode.value === 'authorize')
             await identityApi.authorize(id, { ...authorization, version })
-        else if (mode.value === 'reject') await identityApi.reject(id, version, form.comment)
+        else if (mode.value === 'reject')
+            reviewed = await identityApi.reject(id, version, form.comment)
+        // 请求期间可能切换入口，不把旧页面的审核结果写入新页面。
+        if (route.path !== sourcePath) {
+            ElMessage.success('操作完成')
+            return
+        }
+        if (reviewed) applyReview(reviewed)
         dialog.value = false
+        ElMessage.success(reviewed ? '审核结果已保存' : '操作完成')
         // 管理员修改本人资料或授权后，同步刷新菜单和身份摘要。
         if (id === store.profile?.id) await store.loadProfile()
-        await load()
-        ElMessage.success('操作完成')
+        if ((await load()) === 'failed')
+            ElMessage.warning('操作已成功，列表刷新失败，请点击“刷新”重试')
     } catch {
         /* 请求层统一提示 */
     } finally {
@@ -237,6 +232,7 @@ function resetSearch() {
 watch(
     () => route.path,
     () => {
+        invalidate()
         query.page = 1
         query.keyword = ''
         query.status = ''
@@ -279,6 +275,9 @@ watch(
                     <el-button @click="resetSearch">重置</el-button>
                 </el-form-item></el-form
             >
+            <p v-if="!registrations" class="approval-hint">
+                待审核账号须在“注册审核”中批准并分配任职与权限；已驳回账号须由申请人修改后重新提交。
+            </p>
             <el-table v-loading="loading" :data="rows">
                 <!-- @vue-generic {UserSummary} -->
                 <el-table-column
@@ -312,6 +311,18 @@ watch(
                 <el-table-column label="操作" width="300" fixed="right"
                     ><template #default="{ row }">
                         <el-button link type="primary" @click="open(row, 'view')">详情</el-button>
+                        <el-button
+                            v-if="
+                                !registrations &&
+                                ['PENDING', 'REJECTED'].includes(row.status) &&
+                                store.hasPermission(PERM.REGISTRATION_VIEW) &&
+                                store.hasPermission(PERM.REGISTRATION_APPROVE)
+                            "
+                            link
+                            type="primary"
+                            @click="router.push('/system/registrations')"
+                            >前往审核</el-button
+                        >
                         <template
                             v-if="
                                 registrations &&
@@ -520,6 +531,9 @@ watch(
     </el-card>
 </template>
 <style scoped>
+.approval-hint {
+    color: var(--el-text-color-secondary);
+}
 .detail-form {
     margin-top: 24px;
 }

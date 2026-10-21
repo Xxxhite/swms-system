@@ -33,18 +33,48 @@ export const placementFields = {
 }
 /** 注册及受限资料表单的人员字段，不包含账号授权和审核结果。 */
 export const registrationFields = {
-  name: text(50),
-  phone: text(32),
-  arrivalDate: t.String({ format: "date" }),
-  major: text(),
-  proposedPosition: text(),
-  education: text(),
-  politicalStatus: text(),
+  name: t.String({
+    minLength: 1,
+    maxLength: 50,
+    pattern: "\\S",
+    error: "姓名须为 1—50 字符且不能全为空格",
+  }),
+  phone: t.String({
+    minLength: 1,
+    maxLength: 32,
+    pattern: "\\S",
+    error: "联系电话须为 1—32 字符且不能全为空格",
+  }),
+  arrivalDate: t.String({ format: "date", error: "请选择有效的到岗日期" }),
+  major: t.String({
+    minLength: 1,
+    maxLength: 100,
+    pattern: "\\S",
+    error: "专业须为 1—100 字符且不能全为空格",
+  }),
+  proposedPosition: t.String({
+    minLength: 1,
+    maxLength: 100,
+    pattern: "\\S",
+    error: "申请岗位须为 1—100 字符且不能全为空格",
+  }),
+  education: t.String({
+    minLength: 1,
+    maxLength: 100,
+    pattern: "\\S",
+    error: "最高学历须为 1—100 字符且不能全为空格",
+  }),
+  politicalStatus: t.String({
+    minLength: 1,
+    maxLength: 100,
+    pattern: "\\S",
+    error: "政治面貌须为 1—100 字符且不能全为空格",
+  }),
   socialWorkerNo: nullableText(),
   serviceFieldCode: nullableText(),
   proposedTeam: nullableText(),
 }
-export const password = t.String({ minLength: 8, maxLength: 128 })
+export const password = t.String({ minLength: 8, maxLength: 128, error: "密码须为 8—128 字符" })
 /** 组织维护字段：限制编码格式、节点类型、启停状态及排序。 */
 export const orgFields = {
   code: t.String({ minLength: 1, maxLength: 32, pattern: "^[a-zA-Z0-9_-]+$" }),

@@ -1,30 +1,16 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, type FormInstance } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { authApi } from '@/api/modules/auth'
 import { useMock } from '@/api/config'
 import PersonnelFields from './PersonnelFields.vue'
-import { nullablePersonnel, personnelDefaults, personnelRules } from './fields'
+import { nullablePersonnel, personnelDefaults, registrationRules } from './fields'
 const router = useRouter()
 const form = reactive({ username: '', password: '', ...personnelDefaults() })
 const formRef = ref<FormInstance>()
 const busy = ref(false)
-const rules: FormRules = {
-    ...personnelRules,
-    username: [
-        {
-            required: true,
-            pattern: /^[a-z0-9_]{3,32}$/,
-            message: '账号为 3—32 位小写字母、数字或下划线',
-            trigger: 'blur',
-        },
-    ],
-    password: [
-        { required: true, min: 8, max: 128, message: '密码须为 8—128 字符', trigger: 'blur' },
-    ],
-}
 /** 校验并提交注册资料，成功后跳转登录页并带回账号。 */
 async function submit() {
     if (busy.value || useMock || !(await formRef.value?.validate().catch(() => false))) return
@@ -54,7 +40,7 @@ async function submit() {
             <el-form
                 ref="formRef"
                 :model="form"
-                :rules="rules"
+                :rules="registrationRules"
                 label-width="100px"
                 :disabled="useMock"
                 @submit.prevent="submit"
@@ -68,6 +54,7 @@ async function submit() {
                         type="password"
                         show-password
                         autocomplete="new-password"
+                        placeholder="8—128 个字符"
                 /></el-form-item>
                 <personnel-fields :model-value="form" />
                 <el-form-item class="form-actions">

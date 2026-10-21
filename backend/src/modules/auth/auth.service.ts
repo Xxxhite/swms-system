@@ -26,6 +26,17 @@ export type ProfileInput = Partial<Omit<RegistrationInput, "username" | "passwor
   version: number
 }
 
+/** 拒绝不存在的自然日期，在入库前拦截二月三十日等自动进位日期。 */
+function assertArrivalDate(value: string) {
+  const date = new Date(`${value}T00:00:00Z`)
+  if (
+    !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value) ||
+    !Number.isFinite(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+  )
+    throw AppError.badRequest("请选择有效的到岗日期")
+}
+
 /** 处理本人账号流程；任职安排、审核和授权由 IdentityService 负责。 */
 export class AuthService {
   constructor(
@@ -34,6 +45,7 @@ export class AuthService {
   ) {}
   /** 注册只保存申请资料和密码哈希，PENDING 状态使用 users 表的默认值。 */
   async register(input: RegistrationInput) {
+    assertArrivalDate(input.arrivalDate)
     validateServiceField(input.serviceFieldCode)
     const { password, ...fields } = input
     return this.repository.register({ ...fields, passwordHash: await hashPassword(password) })
@@ -61,6 +73,7 @@ export class AuthService {
   }
   /** 申请阶段可修改申请资料；启用后仅允许自助维护白名单中的普通联系资料。 */
   updateProfile(actor: Actor, input: ProfileInput) {
+    if (input.arrivalDate !== undefined) assertArrivalDate(input.arrivalDate)
     validateServiceField(input.serviceFieldCode)
     return this.repository.changeUser(
       actor.user.id,

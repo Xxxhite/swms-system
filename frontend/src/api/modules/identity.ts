@@ -41,10 +41,10 @@ export const identityApi = {
     authorize: (id: number, input: AuthorizationInput & { version: number }): Promise<unknown> =>
         http.put(`/users/${id}/authorization`, input),
     /** 提交审核批准及任职授权信息，后端统一处理事务和重复请求。 */
-    approve: (id: number, input: Record<string, unknown>): Promise<unknown> =>
+    approve: (id: number, input: Record<string, unknown>): Promise<UserSummary> =>
         http.post(`/registrations/${id}/approve`, input),
     /** 提交驳回意见及申请版本，员工可修改后重提。 */
-    reject: (id: number, version: number, comment: string): Promise<unknown> =>
+    reject: (id: number, version: number, comment: string): Promise<UserSummary> =>
         http.post(`/registrations/${id}/reject`, { version, comment }),
     /** 读取角色及其权限集合，供管理表格和授权选项使用。 */
     roles: (): Promise<Role[]> => http.get('/roles'),

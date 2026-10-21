@@ -228,6 +228,12 @@ function search() {
     query.page = 1
     void load()
 }
+/** 清空手动筛选条件，从第一页立即重新查询，保留每页条数。 */
+function resetSearch() {
+    query.keyword = ''
+    query.status = ''
+    search()
+}
 watch(
     () => route.path,
     () => {
@@ -244,7 +250,12 @@ watch(
 </script>
 <template>
     <el-card>
-        <template #header>{{ title }}</template>
+        <template #header>
+            <div class="page-header">
+                <span>{{ title }}</span>
+                <el-button v-if="!useMock" @click="load">刷新</el-button>
+            </div>
+        </template>
         <el-alert
             v-if="useMock"
             title="当前为演示模式；人员维护与审核需使用真实接口模式。"
@@ -252,31 +263,35 @@ watch(
             :closable="false"
         />
         <template v-else>
-            <el-form inline @submit.prevent="search"
+            <el-form class="filter-form" @submit.prevent="search"
                 ><el-form-item label="姓名或账号"
                     ><el-input v-model="query.keyword" clearable maxlength="100" /></el-form-item
                 ><el-form-item label="状态"
-                    ><el-select v-model="query.status" clearable style="width: 140px"
+                    ><el-select v-model="query.status" clearable
                         ><el-option
                             v-for="(label, status) in statusLabels"
                             v-show="!registrations || ['PENDING', 'REJECTED'].includes(status)"
                             :key="status"
                             :label="label"
                             :value="status" /></el-select></el-form-item
-                ><el-button type="primary" native-type="submit">查询</el-button
-                ><el-button @click="load">刷新</el-button></el-form
+                ><el-form-item class="filter-form__actions">
+                    <el-button type="primary" native-type="submit">查询</el-button>
+                    <el-button @click="resetSearch">重置</el-button>
+                </el-form-item></el-form
             >
             <el-table v-loading="loading" :data="rows">
                 <!-- @vue-generic {UserSummary} -->
                 <el-table-column
                     prop="name"
                     label="姓名"
-                    min-width="110"
+                    min-width="120"
+                    show-overflow-tooltip
                 /><!-- @vue-generic {UserSummary} -->
                 <el-table-column
                     prop="username"
                     label="账号"
-                    min-width="120"
+                    min-width="180"
+                    show-overflow-tooltip
                 /><!-- @vue-generic {UserSummary} -->
                 <el-table-column prop="phone" label="电话" min-width="140" />
                 <!-- @vue-generic {UserSummary} -->
@@ -289,11 +304,12 @@ watch(
                 <el-table-column
                     prop="proposedPosition"
                     label="申请岗位"
-                    min-width="120"
+                    min-width="180"
+                    show-overflow-tooltip
                 /><!-- @vue-generic {UserSummary} -->
                 <el-table-column prop="dataScope" label="范围" width="100" />
                 <!-- @vue-generic {UserSummary} -->
-                <el-table-column label="操作" min-width="300"
+                <el-table-column label="操作" width="300" fixed="right"
                     ><template #default="{ row }">
                         <el-button link type="primary" @click="open(row, 'view')">详情</el-button>
                         <template
@@ -358,7 +374,7 @@ watch(
                 :page-size="query.pageSize"
                 :total="total"
                 layout="total, prev, pager, next"
-                class="pagination"
+                class="table-pagination"
                 @current-change="load"
             />
         </template>
@@ -504,9 +520,6 @@ watch(
     </el-card>
 </template>
 <style scoped>
-.pagination {
-    margin-top: 20px;
-}
 .detail-form {
     margin-top: 24px;
 }

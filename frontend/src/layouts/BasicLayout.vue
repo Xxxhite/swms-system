@@ -102,13 +102,13 @@ async function handleCommand(command: string): Promise<void> {
 }
 
 .layout__brand {
-    height: 56px;
+    height: 60px;
     flex: none;
     display: flex;
     align-items: center;
     padding: 0 16px;
     color: var(--el-color-white);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-decoration: none;
@@ -150,12 +150,17 @@ async function handleCommand(command: string): Promise<void> {
 }
 
 .layout__user {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    font-size: 14px;
     cursor: pointer;
     outline: none;
     color: var(--el-text-color-primary);
 }
 
 .layout__main {
+    min-width: 0;
     background-color: var(--el-bg-color-page);
 }
 </style>

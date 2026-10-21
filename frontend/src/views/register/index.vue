@@ -70,7 +70,11 @@ async function submit() {
                         autocomplete="new-password"
                 /></el-form-item>
                 <personnel-fields :model-value="form" />
-                <el-button type="primary" :loading="busy" native-type="submit">提交注册</el-button>
+                <el-form-item class="form-actions">
+                    <el-button type="primary" :loading="busy" native-type="submit"
+                        >提交注册</el-button
+                    >
+                </el-form-item>
             </el-form>
             <p><router-link to="/login">返回登录</router-link></p>
         </el-card>
@@ -89,7 +93,7 @@ async function submit() {
 }
 h1 {
     margin: 0;
-    font-size: 20px;
+    font-size: var(--swms-font-size-title);
 }
 .el-alert {
     margin-bottom: 20px;

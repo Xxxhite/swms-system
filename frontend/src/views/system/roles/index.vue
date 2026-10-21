@@ -99,18 +99,22 @@ onMounted(load)
 </script>
 <template>
     <el-card
-        ><template #header>角色与权限</template>
+        ><template #header>
+            <div class="page-header">
+                <span>角色与权限</span>
+                <div v-if="!useMock" class="page-actions">
+                    <el-button type="primary" @click="edit(null)">新增角色</el-button>
+                    <el-button @click="load">刷新</el-button>
+                </div>
+            </div>
+        </template>
         <el-alert
             v-if="useMock"
             title="当前为演示模式；角色维护需使用真实接口模式。"
             type="info"
             :closable="false"
         />
-        <template v-else
-            ><div class="toolbar">
-                <el-button type="primary" @click="edit(null)">新增角色</el-button
-                ><el-button @click="load">刷新</el-button>
-            </div>
+        <template v-else>
             <el-table :data="rows"
                 ><!-- @vue-generic {Role} -->
                 <el-table-column
@@ -133,7 +137,7 @@ onMounted(load)
                         row.status === 'ACTIVE' ? '启用' : '停用'
                     }}</template></el-table-column
                 ><!-- @vue-generic {Role} -->
-                <el-table-column label="操作" width="230"
+                <el-table-column label="操作" fixed="right" width="230"
                     ><template #default="{ row }"
                         ><el-button link type="primary" @click="edit(row)">编辑</el-button
                         ><el-button link type="primary" @click="editPermissions(row)"
@@ -204,11 +208,6 @@ onMounted(load)
     </el-card>
 </template>
 <style scoped>
-.toolbar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-}
 h3 {
     font-size: 14px;
     margin-bottom: 8px;

@@ -16,28 +16,46 @@ const query = reactive({
     dateFrom: '',
     dateTo: '',
 })
+// 筛选与重置可能连续发起请求，仅最后一次查询可以更新表格。
+let generation = 0
 /** 移除空筛选条件后分页查询日志，mock 模式不请求真实管理接口。 */
 async function load() {
-    if (useMock || loading.value) return
+    if (useMock) return
+    const request = ++generation
     loading.value = true
     try {
         const result = await systemApi.logs(
             Object.fromEntries(
-                Object.entries(query).filter(([, value]) => value !== undefined && value !== ''),
+                Object.entries(query).filter(
+                    ([, value]) => value !== undefined && value !== null && value !== '',
+                ),
             ),
         )
-        rows.value = result.list
-        total.value = result.total
+        if (request === generation) {
+            rows.value = result.list
+            total.value = result.total
+        }
     } catch {
         /* 请求层统一提示 */
     } finally {
-        loading.value = false
+        if (request === generation) loading.value = false
     }
 }
 /** 重置页码并执行日志筛选。 */
 function search() {
     query.page = 1
     void load()
+}
+/** 清空全部手动筛选条件，并立即查询第一页日志。 */
+function resetSearch() {
+    Object.assign(query, {
+        actorId: undefined,
+        action: '',
+        entityType: '',
+        dateFrom: '',
+        dateTo: '',
+    })
+    search()
 }
 /** 选中日志并打开脱敏变更详情弹窗。 */
 function showDetail(row: AuditLog) {
@@ -56,7 +74,7 @@ onMounted(load)
             :closable="false"
         />
         <template v-else
-            ><el-form inline @submit.prevent="search"
+            ><el-form class="filter-form" @submit.prevent="search"
                 ><el-form-item label="操作人 ID"
                     ><el-input-number
                         v-model="query.actorId"
@@ -84,7 +102,10 @@ onMounted(load)
                         v-model="query.dateTo"
                         type="date"
                         value-format="YYYY-MM-DD" /></el-form-item
-                ><el-button type="primary" native-type="submit">查询</el-button></el-form
+                ><el-form-item class="filter-form__actions">
+                    <el-button type="primary" native-type="submit">查询</el-button>
+                    <el-button @click="resetSearch">重置</el-button>
+                </el-form-item></el-form
             ><el-table v-loading="loading" :data="rows"
                 ><!-- @vue-generic {AuditLog} -->
                 <el-table-column prop="id" label="ID" width="80" /><!-- @vue-generic {AuditLog} -->
@@ -102,6 +123,7 @@ onMounted(load)
                     prop="action"
                     label="动作"
                     min-width="180"
+                    show-overflow-tooltip
                 /><!-- @vue-generic {AuditLog} -->
                 <el-table-column
                     prop="entityType"
@@ -113,7 +135,7 @@ onMounted(load)
                     label="对象 ID"
                     width="100"
                 /><!-- @vue-generic {AuditLog} -->
-                <el-table-column label="操作" width="100"
+                <el-table-column label="操作" width="110" fixed="right"
                     ><template #default="{ row }"
                         ><el-button link type="primary" @click="showDetail(row)"
                             >查看变更</el-button
@@ -125,7 +147,7 @@ onMounted(load)
                 :page-size="query.pageSize"
                 :total="total"
                 layout="total, prev, pager, next"
-                class="pagination"
+                class="table-pagination"
                 @current-change="load"
         /></template>
         <el-dialog v-model="dialog" title="脱敏变更记录" width="700px"
@@ -139,9 +161,6 @@ onMounted(load)
     </el-card>
 </template>
 <style scoped>
-.pagination {
-    margin-top: 20px;
-}
 pre {
     white-space: pre-wrap;
     overflow-wrap: anywhere;

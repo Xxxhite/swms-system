@@ -10,7 +10,11 @@ const model = defineModel<Omit<RegistrationInput, 'username' | 'password'>>({ re
         ><el-input v-model="model.phone" maxlength="32"
     /></el-form-item>
     <el-form-item label="到岗日期" prop="arrivalDate"
-        ><el-date-picker v-model="model.arrivalDate" type="date" value-format="YYYY-MM-DD"
+        ><el-date-picker
+            v-model="model.arrivalDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
     /></el-form-item>
     <el-form-item label="专业" prop="major"
         ><el-input v-model="model.major" maxlength="100"

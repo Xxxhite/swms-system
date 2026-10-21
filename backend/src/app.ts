@@ -28,7 +28,7 @@ export const app = new Elysia()
           title: "温馨社工服务信息管理系统 API",
           version: "0.1.0",
           description:
-            "浙江理工大学 2027 届本科毕业设计。响应体统一为 { code, message, data }，code 为 0 表示成功。",
+            "温馨社工服务信息管理系统接口。响应体统一为 { code, message, data }，code 为 0 表示成功。",
         },
         tags: [
           { name: "基本信息", description: "登录、人员、角色权限" },

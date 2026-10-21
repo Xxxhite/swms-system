@@ -27,4 +27,68 @@ body,
 
 body {
     background-color: var(--el-bg-color-page);
+    color: var(--el-text-color-primary);
+    font-size: var(--el-font-size-base);
+}
+
+/* 页面标题与操作共用一行，筛选控件使用独立网格，避免行内基线造成按钮下沉。 */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.el-card__header {
+    font-size: var(--swms-font-size-title);
+    font-weight: 600;
+}
+.page-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.page-actions > .el-button + .el-button {
+    margin-left: 0;
+}
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: start;
+    gap: 16px 24px;
+    margin-bottom: 24px;
+}
+.filter-form .el-form-item {
+    margin: 0;
+    min-width: 0;
+}
+.filter-form .el-form-item__content {
+    min-width: 0;
+}
+.filter-form .el-input-number,
+.filter-form .el-date-editor.el-input,
+.filter-form .el-select {
+    width: 100%;
+}
+.filter-form__actions .el-form-item__content {
+    gap: 12px;
+}
+.filter-form__actions .el-button + .el-button {
+    margin-left: 0;
+}
+.table-pagination {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+.form-actions {
+    margin-top: 24px;
+    margin-bottom: 0;
+}
+.form-actions .el-form-item__content {
+    gap: 12px;
+}
+.form-actions .el-button + .el-button {
+    margin-left: 0;
 }

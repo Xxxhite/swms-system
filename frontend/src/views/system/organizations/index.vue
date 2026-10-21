@@ -100,7 +100,15 @@ onMounted(load)
 </script>
 <template>
     <el-card>
-        <template #header>组织管理</template>
+        <template #header>
+            <div class="page-header">
+                <span>组织管理</span>
+                <div v-if="!useMock" class="page-actions">
+                    <el-button type="primary" @click="edit()">新增组织</el-button>
+                    <el-button @click="load">刷新</el-button>
+                </div>
+            </div>
+        </template>
         <el-alert
             v-if="useMock"
             title="当前为演示模式；组织维护需使用真实接口模式。"
@@ -108,10 +116,6 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <div class="toolbar">
-                <el-button type="primary" @click="edit()">新增组织</el-button
-                ><el-button @click="load">刷新</el-button>
-            </div>
             <el-table :data="tree" row-key="id" default-expand-all>
                 <!-- @vue-generic {Organization} -->
                 <el-table-column
@@ -133,7 +137,7 @@ onMounted(load)
                     }}</template></el-table-column
                 >
                 <!-- @vue-generic {Organization} -->
-                <el-table-column label="操作" width="160"
+                <el-table-column label="操作" fixed="right" width="160"
                     ><template #default="{ row }"
                         ><el-button link type="primary" @click="edit(row)">编辑</el-button
                         ><el-button link type="danger" @click="remove(row)"
@@ -186,10 +190,4 @@ onMounted(load)
         </el-dialog>
     </el-card>
 </template>
-<style scoped>
-.toolbar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-</style>
+<style scoped></style>

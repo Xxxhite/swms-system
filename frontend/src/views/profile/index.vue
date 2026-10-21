@@ -101,8 +101,14 @@ onMounted(load)
                     ><el-input v-model="form.phone" maxlength="32" /></el-form-item
                 ><el-form-item label="社工号"
                     ><el-input v-model="form.socialWorkerNo" maxlength="100" /></el-form-item
-                ><el-button type="primary" native-type="submit" :disabled="!detail" :loading="busy"
-                    >保存资料</el-button
+                ><el-form-item class="form-actions"
+                    ><el-button
+                        type="primary"
+                        native-type="submit"
+                        :disabled="!detail"
+                        :loading="busy"
+                        >保存资料</el-button
+                    ></el-form-item
                 ></el-form
             >
             <el-form label-width="110px" @submit.prevent="changePassword"
@@ -122,8 +128,10 @@ onMounted(load)
                         v-model="passwords.confirm"
                         type="password"
                         show-password /></el-form-item
-                ><el-button type="primary" native-type="submit" :loading="busy"
-                    >修改密码</el-button
+                ><el-form-item class="form-actions"
+                    ><el-button type="primary" native-type="submit" :loading="busy"
+                        >修改密码</el-button
+                    ></el-form-item
                 ></el-form
             >
         </div>
@@ -138,6 +146,7 @@ onMounted(load)
 }
 h2 {
     font-size: 16px;
+    margin: 0 0 20px;
 }
 .notice {
     margin-top: 20px;

@@ -4,6 +4,9 @@
  * 使用 html:root 提高优先级，确保覆盖 Element Plus 默认变量。
  */
 html:root {
+    --swms-font-size-title: 18px;
+    --swms-font-size-welcome: 24px;
+    --el-font-size-base: 14px;
     --el-color-primary: #1f7a6e;
     --el-color-primary-rgb: 31, 122, 110;
     --el-color-primary-light-3: #62a29a;

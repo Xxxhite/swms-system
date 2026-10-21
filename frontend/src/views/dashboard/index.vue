@@ -91,7 +91,7 @@ const roleNames = computed(() => userStore.profile?.roleNames.join('„ÄÅ') || 'Êú
 }
 .dashboard__welcome h1 {
     margin: 0;
-    font-size: 26px;
+    font-size: var(--swms-font-size-welcome);
     color: var(--el-text-color-primary);
 }
 .dashboard__intro {

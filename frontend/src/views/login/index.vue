@@ -55,9 +55,8 @@ async function submit(): Promise<void> {
     <div class="login">
         <el-card class="login__card">
             <div class="login__title">温馨社工服务信息管理系统</div>
-            <div class="login__subtitle">浙江理工大学 2027 届本科毕业设计</div>
 
-            <el-form ref="formRef" :model="form" :rules="rules" @keyup.enter="submit">
+            <el-form ref="formRef" :model="form" :rules="rules" size="large" @keyup.enter="submit">
                 <el-form-item prop="username">
                     <el-input v-model="form.username" placeholder="账号" clearable />
                 </el-form-item>
@@ -97,7 +96,9 @@ async function submit(): Promise<void> {
 
 <style scoped>
 .login {
-    height: 100%;
+    min-height: 100%;
+    padding: 24px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,18 +107,13 @@ async function submit(): Promise<void> {
 
 .login__card {
     width: 420px;
+    max-width: 100%;
 }
 
 .login__title {
-    font-size: 18px;
+    font-size: var(--swms-font-size-title);
+    margin: 8px 0 28px;
     font-weight: 600;
-    text-align: center;
-}
-
-.login__subtitle {
-    margin: 6px 0 24px;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
     text-align: center;
 }
 
@@ -129,7 +125,7 @@ async function submit(): Promise<void> {
     margin-top: 20px;
     padding-top: 16px;
     border-top: 1px dashed var(--el-border-color);
-    font-size: 12px;
+    font-size: 13px;
     color: var(--el-text-color-regular);
 }
 .login__register {

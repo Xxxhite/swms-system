@@ -7,11 +7,11 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-User=Xxxhite
-Group=Xxxhite
-WorkingDirectory=/srv/swms/current/backend
-EnvironmentFile=/srv/swms/shared/backend.env
-ExecStart=/srv/swms/runtime/bun/bin/bun run src/index.ts
+User=__APP_USER__
+Group=__APP_GROUP__
+WorkingDirectory=__APP_ROOT__/current/backend
+EnvironmentFile=__APP_ROOT__/shared/backend.env
+ExecStart=__APP_ROOT__/runtime/bun/bin/bun run src/index.ts
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30

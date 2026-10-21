@@ -27,3 +27,6 @@ coverage/
 
 # 毕设相关材料
 /.docs/
+
+# 按实际服务器生成的部署配置
+/deploy/generated/

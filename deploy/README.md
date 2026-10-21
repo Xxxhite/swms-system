@@ -1,193 +1,222 @@
 # Linux 部署与更新
 
-适用于 Ubuntu 24.04、域名 `swms.sopak.space`、部署账号 `Xxxhite`。
-前端在本机构建，服务器使用 Bun、MySQL、Nginx 和 systemd。
-既有博客和其他服务继续使用各自配置。新增配置仅使用此项目的名称和路径。
+适用于 Ubuntu 24.04、Bun、MySQL、Nginx 和 systemd。前端在本机构建，服务器安装 Linux 后端依赖。
+仓库保留通用模板和步骤；实际域名、账号、配置及发布记录由部署者单独保存。
 
-## 目录与权限
+## 配置范围与目录
+
+| 文件 | 用途 |
+| --- | --- |
+| `nginx/swms.conf.template` | 独立 HTTP 站点模板，HTTPS 由 Certbot 配置 |
+| `systemd/swms-api.service.template` | 后端服务模板 |
+| `prepare-server.sh` | 接收部署参数，首次准备数据库和目录 |
+| `generated/` | 实际生成的配置，已由根目录 `.gitignore` 忽略 |
+
+默认目录 `/srv/swms`：
 
 ```text
 /srv/swms/
-├── releases/<发布编号>/    # 后端源码、迁移、前端 dist、部署文件
-├── current -> releases/…  # 正在运行的版本
-├── assets/                # 历次发布的带哈希前端资源，供旧页面继续加载
-├── runtime/bun/           # 固定版本 Bun，仅部署账号可访问
-├── shared/backend.env     # 服务器独立配置，权限 600
-└── backups/               # 数据库备份，仅部署账号和管理员访问
+├── releases/<发布编号>/    # 后端、迁移、前端 dist、部署文件
+├── current -> releases/…  # 当前版本
+├── assets/                # 历次带哈希的前端资源
+├── runtime/bun/           # 固定版本运行时
+├── shared/backend.env     # 服务器环境配置，权限 600
+└── backups/               # 私有备份
 ```
 
-发布目录和静态资源需要 Nginx 用户可读、可遍历；环境文件、备份和运行时目录为私有。
-systemd 以 `Xxxhite` 运行，读取共享环境文件；后端仅监听 `127.0.0.1:3000`。
-Nginx 保留 `/api` 路径前缀，域名根目录提供 hash 路由页面。
-`/health` 可经站点检查，`/docs` 在后端本机检查，公网未配置文档代理。
+公开静态目录需要 Nginx 可读、可遍历；runtime、shared、backups 为私有目录。
+服务使用普通部署账号，后端监听 `127.0.0.1:3000`，MySQL 使用本机 3306。
+Nginx 保留 `/api` 前缀，浏览器使用 hash 路由；公网提供 `/health`，`/docs` 在服务器本机检查。
+用户名、域名和部署根目录须同时用于初始化与模板替换，保持各配置一致。
 
-## 首次服务器准备（管理员）
+## 首次准备
 
-在服务器上审阅后执行上传的脚本：
+先确定已有的普通 Linux 部署账号和解析到服务器的域名。以下均为示例，执行前修改。
+Linux 命令在同一个 Bash 终端执行；重新登录后先重新设置这些变量。
 
 ```bash
-sudo bash /home/Xxxhite/swms-bootstrap/prepare-server.sh
+APP_USER=deploy
+APP_DOMAIN=example.com
+APP_ROOT=/srv/swms
+BUN_VERSION=1.3.14
+bash deploy/prepare-server.sh --user "$APP_USER" --domain "$APP_DOMAIN" --root "$APP_ROOT" --check
+sudo bash deploy/prepare-server.sh --user "$APP_USER" --domain "$APP_DOMAIN" --root "$APP_ROOT"
 ```
 
-脚本安装 MySQL 和必要工具、限制 MySQL 初始内存配置、建立目录、独立数据库及账号，
-生成独立 JWT 密钥和随机初始化密码。密码不打印、不复用本地配置。
-已有 `backend.env`、同名数据库或数据库账号时会停止，不自动覆盖。
-MySQL 初始缓冲池为 128 MiB、连接上限为 20；结合实际内存观测再调整。
-此脚本用于首次准备，不用于日常更新。
+脚本支持 `--help`，`--user` 和 `--domain` 必填，`--root` 默认 `/srv/swms`。
+`--check` 只检查参数和账号，不安装软件、不生成配置；账号应事先创建。
+目录限 `/srv` 或 `/opt` 下的独立路径，不含空格、`..` 或符号链接，匹配服务的 ProtectHome 设置。
 
-## 安装运行时（部署账号）
+首次脚本安装 MySQL 和工具，创建固定的 `swms` 库及 `swms_app` 应用账号，生成随机数据库密码、
+JWT 密钥及初始化密码，写入服务器私有环境文件。已有配置、同名库或账号会停止，不自动覆盖。
+MySQL 初始缓冲池 128 MiB、连接上限 20，按实际容量调整；脚本用于首次初始化，不用于更新。
+管理员先审阅脚本对 MySQL 服务的配置和重启步骤，再执行。
 
-Bun 与本地验证版本保持一致，初始固定为 `1.3.14`：
+部署账号安装与本地验证一致的 Bun 版本：
 
 ```bash
-curl -fsSL https://bun.sh/install -o /srv/swms/runtime/install-bun.sh
-BUN_INSTALL=/srv/swms/runtime/bun bash /srv/swms/runtime/install-bun.sh bun-v1.3.14
-/srv/swms/runtime/bun/bin/bun --version
+curl -fsSL https://bun.sh/install -o "$APP_ROOT/runtime/install-bun.sh"
+BUN_INSTALL="$APP_ROOT/runtime/bun" bash "$APP_ROOT/runtime/install-bun.sh" "bun-v$BUN_VERSION"
+"$APP_ROOT/runtime/bun/bin/bun" --version
 ```
 
-升级 Bun 时重新运行两端检查与集成测试，再同步固定版本。
-官方安装说明：<https://bun.sh/docs/installation>。
+版本升级后先重跑检查和集成测试。官方安装说明：<https://bun.sh/docs/installation>。
 
 ## 本机验证与打包
 
-先分别在 `backend` 和 `frontend` 执行 `bun run check`。
-前端设置 `VITE_USE_MOCK=false`、`VITE_API_BASE_URL=/api` 后执行 `bun run build`。
-这两项变量会编入构建产物，服务器启动时修改不会改变已构建页面。
+两端分别执行 `bun run check`，前端以 `VITE_USE_MOCK=false`、`VITE_API_BASE_URL=/api` 执行
+`bun run build`。前端变量在构建时生效。数据库变更在本地生成并验证迁移，随代码发布。
+记录发布提交号；未提交的工作区快照需另外标注并记录包校验值。
 
-发布优先使用已确认提交的版本。尚未提交时，明确标记为工作区快照，并记录基准提交、
-发布编号及压缩包 SHA256；不把工作区快照当作对应提交的完整内容。
-
-在仓库根目录执行以下 PowerShell，`$releaseId` 每次使用新的编号：
+仓库根目录的 PowerShell 示例：
 
 ```powershell
-$releaseId = '20261021-01'
+$releaseId = 'release-001' # 每次使用新编号
 $releaseArchive = Join-Path $env:TEMP "swms-$releaseId.tar.gz"
-tar -czf $releaseArchive backend/src backend/drizzle backend/bun.lock backend/package.json backend/tsconfig.json backend/drizzle.config.ts backend/.env.example frontend/dist deploy
+tar --exclude=deploy/generated -czf $releaseArchive backend/src backend/drizzle backend/bun.lock backend/package.json backend/tsconfig.json backend/drizzle.config.ts backend/.env.example frontend/dist deploy
 Get-FileHash $releaseArchive -Algorithm SHA256
 ```
 
-只打包列出的路径。`.env`、`.docs`、私钥、`.git`、本地数据库和 `node_modules` 均不在包内。
-上传压缩包后核对 `sha256sum` 与本机值一致，再解压到新的发布目录。
-该包包含 Linux 上安装后端依赖所需的锁文件，不能上传 Windows 的 `node_modules`。
+包内仅包含指定源码、迁移、锁文件、示例、前端 dist 和通用部署文件。
+生成配置目录需显式排除：Git 忽略规则不会自动作用于 tar。
+环境文件、密钥、证书、数据库、`.docs`、`.git` 和 Windows node_modules 不随包上传。
 
-## 准备发布目录（部署账号）
+## 发布目录与配置生成
 
-以下示例中的编号与压缩包名须保持一致：
+将发布包上传到部署账号自己的准备目录，核对 `sha256sum` 后，在 Bash 中执行：
 
 ```bash
-release_id=20261021-01
-release_dir=/srv/swms/releases/$release_id
+set -euo pipefail
+release_id=release-001
+release_dir="$APP_ROOT/releases/$release_id"
 test ! -e "$release_dir"
 mkdir "$release_dir"
 tar -xzf "$HOME/swms-bootstrap/swms-$release_id.tar.gz" -C "$release_dir"
-ln -s /srv/swms/shared/backend.env "$release_dir/backend/.env"
+ln -s "$APP_ROOT/shared/backend.env" "$release_dir/backend/.env"
 cd "$release_dir/backend"
-# 服务环境为 production，安装过程显式保留迁移工具所在的开发依赖。
-NODE_ENV=development /srv/swms/runtime/bun/bin/bun install --frozen-lockfile
-cp -an "$release_dir/frontend/dist/assets/." /srv/swms/assets/
-chmod 0755 "$release_dir" "$release_dir/frontend" "$release_dir/frontend/dist" /srv/swms/assets
-find "$release_dir/frontend/dist" /srv/swms/assets -type d -exec chmod 0755 {} +
-find "$release_dir/frontend/dist" /srv/swms/assets -type f -exec chmod 0644 {} +
+NODE_ENV=development "$APP_ROOT/runtime/bun/bin/bun" install --frozen-lockfile
+cp -a --update=none "$release_dir/frontend/dist/assets/." "$APP_ROOT/assets/"
+find "$release_dir/frontend/dist" "$APP_ROOT/assets" -type d -exec chmod 0755 {} +
+find "$release_dir/frontend/dist" "$APP_ROOT/assets" -type f -exec chmod 0644 {} +
 ```
 
-部署账号的 shell 如启用了 `set -e`，上述存在性保护会终止重复解压；交互执行时发现任一步失败应停止。
-依赖、资源全部准备好后再切换版本，避免安装失败影响正在运行的版本。
-
-## 第一次迁移、初始化与上线
-
-在新发布目录的 `backend` 中执行：
+安装时保留迁移工具所在的开发依赖。准备失败时停止，不切换 current。
+进入发布目录，用与首次准备一致的参数检查和生成配置。Python 3 按明确标记替换，不处理 Nginx 的 `$host` 等变量：
 
 ```bash
-/srv/swms/runtime/bun/bin/bun run db:migrate
-/srv/swms/runtime/bun/bin/bun run db:seed:projects
+cd "$release_dir"
+bash deploy/prepare-server.sh --user "$APP_USER" --domain "$APP_DOMAIN" --root "$APP_ROOT" --check
+APP_GROUP=$(id -gn "$APP_USER")
+umask 077
+python3 - "$APP_USER" "$APP_GROUP" "$APP_DOMAIN" "$APP_ROOT" <<'PY'
+from pathlib import Path
+import sys
+
+values = dict(zip(
+    ('__APP_USER__', '__APP_GROUP__', '__APP_DOMAIN__', '__APP_ROOT__'),
+    sys.argv[1:],
+))
+output = Path('deploy/generated')
+output.mkdir(mode=0o700, exist_ok=True)
+for source, target in (
+    ('deploy/nginx/swms.conf.template', 'swms.conf'),
+    ('deploy/systemd/swms-api.service.template', 'swms-api.service'),
+):
+    content = Path(source).read_text(encoding='utf-8')
+    for marker, value in values.items():
+        content = content.replace(marker, value)
+    assert '__APP_' not in content, '存在未替换标记'
+    (output / target).write_text(content, encoding='utf-8', newline='\n')
+PY
 ```
 
-第二条只在首次需要虚构演示数据时执行，创建身份账号、业务权限、虚构项目及月报。
-不需要演示账号时，改用 `db:seed` 和 `db:seed:business-permissions`。
-用户在自己的终端查看 `shared/backend.env` 中的初始化密码；不将其粘贴到聊天或提交仓库。
+实际配置保存在 `deploy/generated/`，不纳入 Git 或下次发布包。模板文件需先生成，不能直接安装。
+服务器现有配置保持原位；日常发布不以新生成的 HTTP 配置覆盖 Certbot 已配置的 HTTPS 站点。
 
-确认初始化成功后，由部署账号设置首次 `current`：
+## 首次迁移与启用
 
-```bash
-test ! -e /srv/swms/current
-ln -s "$release_dir" /srv/swms/current
-```
-
-再由管理员执行：
+在新版本 `backend` 执行 `bun run db:migrate`（使用上文的 Bun 完整路径）。
+如需虚构数据，再显式执行 `db:seed:projects`；仅管理员可用 `db:seed` 和 `db:seed:business-permissions`。
+密码仅由部署者在自己的终端查看共享配置。初始化成功后设置首次 current：
 
 ```bash
-sudo install -m 0644 /srv/swms/current/deploy/systemd/swms-api.service /etc/systemd/system/swms-api.service
+test ! -e "$APP_ROOT/current"
+ln -s "$release_dir" "$APP_ROOT/current"
+sudo install -m 0644 "$release_dir/deploy/generated/swms-api.service" /etc/systemd/system/swms-api.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now swms-api
-sudo systemctl status swms-api --no-pager
-curl --fail http://127.0.0.1:3000/health
+curl --retry 10 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:3000/health
 curl --fail --output /dev/null http://127.0.0.1:3000/docs
 
-# 首次安装专用站点；如果文件已存在，先检查差异，不覆盖 Certbot 修改后的 HTTPS 配置。
 test ! -e /etc/nginx/sites-available/swms
-sudo install -m 0644 /srv/swms/current/deploy/nginx/swms.conf /etc/nginx/sites-available/swms
+test ! -e /etc/nginx/sites-enabled/swms
+sudo install -m 0644 "$release_dir/deploy/generated/swms.conf" /etc/nginx/sites-available/swms
 sudo ln -s /etc/nginx/sites-available/swms /etc/nginx/sites-enabled/swms
 sudo nginx -t
 sudo systemctl reload nginx
-curl --fail -H 'Host: swms.sopak.space' http://127.0.0.1/health
-sudo certbot --nginx -d swms.sopak.space --redirect
+curl --retry 5 --retry-all-errors --retry-delay 1 --fail -H "Host: $APP_DOMAIN" http://127.0.0.1/health
+sudo certbot --nginx -d "$APP_DOMAIN" --redirect
 sudo certbot renew --dry-run
 ```
 
-Certbot 会交互询问邮箱及服务条款，由管理员完成。
-Nginx 配置有误时先修复再 reload；不要重写既有博客或默认站点配置。
-反向代理规则参考 <https://nginx.org/en/docs/http/ngx_http_proxy_module.html>，
-服务托管参考 <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html>。
+Nginx、Certbot（含 nginx 插件）、Python 3 需已安装。证书邮箱及条款由管理员在终端确认。
+中途失败时先核对停点，不重复首次脚本；Nginx 检查失败时不 reload。既有站点使用各自配置。
+参考：[Nginx 代理](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)、
+[systemd 服务](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html)。
 
-## 日常更新
+## 日常更新与备份
 
-1. 本地开发、检查、浏览器验收，确认文件清单和提交后由用户推送；记录发布提交号。
-2. 构建、打包、上传、校验 SHA256，按前文准备新发布目录及其依赖和静态资源。
-3. 记录 `readlink -f /srv/swms/current`，创建维护标记并停止后端，阻止备份后继续写入。
-4. 管理员备份数据库；保存上一版环境配置，环境文件备份仅放在私有备份目录。
-5. 在新版本 `backend` 执行 `db:migrate`。迁移失败时保持维护状态，先核对库状态。
-6. 原子切换 `current`，管理员启动后端；先从本机验证，再移除维护标记。
-7. 验收 HTTPS、登录与权限、月报审批、Excel；记录版本、时间、备份位置和结果。
+1. 本地检查、验收、提交和推送，记录版本；构建、上传并验证发布包。
+2. 准备新版本依赖与静态资源，记录 `readlink -f "$APP_ROOT/current"`。
+3. 涉及后端或数据库时，创建 `$APP_ROOT/maintenance` 并停止 swms-api，管理员备份数据库及共享环境配置。
+4. 在新版本执行正式迁移；失败则保持维护状态，核对库状态后处理。
+5. 建立 current.next 指向新目录，通过 `mv -Tf` 原子切换 current，再启动服务并检查健康。
+6. 验证通过后移除维护标记，验收 HTTPS、登录、权限、月报审批与 Excel，记录结果。
 
-维护与备份示例：
+管理员的数据库备份示例（变量作为参数显式传给 sudo 后的 Bash）：
 
 ```bash
-touch /srv/swms/maintenance
-sudo systemctl stop swms-api
-sudo bash -c 'set -euo pipefail; umask 077; backup_dir=/srv/swms/backups/$(date -u +%Y%m%dT%H%M%SZ); mkdir "$backup_dir"; mysqldump --single-transaction --routines --triggers --events --set-gtid-purged=OFF --no-tablespaces swms | gzip > "$backup_dir/swms.sql.gz"; gzip -t "$backup_dir/swms.sql.gz"; cp /srv/swms/shared/backend.env "$backup_dir/backend.env"; readlink -f /srv/swms/current > "$backup_dir/release.txt"; sha256sum "$backup_dir/swms.sql.gz" > "$backup_dir/SHA256SUMS"; chown -R Xxxhite:Xxxhite "$backup_dir"'
+sudo bash -s -- "$APP_ROOT" "$APP_USER" "$APP_GROUP" <<'SH'
+set -euo pipefail
+umask 077
+backup_dir="$1/backups/$(date -u +%Y%m%dT%H%M%SZ)"
+mkdir "$backup_dir"
+mysqldump --single-transaction --routines --triggers --events --set-gtid-purged=OFF --no-tablespaces swms | gzip > "$backup_dir/swms.sql.gz"
+gzip -t "$backup_dir/swms.sql.gz"
+cp "$1/shared/backend.env" "$backup_dir/backend.env"
+readlink -f "$1/current" > "$backup_dir/release.txt"
+sha256sum "$backup_dir/swms.sql.gz" > "$backup_dir/SHA256SUMS"
+chown -R "$2:$3" "$backup_dir"
+SH
 ```
 
-切换版本（部署账号，在新版本迁移成功后执行）：
+切换命令在部署账号执行，事先核对 current.next 不存在：
 
 ```bash
-test ! -e /srv/swms/current.next
-ln -s "$release_dir" /srv/swms/current.next
-mv -Tf /srv/swms/current.next /srv/swms/current
+test ! -e "$APP_ROOT/current.next"
+ln -s "$release_dir" "$APP_ROOT/current.next"
+mv -Tf "$APP_ROOT/current.next" "$APP_ROOT/current"
 sudo systemctl start swms-api
-curl --fail http://127.0.0.1:3000/health
-# 上一步成功且日志正常后再恢复业务请求。
-rm /srv/swms/maintenance
+curl --retry 10 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:3000/health
+rm "$APP_ROOT/maintenance"
 ```
 
-Nginx 静态目录会随 `current` 切换，日常代码更新无需重新覆盖 HTTPS 配置。
-服务文件变化时单独审阅并重新安装、`daemon-reload`；环境变化时先更新共享配置再重启。
-日常更新不重复生成迁移、不执行 `db:push`，不自动执行 seed 或清库测试。
+仅前端更新可保留原后端运行版本，备份旧前端及当前链接后切换；若新目录链接复用旧后端，须保留其被引用目录。
+日常代码更新不覆盖 Nginx HTTPS 配置，不重复 seed、生成迁移或运行 `db:push`。
+服务文件变动时另行审阅、安装并 daemon-reload；环境变量变化后再重启。
 
-## 回退与验证
+## 回退与验收
 
-仅代码变化或数据库与旧代码兼容时，在维护状态切回记录的旧发布目录并重启。
-数据库迁移执行后先核对兼容性；不假定切回代码会撤销数据库变化。
-需要恢复数据库时由管理员停服务、保留失败现场备份、核对原备份校验值，
-再导入备份并恢复匹配版本。恢复使用备份时点的数据，期间产生的数据需另外处理。
-上线后保留至少上一版代码、资源和数据库备份。
+数据库兼容时，在维护状态切回记录的旧目录并重启。需要恢复数据库时由管理员停服务，
+备份失败现场、校验原备份，再导入并恢复匹配版本；需另行处理备份时点之后的数据。
+保留至少上一版代码、旧哈希资源和数据库备份。
 
 ```bash
 sudo journalctl -u swms-api -n 100 --no-pager
-curl --fail https://swms.sopak.space/health
+curl --fail "https://$APP_DOMAIN/health"
 ss -ltn
 free -h
 ```
 
-确认 API 监听本机 3000、MySQL 监听本机 3306；通过已有安全组和防火墙维持网站与 SSH 入口。
-首次验收包括管理员登录、注册短密码提示、审核入口、项目列表与详情、月报、主管审批、真实 Excel 下载。
-目前文件上传属于后续阶段；实现后将文件目录放到 `shared` 并扩展备份、恢复和 Nginx 限制。
+验收包含登录注册、审核列表即时更新、各数据范围、项目月报与主管审批、真实 Excel 下载。
+文件上传实现后，文件目录放入 shared，并扩展备份恢复和上传限制。

@@ -1,5 +1,24 @@
 /** 审计动作编码沿用后端记录，中文字典同时用于表格显示和筛选选项。 */
 export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    'create-project': '登记项目',
+    'update-project': '修改项目',
+    'activate-project': '启用项目',
+    'delete-project': '删除草稿项目',
+    'save-contract': '保存合同',
+    'save-project-teams': '维护承担团队',
+    'save-service-points': '维护服务点',
+    'save-indicator': '保存指标',
+    'allocate-indicator': '调整指标目标',
+    'activate-indicator': '启用指标',
+    'delete-indicator': '删除草稿指标',
+    'save-monthly': '保存月报草稿',
+    'submit-monthly': '提交月报',
+    'delete-monthly': '删除月报草稿',
+    'request-monthly-change': '申请月报变更',
+    'withdraw-monthly-change': '撤回月报变更',
+    'approve-monthly-change': '批准月报变更',
+    'reject-monthly-change': '驳回月报变更',
+
     register: '提交注册申请',
     login: '登录',
     logout: '退出登录',
@@ -18,6 +37,10 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
 
 /** 被操作的数据类别，与人员角色或账号状态分别管理。 */
 export const AUDIT_ENTITY_TYPE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    project: '项目',
+    indicator: '指标',
+    monthly_report: '月报',
+    monthly_change: '月报变更',
     user: '用户',
     role: '角色',
     organization: '组织',

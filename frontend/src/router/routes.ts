@@ -20,7 +20,8 @@ export const menuTree: MenuNode[] = [
         path: '/service',
         title: '服务管理',
         children: [
-            { path: '/service/monitor', title: '指标监测端', permission: PERM.SERVICE_MONITOR },
+            { path: '/service/monitor', title: '指标监测', permission: PERM.SERVICE_MONITOR },
+            { path: '/service/monthly-reports', title: '月度填报', permission: PERM.MONTHLY_VIEW },
             {
                 path: '/service/archive',
                 title: '服务档案',
@@ -80,6 +81,7 @@ export const menuTree: MenuNode[] = [
     { path: '/activity', title: '活动管理', permission: PERM.ACTIVITY },
     { path: '/resource', title: '资源管理', permission: PERM.RESOURCE },
     { path: '/analysis', title: '数据分析', permission: PERM.ANALYSIS },
+    { path: '/approvals', title: '月报变更待办', permission: PERM.MONTHLY_APPROVE },
     { path: '/knowledge', title: '知识管理', permission: PERM.KNOWLEDGE },
     {
         path: '/system',
@@ -137,18 +139,31 @@ function flattenMenu(
 /** 为每个可见菜单节点生成路由；业务页面接入时在此替换对应占位组件。 */
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
     const pages: Record<string, RouteRecordRaw['component']> = {
+        '/project': () => import('@/views/project/index.vue'),
+        '/service/monitor': () => import('@/views/service/monitor/index.vue'),
+        '/service/monthly-reports': () => import('@/views/service/monthly-reports/index.vue'),
+        '/approvals': () => import('@/views/approval/index.vue'),
+        '/analysis': () => import('@/views/analysis/index.vue'),
         '/system/organizations': () => import('@/views/system/organizations/index.vue'),
         '/system/users': () => import('@/views/system/users/index.vue'),
         '/system/registrations': () => import('@/views/system/users/index.vue'),
         '/system/roles': () => import('@/views/system/roles/index.vue'),
         '/system/logs': () => import('@/views/system/audit/index.vue'),
     }
-    return flattenMenu(nodes).map(({ node, parents }) => ({
+    const routes: RouteRecordRaw[] = flattenMenu(nodes).map(({ node, parents }) => ({
         path: node.path,
         name: `menu:${node.path}`,
         component: pages[node.path] ?? (() => import('@/views/placeholder/ModulePlaceholder.vue')),
         meta: { title: node.title, parents },
     }))
+    if (routes.some((route) => route.path === '/project'))
+        routes.push({
+            path: '/project/:id',
+            name: 'ProjectDetail',
+            component: () => import('@/views/project/detail.vue'),
+            meta: { title: '项目详情', parents: ['项目管理'] },
+        })
+    return routes
 }
 
 /** 不需要登录的路由 */

@@ -1,2 +1,5 @@
 export * from "./identity"
 export * from "./audit"
+export * from "./project"
+export * from "./indicator"
+export * from "./approval"

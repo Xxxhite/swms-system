@@ -13,6 +13,19 @@ interface MockAccount {
 }
 
 const allPermissions = Object.values(PERM)
+const readBusiness = [
+    PERM.PROJECT,
+    PERM.PROJECT_RECORD_VIEW,
+    PERM.SERVICE_MONITOR,
+    PERM.INDICATOR_VIEW,
+    PERM.MONTHLY_VIEW,
+]
+const reportBusiness = [
+    PERM.MONTHLY_CREATE,
+    PERM.MONTHLY_UPDATE,
+    PERM.MONTHLY_SUBMIT,
+    PERM.MONTHLY_DELETE,
+]
 
 const accounts: Record<string, MockAccount> = {
     admin: {
@@ -54,7 +67,18 @@ const accounts: Record<string, MockAccount> = {
             teamId: null,
             teamName: '总部',
             dataScope: 'ALL',
-            permissions: allPermissions.filter((code) => code !== PERM.SYSTEM),
+            permissions: [
+                ...readBusiness,
+                PERM.MONTHLY_APPROVE,
+                PERM.ANALYSIS,
+                PERM.REPORT_VIEW,
+                PERM.REPORT_EXPORT,
+                PERM.SERVICE_ARCHIVE,
+                PERM.SERVICE_APPROVE,
+                PERM.ACTIVITY,
+                PERM.RESOURCE,
+                PERM.KNOWLEDGE,
+            ],
         },
     },
     leader: {
@@ -76,6 +100,9 @@ const accounts: Record<string, MockAccount> = {
             teamName: '海珠团队',
             dataScope: 'TEAM',
             permissions: [
+                ...readBusiness,
+                ...reportBusiness,
+                PERM.MONTHLY_APPROVE,
                 PERM.SERVICE_MONITOR,
                 PERM.SERVICE_ARCHIVE,
                 PERM.SERVICE_APPROVE,
@@ -104,7 +131,7 @@ const accounts: Record<string, MockAccount> = {
             teamId: 11,
             teamName: '海珠团队',
             dataScope: 'SELF',
-            permissions: [PERM.SERVICE_ARCHIVE, PERM.KNOWLEDGE],
+            permissions: [...readBusiness, ...reportBusiness, PERM.SERVICE_ARCHIVE, PERM.KNOWLEDGE],
         },
     },
 }

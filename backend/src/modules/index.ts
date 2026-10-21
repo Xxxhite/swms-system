@@ -1,3 +1,7 @@
+import { createProjectRoutes } from "./project/project.route"
+import { createServiceRoutes } from "./service/service.route"
+import { createApprovalRoutes } from "./approval/approval.route"
+import { createAnalysisRoutes } from "./analysis/analysis.route"
 import type { AnyElysia } from "elysia"
 import { createAuthRoutes } from "./auth/auth.route"
 import { createIdentityRoutes } from "./identity/identity.route"
@@ -20,4 +24,8 @@ export const modules: AnyElysia[] = [
   createAuthRoutes(),
   createIdentityRoutes(),
   createSystemRoutes(),
+  createProjectRoutes(),
+  createServiceRoutes(),
+  createApprovalRoutes(),
+  createAnalysisRoutes(),
 ]

@@ -1,3 +1,4 @@
+import { seedProjects, grantBusinessPermissions } from "@/modules/project/project.seed.repository"
 import { db, pool } from "./index"
 import { seedIdentity } from "@/modules/identity/identity.seed.repository"
 
@@ -10,7 +11,16 @@ try {
       ? { demoPassword: process.env.SEED_DEMO_PASSWORD ?? "" }
       : {}),
   })
-  console.log("身份初始化完成；已有账号和密码保持原样")
+  if (process.argv.includes("--business-permissions")) await grantBusinessPermissions(db)
+  if (process.argv.includes("--projects"))
+    await seedProjects(db, process.env.SEED_ADMIN_USERNAME ?? "admin")
+  console.log(
+    process.argv.includes("--projects")
+      ? "身份与虚构项目初始化完成；已有账号和密码保持原样"
+      : process.argv.includes("--business-permissions")
+        ? "业务权限补充完成；已有授权保持原样"
+        : "身份初始化完成；已有账号和密码保持原样",
+  )
 } finally {
   await pool.end()
 }

@@ -1,3 +1,9 @@
+import { registerProjectTests } from "@/modules/project/project.integration"
+import { ProjectRepository } from "@/modules/project/project.repository"
+import { createProjectRoutes } from "@/modules/project/project.route"
+import { createServiceRoutes } from "@/modules/service/service.route"
+import { createApprovalRoutes } from "@/modules/approval/approval.route"
+import { createAnalysisRoutes } from "@/modules/analysis/analysis.route"
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
 import { Elysia } from "elysia"
 import mysql from "mysql2/promise"
@@ -69,6 +75,17 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "approval_records",
+        "approval_tasks",
+        "approval_instances",
+        "monthly_report_changes",
+        "monthly_reports",
+        "team_indicator_targets",
+        "project_indicators",
+        "project_teams",
+        "project_service_points",
+        "project_contracts",
+        "projects",
         "audit_logs",
         "user_managed_orgs",
         "user_extra_permissions",
@@ -109,6 +126,10 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
           createAuthRoutes(auth),
           createIdentityRoutes(identities),
           createSystemRoutes(identities),
+          createProjectRoutes(new ProjectRepository(database), identities),
+          createServiceRoutes(new ProjectRepository(database), identities),
+          createApprovalRoutes(new ProjectRepository(database), identities),
+          createAnalysisRoutes(new ProjectRepository(database), identities),
         ]),
       )
       .compile()
@@ -146,7 +167,16 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     expect(profile.body.data.permissions).toEqual([])
     expect(profile.body.data.roles).toEqual([])
     expect(profile.body.data.passwordHash).toBeUndefined()
-    for (const path of ["/users", "/roles", "/orgs/tree", "/system/logs"])
+    for (const path of [
+      "/users",
+      "/roles",
+      "/orgs/tree",
+      "/system/logs",
+      "/projects",
+      "/service/indicator-progress",
+      "/approvals/tasks",
+      "/analysis/monthly-warnings",
+    ])
       expect((await request(path, "GET", pendingToken)).body.code).toBe(2003)
   })
 
@@ -588,4 +618,5 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     expect((await request("/dictionaries/constructor", "GET", adminToken)).body.code).toBe(3000)
     expect((await request("/dictionaries/toString", "GET", adminToken)).body.code).toBe(3000)
   })
+  registerProjectTests(() => ({ database, handle }))
 })

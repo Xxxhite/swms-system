@@ -1,0 +1,165 @@
+export interface BusinessQuery {
+    page?: number
+    pageSize?: number
+    keyword?: string
+    category?: string
+    status?: string
+    serviceFieldCode?: string
+    serviceArea?: string
+    teamId?: number
+    projectId?: number
+    indicatorId?: number
+    month?: string
+    asOfDate?: string
+    warningLevel?: string
+}
+export interface ProjectInput {
+    code: string
+    name: string
+    category: 'CONTRACT_PACKAGE' | 'HEADQUARTERS' | 'FUND'
+    ownerOrgId: number
+    directorId: number
+    supervisorId: number
+    serviceFieldCode: string
+}
+export interface ContractInput {
+    contractNo?: string
+    partnerName: string
+    startDate: string
+    endDate: string
+    amount: string
+    serviceArea: string
+    note?: string
+}
+export interface Allocation {
+    teamId: number
+    targetValue: string
+}
+export interface Indicator {
+    id: number
+    projectId: number
+    name: string
+    unit: string
+    definition: string
+    targetValue?: string
+    status: 'DRAFT' | 'ACTIVE'
+    version: number
+    allocations: Allocation[]
+}
+export interface Project extends ProjectInput {
+    id: number
+    status: 'DRAFT' | 'ACTIVE'
+    version: number
+    statisticsScope: 'PROJECT' | 'TEAM'
+    visibleTeamIds: number[]
+    contract: ContractInput | null
+    teams: Array<{ teamId: number; reporterId: number; teamName: string; reporterName: string }>
+    servicePoints: Array<{ id?: number; name: string; address?: string; note?: string }>
+    indicators: Indicator[]
+}
+export interface Candidates {
+    projects?: Array<{ id: number; name: string }>
+    organizations: Array<{ id: number; name: string; type: string }>
+    users: Array<{ id: number; name: string; username: string; teamId: number | null }>
+    serviceFields: Array<{ code: string; name: string }>
+}
+export interface MonthlyInput {
+    indicatorId: number
+    teamId: number
+    month: string
+    actualValue: string
+    note?: string
+}
+export interface ApprovalInstance {
+    id: number
+    applicantId: number
+    status: string
+    businessSnapshot: Record<string, unknown>
+    workflowSnapshot: unknown
+    tasks?: ApprovalTask[]
+    records?: Array<{
+        id: number
+        action: string
+        comment: string | null
+        createdAt: string
+        actorId: number
+        actorName?: string
+    }>
+}
+export interface ApprovalTask {
+    id: number
+    instanceId: number
+    approverId: number
+    status: string
+    version: number
+    instance?: ApprovalInstance
+}
+export interface Monthly extends MonthlyInput {
+    canMaintain: boolean
+    id: number
+    status: 'DRAFT' | 'SUBMITTED' | 'VOID'
+    version: number
+    submittedAt: string | null
+    projectId: number
+    projectName: string
+    indicatorName: string
+    teamName: string
+    unit: string
+    changes: Array<{
+        id: number
+        operation: string
+        reason: string
+        pendingReportId: number | null
+        instance: ApprovalInstance
+    }>
+}
+export interface Progress {
+    canReport?: boolean
+    projectId: number
+    projectName: string
+    indicatorId: number
+    indicatorName: string
+    unit: string
+    definition: string
+    teamId: number | null
+    teamName: string
+    statisticsScope: 'PROJECT' | 'TEAM' | 'SELF'
+    targetValue: string
+    monthlyValue: string
+    cumulative: string
+    completionRate: number | null
+    warningLevel: 'green' | 'yellow' | 'orange' | 'red' | null
+    overdue: boolean
+    notStarted: boolean
+    endDate: string
+    asOfDate: string
+    month: string
+    calculationNote: string
+}
+/** 移除空筛选项；数字零仍保留，避免把清空条件发送为字符串空值。 */
+export function queryParams(query: BusinessQuery): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(query).filter(([, v]) => v !== '' && v != null))
+}
+export const projectCategories = {
+    CONTRACT_PACKAGE: '合同包',
+    HEADQUARTERS: '总部项目',
+    FUND: '基金项目',
+}
+export const businessStatus: Record<string, string> = {
+    DRAFT: '草稿',
+    ACTIVE: '已启用',
+    SUBMITTED: '已提交',
+    VOID: '已撤销',
+    PENDING: '待审批',
+    IN_REVIEW: '审批中',
+    APPROVED: '已通过',
+    REJECTED: '已驳回',
+    CANCELLED: '已撤回',
+    CORRECT: '更正',
+    DELETE: '撤销',
+    RESTORE: '恢复',
+    SUBMIT: '提交',
+    APPROVE: '通过',
+    REJECT: '驳回',
+    WITHDRAW: '撤回',
+}

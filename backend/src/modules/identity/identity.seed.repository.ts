@@ -1,3 +1,4 @@
+import { businessRoleDefaults } from "@/modules/project/business-permissions"
 import { eq } from "drizzle-orm"
 import type { Database } from "./identity.repository"
 import * as s from "@/db/schema"
@@ -51,7 +52,17 @@ export async function seedIdentity(
     const root = await org("headquarters", "温馨社工总部", "HEADQUARTERS", null)
     await org("unassigned", "待分配人员", "DEPARTMENT", root)
     const all = permissionCatalog.map((item) => item.code)
-    const business = all.filter((code) => !code.startsWith("system:"))
+    const business = [
+      "service:monitor:view",
+      "service:archive:view",
+      "service:archive:approve",
+      "project:view",
+      "activity:view",
+      "resource:view",
+      "analysis:view",
+      "knowledge:view",
+      "knowledge:document:download",
+    ]
     const definitions = [
       { code: "admin", name: "机构管理员", permissions: all },
       {
@@ -74,6 +85,11 @@ export async function seedIdentity(
         permissions: ["service:archive:view", "knowledge:view", "knowledge:document:download"],
       },
       { code: "intern", name: "实习生", permissions: ["knowledge:view"] },
+      {
+        code: "project_manager",
+        name: "项目总监",
+        permissions: businessRoleDefaults.project_manager!,
+      },
     ]
     const roleIds = new Map<string, number>()
     for (const definition of definitions) {
@@ -86,9 +102,20 @@ export async function seedIdentity(
         await tx
           .insert(s.rolePermissions)
           .values(
-            definition.permissions.map((permissionCode) => ({ roleId: role.id, permissionCode })),
+            [
+              ...new Set([
+                ...definition.permissions,
+                ...(businessRoleDefaults[definition.code] ?? []),
+              ]),
+            ].map((permissionCode) => ({ roleId: role.id, permissionCode })),
           )
       }
+      if (definition.code === "admin")
+        for (const permissionCode of all)
+          await tx
+            .insert(s.rolePermissions)
+            .values({ roleId: role.id, permissionCode })
+            .onDuplicateKeyUpdate({ set: { permissionCode } })
       roleIds.set(role.code, role.id)
     }
     /** 按账号复用或新增种子人员；新增时设置角色及范围，管理员账号另校验已有身份。 */
@@ -162,6 +189,16 @@ export async function seedIdentity(
         "ALL",
         demoHash,
         "position-5",
+      )
+      await person(
+        "project_manager",
+        "演示项目总监",
+        "project_manager",
+        root,
+        supervisor,
+        "ALL",
+        demoHash,
+        "position-6",
       )
       await person(
         "department",

@@ -60,7 +60,15 @@ async function handleCommand(command: string): Promise<void> {
                     >
                         工作台
                     </el-breadcrumb-item>
-                    <el-breadcrumb-item v-for="(item, index) in breadcrumb" :key="index">
+                    <el-breadcrumb-item
+                        v-for="(item, index) in breadcrumb"
+                        :key="index"
+                        :to="
+                            route.name === 'ProjectDetail' && item === '项目管理'
+                                ? '/project'
+                                : undefined
+                        "
+                    >
                         {{ item }}
                     </el-breadcrumb-item>
                 </el-breadcrumb>

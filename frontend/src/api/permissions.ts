@@ -3,12 +3,28 @@
  * 统一前端功能权限标识；后端接入时需对齐权限编码并独立执行授权校验。
  */
 export const PERM = {
+    PROJECT_RECORD_VIEW: 'project:record:view',
+    PROJECT_CREATE: 'project:record:create',
+    PROJECT_UPDATE: 'project:record:update',
+    PROJECT_DELETE: 'project:record:delete',
+    INDICATOR_VIEW: 'service:indicator:view',
+    INDICATOR_MANAGE: 'service:indicator:manage',
+    INDICATOR_ALLOCATE: 'service:indicator:allocate',
+    MONTHLY_CREATE: 'service:monthly:create',
+    MONTHLY_UPDATE: 'service:monthly:update',
+    MONTHLY_SUBMIT: 'service:monthly:submit',
+    MONTHLY_DELETE: 'service:monthly:delete',
+    REPORT_VIEW: 'analysis:report:view',
+    REPORT_EXPORT: 'analysis:report:export',
+
     /** 服务管理 — 指标监测端：合同包立项、指标设置、完成情况与预警 */
     SERVICE_MONITOR: 'service:monitor:view',
     /** 服务管理 — 执行端：9 类服务档案 */
     SERVICE_ARCHIVE: 'service:archive:view',
     /** 档案审批（团队主任初审、督导审批） */
     SERVICE_APPROVE: 'service:archive:approve',
+    MONTHLY_VIEW: 'service:monthly:view',
+    MONTHLY_APPROVE: 'service:monthly:approve',
     PROJECT: 'project:view',
     ACTIVITY: 'activity:view',
     RESOURCE: 'resource:view',

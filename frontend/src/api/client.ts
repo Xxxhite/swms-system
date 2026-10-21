@@ -55,7 +55,20 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
     })
 
     instance.interceptors.response.use(
-        (response) => {
+        async (response) => {
+            if (response.config.responseType === 'blob' && response.data instanceof Blob) {
+                if (
+                    String(response.headers['content-type'] ?? '').includes(
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    )
+                )
+                    return response
+                try {
+                    response.data = JSON.parse(await response.data.text())
+                } catch {
+                    /* 交给统一格式校验 */
+                }
+            }
             const body: unknown = response.data
             if (!isApiResponse(body)) {
                 const message = '接口响应格式不正确'
@@ -71,12 +84,24 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
                 )
                 return Promise.reject(new Error(message))
             }
+            if (response.config.responseType === 'blob') {
+                const message = '下载未返回有效的 Excel 文件'
+                report(message)
+                return Promise.reject(new Error(message))
+            }
             return response
         },
-        (error: unknown) => {
+        async (error: unknown) => {
             if (!axios.isAxiosError(error)) {
                 report('请求失败')
                 return Promise.reject(error)
+            }
+            if (error.response?.data instanceof Blob) {
+                try {
+                    error.response.data = JSON.parse(await error.response.data.text())
+                } catch {
+                    /* 保留 HTTP 错误提示 */
+                }
             }
             const body: unknown = error.response?.data
             const status = error.response?.status
@@ -111,6 +136,10 @@ export function createHttp(instance: AxiosInstance) {
         return (await promise).data.data as T
     }
     return {
+        /** 下载受控 Excel，成功才返回文件，JSON 错误交给响应拦截器。 */
+        async download(url: string, params?: Record<string, unknown>): Promise<Blob> {
+            return (await instance.get<Blob>(url, { params, responseType: 'blob' })).data
+        },
         /** 发送带查询参数的 GET 请求并返回业务数据。 */
         get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
             return unwrap<T>(instance.get<ApiResponse<T>>(url, { params }))

@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { approvalApi } from '@/api/modules/approval'
+import { serviceApi } from '@/api/modules/service'
+import { analysisApi } from '@/api/modules/analysis'
 
 import { useMock } from '@/api/config'
 import { useUserStore } from '@/stores/user'
@@ -11,6 +14,32 @@ const teamName = computed(
     () => userStore.profile?.teamName?.trim() || userStore.profile?.orgName || '未设置',
 )
 const roleNames = computed(() => userStore.profile?.roleNames.join('、') || '未设置')
+const pendingCount = ref(0),
+    redCount = ref(0)
+/** 工作台只查询已授权的统计入口；业务异常由请求层提示。 */
+onMounted(async () => {
+    if (useMock) return
+    if (userStore.hasPermission('service:monthly:approve')) {
+        try {
+            pendingCount.value = (await approvalApi.tasks({ status: 'PENDING', pageSize: 1 })).total
+        } catch {
+            /* 请求层提示 */
+        }
+    }
+    if (
+        userStore.hasPermission('service:indicator:view') ||
+        userStore.hasPermission('analysis:report:view')
+    ) {
+        try {
+            const api = userStore.hasPermission('service:indicator:view')
+                ? serviceApi.progress
+                : analysisApi.warnings
+            redCount.value = (await api({ warningLevel: 'red', pageSize: 1 })).total
+        } catch {
+            /* 请求层提示 */
+        }
+    }
+})
 </script>
 
 <template>
@@ -35,6 +64,18 @@ const roleNames = computed(() => userStore.profile?.roleNames.join('、') || '�
             </dl>
         </section>
 
+        <div v-if="!useMock" class="page-actions">
+            <el-button
+                v-if="userStore.hasPermission('service:monthly:approve')"
+                @click="$router.push('/approvals')"
+                >月报变更待办 {{ pendingCount }} 条</el-button
+            >
+            <el-button
+                v-if="userStore.hasPermission('service:indicator:view')"
+                @click="$router.push('/service/monitor')"
+                >红色预警 {{ redCount }} 条</el-button
+            >
+        </div>
         <section aria-labelledby="shortcuts-title">
             <h2 id="shortcuts-title" class="dashboard__section-title">常用功能</h2>
             <div v-if="userStore.menus.length" class="dashboard__shortcuts">

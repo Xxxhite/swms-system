@@ -1,3 +1,4 @@
+import { businessPermissionEntries } from "@/modules/project/business-permissions"
 export const positions = [
   "实习生",
   "助理",
@@ -44,6 +45,7 @@ export const dictionaries = {
 }
 
 export const permissionCatalog = [
+  ...businessPermissionEntries,
   ["system:view", "系统管理"],
   ["system:org:manage", "管理组织"],
   ["system:user:view", "查询人员"],

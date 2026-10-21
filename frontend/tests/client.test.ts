@@ -145,3 +145,49 @@ describe('请求与错误契约', () => {
         expect(messages).toEqual([])
     })
 })
+
+describe('受控 Excel 下载', () => {
+    test('成功文件保留 Blob，附加认证头', async () => {
+        const file = new Blob(['xlsx'])
+        const { http, messages } = fixture(async (config) => {
+            expect(config.headers.Authorization).toBe('Bearer test-token')
+            return {
+                ...response(config, file),
+                headers: {
+                    'content-type':
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                },
+            }
+        })
+        expect(await http.download('/analysis/exports/indicators')).toBe(file)
+        expect(messages).toEqual([])
+    })
+    test('下载收到 JSON 认证失败时清理会话，不返回伪文件', async () => {
+        const { http, messages, expired } = fixture(async (config) =>
+            response(
+                config,
+                new Blob([JSON.stringify({ code: 2001, message: '登录已过期', data: null })]),
+            ),
+        )
+        await expect(http.download('/analysis/exports/indicators')).rejects.toThrow('登录已过期')
+        expect(expired()).toBe(1)
+        expect(messages).toEqual(['登录已过期'])
+    })
+    test('HTTP 错误 Blob 仍解析业务提示', async () => {
+        const { http, messages } = fixture(async (config) => {
+            throw new AxiosError(
+                'Forbidden',
+                AxiosError.ERR_BAD_RESPONSE,
+                config,
+                undefined,
+                response(
+                    config,
+                    new Blob([JSON.stringify({ code: 2003, message: '无导出权限', data: null })]),
+                    403,
+                ),
+            )
+        })
+        await expect(http.download('/analysis/exports/indicators')).rejects.toThrow()
+        expect(messages).toEqual(['无导出权限'])
+    })
+})

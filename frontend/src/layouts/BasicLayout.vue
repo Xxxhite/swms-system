@@ -46,13 +46,15 @@ async function handleCommand(command: string): Promise<void> {
             <router-link to="/dashboard" class="layout__brand" title="返回工作台">
                 温馨社工服务管理系统
             </router-link>
-            <el-menu :default-active="activeMenu" router class="layout__menu">
-                <el-menu-item index="/dashboard">工作台</el-menu-item>
-                <sidebar-item v-for="item in userStore.menus" :key="item.path" :node="item" />
-            </el-menu>
+            <el-scrollbar class="layout__sidebar-scrollbar">
+                <el-menu :default-active="activeMenu" router class="layout__menu">
+                    <el-menu-item index="/dashboard">工作台</el-menu-item>
+                    <sidebar-item v-for="item in userStore.menus" :key="item.path" :node="item" />
+                </el-menu>
+            </el-scrollbar>
         </el-aside>
 
-        <el-container>
+        <el-container class="layout__body">
             <el-header class="layout__header">
                 <el-breadcrumb separator="/">
                     <el-breadcrumb-item
@@ -92,7 +94,9 @@ async function handleCommand(command: string): Promise<void> {
             </el-header>
 
             <el-main class="layout__main">
-                <router-view />
+                <el-scrollbar class="layout__content-scrollbar" view-class="layout__content">
+                    <router-view />
+                </el-scrollbar>
             </el-main>
         </el-container>
     </el-container>
@@ -106,6 +110,7 @@ async function handleCommand(command: string): Promise<void> {
 .layout__aside {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     background-color: var(--swms-sidebar-bg);
 }
 
@@ -131,6 +136,17 @@ async function handleCommand(command: string): Promise<void> {
     outline-offset: -2px;
 }
 
+/* flex 子项允许缩小到剩余高度，滚动由 ElScrollbar 统一处理。 */
+.layout__sidebar-scrollbar {
+    flex: 1;
+    min-height: 0;
+}
+
+.layout__body {
+    min-width: 0;
+    min-height: 0;
+}
+
 .layout__menu {
     --el-menu-bg-color: var(--swms-sidebar-bg);
     --el-menu-text-color: var(--swms-sidebar-text);
@@ -138,8 +154,6 @@ async function handleCommand(command: string): Promise<void> {
     --el-menu-active-color: var(--swms-sidebar-active);
     --el-menu-hover-bg-color: var(--swms-sidebar-hover);
 
-    flex: 1;
-    overflow-y: auto;
     border-right: none;
 }
 
@@ -169,6 +183,19 @@ async function handleCommand(command: string): Promise<void> {
 
 .layout__main {
     min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
     background-color: var(--el-bg-color-page);
+}
+
+.layout__content-scrollbar {
+    height: 100%;
+}
+
+:deep(.layout__content) {
+    min-height: 100%;
+    padding: var(--el-main-padding);
+    box-sizing: border-box;
 }
 </style>

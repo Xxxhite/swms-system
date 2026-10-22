@@ -26,6 +26,8 @@ body,
 }
 
 body {
+    /* 页面滚动交由根组件或业务布局的 ElScrollbar，避免浏览器再产生一层滚动条。 */
+    overflow: hidden;
     background-color: var(--el-bg-color-page);
     color: var(--el-text-color-primary);
     font-size: var(--el-font-size-base);

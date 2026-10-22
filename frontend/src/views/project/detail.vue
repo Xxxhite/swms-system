@@ -39,7 +39,7 @@ const contract = reactive<ContractInput>({
     serviceArea: '',
     note: '',
 })
-const teams = ref<Array<{ teamId: number; reporterId: number }>>([]),
+const teams = ref<Array<{ teamId?: number; reporterId?: number }>>([]),
     points = ref<Project['servicePoints']>([])
 const canManage = computed(
     () =>
@@ -158,7 +158,15 @@ function saveContract() {
     void operate(() => projectApi.contract(project.value!, contract))
 }
 function saveTeams() {
-    void operate(() => projectApi.teams(project.value!, teams.value))
+    const selectedTeams: Array<{ teamId: number; reporterId: number }> = []
+    for (const [index, team] of teams.value.entries()) {
+        if (!team.teamId || !team.reporterId) {
+            ElMessage.warning(`请完整选择第 ${index + 1} 行的承担团队和填报负责人`)
+            return
+        }
+        selectedTeams.push({ teamId: team.teamId, reporterId: team.reporterId })
+    }
+    void operate(() => projectApi.teams(project.value!, selectedTeams))
 }
 function savePoints() {
     void operate(() => projectApi.points(project.value!, points.value))
@@ -256,6 +264,7 @@ onMounted(load)
                         v-model="team.teamId"
                         :disabled="!has('project:record:update')"
                         placeholder="承担团队"
+                        @change="team.reporterId = undefined"
                     >
                         <el-option
                             v-for="o in candidates.organizations.filter((o) => o.type === 'TEAM')"
@@ -266,7 +275,7 @@ onMounted(load)
                     </el-select>
                     <el-select
                         v-model="team.reporterId"
-                        :disabled="!has('project:record:update')"
+                        :disabled="!has('project:record:update') || !team.teamId"
                         placeholder="填报负责人"
                         filterable
                     >
@@ -287,9 +296,7 @@ onMounted(load)
                     </el-button>
                 </div>
                 <div v-if="has('project:record:update')" class="page-actions">
-                    <el-button @click="teams.push({ teamId: 0, reporterId: 0 })">
-                        添加团队
-                    </el-button>
+                    <el-button @click="teams.push({})">添加团队</el-button>
                     <el-button type="primary" :loading="busy" @click="saveTeams()">
                         保存团队
                     </el-button>

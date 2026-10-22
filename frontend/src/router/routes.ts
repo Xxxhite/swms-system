@@ -28,16 +28,6 @@ export const menuTree: MenuNode[] = [
                 permission: PERM.SERVICE_ARCHIVE,
                 children: [
                     {
-                        path: '/service/archive/case',
-                        title: '专-个案',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
-                        path: '/service/archive/group',
-                        title: '专-小组',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
                         path: '/service/archive/activity',
                         title: '专-活动',
                         permission: PERM.SERVICE_ARCHIVE,

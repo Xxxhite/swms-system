@@ -8,8 +8,12 @@ describe('菜单权限', () => {
         const menu = filterMenuTree(menuTree, [PERM.SERVICE_ARCHIVE, PERM.KNOWLEDGE])
         expect(menu.map((item) => item.path)).toEqual(['/service', '/knowledge'])
         expect(menu[0]?.children?.map((item) => item.path)).toEqual(['/service/archive'])
-        expect(menu[0]?.children?.[0]?.children).toHaveLength(9)
-        expect(menuToRoutes(menu).some((route) => route.path === '/system')).toBe(false)
+        expect(menu[0]?.children?.[0]?.children).toHaveLength(7)
+        const paths = menuToRoutes(menu).map((route) => route.path)
+        expect(paths).not.toContain('/service/archive/case')
+        expect(paths).not.toContain('/service/archive/group')
+        expect(paths).toContain('/service/archive/activity')
+        expect(paths).not.toContain('/system')
     })
 
     test('没有权限时不留下空父菜单', () => {

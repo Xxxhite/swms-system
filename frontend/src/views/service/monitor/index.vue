@@ -225,7 +225,11 @@ onMounted(async () => {
                 <!-- @vue-generic {Progress} -->
                 <el-table-column label="预警" width="180" fixed="right">
                     <template #default="{ row }">
-                        <el-tag v-if="row.warningLevel" :type="warningTypes[row.warningLevel]">
+                        <el-tag
+                            v-if="row.warningLevel"
+                            :type="warningTypes[row.warningLevel]"
+                            :class="{ 'warning-tag--yellow': row.warningLevel === 'yellow' }"
+                        >
                             {{ warningLabels[row.warningLevel] }}
                         </el-tag>
                         <span v-else>本人局部数据</span>
@@ -248,5 +252,12 @@ onMounted(async () => {
 <style scoped>
 .notice {
     margin-bottom: 20px;
+}
+
+/* 复用 ElTag 预设尺寸与外观，只覆盖黄色预警的三项颜色变量。 */
+.warning-tag--yellow {
+    --el-tag-text-color: var(--swms-warning-yellow-text);
+    --el-tag-bg-color: var(--swms-warning-yellow-bg);
+    --el-tag-border-color: var(--swms-warning-yellow-border);
 }
 </style>

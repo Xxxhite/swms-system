@@ -4,11 +4,15 @@
  * 使用 html:root 提高优先级，确保覆盖 Element Plus 默认变量。
  */
 html:root {
+    /* 字号：页面／卡片及登录注册标题、工作台欢迎标题、正文与组件基础文字。 */
     --swms-font-size-title: 18px;
     --swms-font-size-welcome: 24px;
     --el-font-size-base: 14px;
+
+    /* 主色：主要按钮、链接、选中项与焦点边框；RGB 形式供带透明度的效果使用。 */
     --el-color-primary: #1f7a6e;
     --el-color-primary-rgb: 31, 122, 110;
+    /* 浅色阶供悬停、禁用及浅底组件使用；深色阶供按下状态使用。 */
     --el-color-primary-light-3: #62a29a;
     --el-color-primary-light-5: #8fbcb7;
     --el-color-primary-light-7: #bcd7d4;
@@ -16,26 +20,37 @@ html:root {
     --el-color-primary-light-9: #e9f2f1;
     --el-color-primary-dark-2: #196258;
 
+    /* 指标监测和月度预警表的黄色 ElTag：依次为文字、浅底、边框；橙色沿用 warning。 */
+    --swms-warning-yellow-text: #dca42c;
+    --swms-warning-yellow-bg: #fffbe6;
+    --swms-warning-yellow-border: #f5e6a3;
+
+    /* 页面底色、卡片／组件基础底色、下拉框／弹出层底色。 */
     --el-bg-color-page: #f4f8f7;
     --el-bg-color: #ffffff;
     --el-bg-color-overlay: #ffffff;
 
+    /* 文字层级：标题／重要信息、常规正文、辅助说明、占位提示、禁用内容。 */
     --el-text-color-primary: #1f2d2b;
     --el-text-color-regular: #4b5f5b;
     --el-text-color-secondary: #5f736e;
     --el-text-color-placeholder: #8aa19b;
     --el-text-color-disabled: #b3c3be;
 
+    /* 边框由标准到更浅，供表单控件、卡片、表格分隔线等组件预设使用。 */
     --el-border-color: #cfdfda;
     --el-border-color-light: #d9e7e3;
     --el-border-color-lighter: #e5efec;
     --el-border-color-extra-light: #eff6f4;
 
+    /* 填充色由标准到更浅，供控件底色、悬停行及浅色内容区域等组件预设使用。 */
     --el-fill-color: #eef4f2;
     --el-fill-color-light: #f0f6f4;
     --el-fill-color-lighter: #f7faf9;
     --el-fill-color-extra-light: #fbfdfc;
 
+    /* 侧栏：背景、菜单文字、选中／悬停文字与焦点描边、菜单悬停背景。 */
+    /* bg 与 hover 同时构成登录页渐变背景；bg 也用于 404 页按钮焦点描边。 */
     --swms-sidebar-bg: #173b3f;
     --swms-sidebar-text: #cfe3df;
     --swms-sidebar-active: #e9c46a;

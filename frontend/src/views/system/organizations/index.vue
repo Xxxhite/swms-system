@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useTableSort, type SortQuery } from '@/utils/tableSort'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
@@ -8,7 +9,14 @@ import { identityApi } from '@/api/modules/identity'
 import type { Organization } from '@/api/types'
 import { organizationTree } from '../shared'
 const rows = ref<Organization[]>([])
-const tree = computed(() => organizationTree(rows.value))
+const sortQuery = reactive<SortQuery>({})
+const { setTableRef, defaultSort, onSortChange } = useTableSort(
+    sortQuery,
+    'sortOrder',
+    'ascending',
+    () => {},
+)
+const tree = computed(() => organizationTree(rows.value, sortQuery))
 const dialog = ref(false)
 const busy = ref(false)
 const selectedId = ref<number | null>(null)
@@ -116,11 +124,18 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <el-table :data="tree" row-key="id" default-expand-all>
+            <el-table
+                :ref="setTableRef"
+                :data="tree"
+                row-key="id"
+                default-expand-all
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {Organization} -->
-                <el-table-column prop="name" label="组织名称" min-width="180" />
+                <el-table-column prop="name" sortable="custom" label="组织名称" min-width="180" />
                 <!-- @vue-generic {Organization} -->
-                <el-table-column prop="code" label="编码" min-width="140" />
+                <el-table-column prop="code" sortable="custom" label="编码" min-width="140" />
                 <!-- @vue-generic {Organization} -->
                 <el-table-column label="类型" width="100">
                     <template #default="{ row }">
@@ -133,6 +148,8 @@ onMounted(load)
                         {{ row.status === 'ACTIVE' ? '启用' : '停用' }}
                     </template>
                 </el-table-column>
+                <!-- @vue-generic {Organization} -->
+                <el-table-column prop="sortOrder" label="排序值" width="110" sortable="custom" />
                 <!-- @vue-generic {Organization} -->
                 <el-table-column label="操作" fixed="right" width="160">
                     <template #default="{ row }">

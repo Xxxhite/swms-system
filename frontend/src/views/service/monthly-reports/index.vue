@@ -1,7 +1,15 @@
 <script setup lang="ts">
+import { useTableSort } from '@/utils/tableSort'
 import { projectApi } from '@/api/modules/project'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import {
+    fieldRule,
+    textIssue,
+    decimalIssue,
+    monthIssue,
+    validateForm,
+} from '@/utils/businessValidation'
 import 'element-plus/es/components/message/style/css'
 import { useUserStore } from '@/stores/user'
 import { useMock } from '@/api/config'
@@ -33,6 +41,23 @@ const form = reactive<MonthlyInput>({
     note: '',
 })
 const change = reactive({ operation: 'CORRECT', actualValue: '0.00', note: '', reason: '' })
+const formRef = ref<FormInstance>(),
+    changeRef = ref<FormInstance>()
+const formRules: FormRules = {
+    indicatorId: [
+        fieldRule(() => (form.indicatorId > 0 && form.teamId > 0 ? undefined : '请选择指标及团队')),
+    ],
+    month: [fieldRule((value) => monthIssue(value, formatDateTime(new Date()).slice(0, 7)))],
+    actualValue: [fieldRule((value) => decimalIssue(value, '当月新增'))],
+}
+const changeRules: FormRules = {
+    actualValue: [
+        fieldRule((value) =>
+            change.operation === 'CORRECT' ? decimalIssue(value, '更正后新增') : undefined,
+        ),
+    ],
+    reason: [fieldRule((value) => textIssue(value, '变更原因', 1000))],
+}
 const filterTeams = ref<Array<{ id: number; name: string }>>([])
 const filterProjects = ref<Array<{ id: number; name: string }>>([])
 const query = reactive({
@@ -45,6 +70,12 @@ const query = reactive({
     status: '',
 })
 const slotOptions = computed(() => slots.value.filter((r) => r.teamId !== null && r.canReport))
+const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
+    query,
+    'month',
+    'descending',
+    load,
+)
 let generation = 0
 /** 列表按当前范围读取，并忽略旧筛选的迟到响应。 */
 async function load() {
@@ -69,6 +100,7 @@ function search() {
     void load()
 }
 function reset() {
+    resetSort()
     Object.assign(query, {
         teamId: undefined,
         projectId: undefined,
@@ -79,10 +111,11 @@ function reset() {
     search()
 }
 /** 写入串行执行，成功后刷新正式值与状态。 */
-async function operate(work: () => Promise<unknown>) {
+async function operate(work: () => Promise<unknown>, validate?: () => Promise<boolean>) {
     if (busy.value) return
     busy.value = true
     try {
+        if (validate && !(await validate())) return
         await work()
         dialog.value = false
         changeDialog.value = false
@@ -157,7 +190,10 @@ async function showHistory(row: Monthly) {
 }
 /** 草稿、提交和审批申请分别调用状态对应的接口。 */
 function saveMonthly() {
-    void operate(() => serviceApi.save(form, selected.value))
+    void operate(
+        () => serviceApi.save(form, selected.value),
+        () => validateForm(formRef.value),
+    )
 }
 function submitMonthly(row: Monthly) {
     void operate(() => serviceApi.submit(row))
@@ -166,7 +202,10 @@ function removeMonthly(row: Monthly) {
     void operate(() => serviceApi.remove(row))
 }
 function saveChange() {
-    void operate(() => serviceApi.change(selected.value!, change))
+    void operate(
+        () => serviceApi.change(selected.value!, change),
+        () => validateForm(changeRef.value),
+    )
 }
 async function withdraw(id: number) {
     await operate(() => serviceApi.withdraw(id))
@@ -254,10 +293,17 @@ onMounted(async () => {
                     <el-button @click="reset">重置</el-button>
                 </el-form-item>
             </el-form>
-            <el-table v-loading="loading" :data="rows">
+            <el-table
+                :ref="setTableRef"
+                v-loading="loading"
+                :data="rows"
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {Monthly} -->
                 <el-table-column
                     prop="projectName"
+                    sortable="custom"
                     label="项目"
                     min-width="160"
                     show-overflow-tooltip
@@ -265,16 +311,22 @@ onMounted(async () => {
                 <!-- @vue-generic {Monthly} -->
                 <el-table-column
                     prop="indicatorName"
+                    sortable="custom"
                     label="指标"
                     min-width="140"
                     show-overflow-tooltip
                 />
                 <!-- @vue-generic {Monthly} -->
-                <el-table-column prop="teamName" label="团队" min-width="130" />
+                <el-table-column prop="teamName" sortable="custom" label="团队" min-width="130" />
                 <!-- @vue-generic {Monthly} -->
-                <el-table-column prop="month" label="月份" width="110" />
+                <el-table-column prop="month" sortable="custom" label="月份" width="110" />
                 <!-- @vue-generic {Monthly} -->
-                <el-table-column prop="actualValue" label="当月新增" width="100" />
+                <el-table-column
+                    prop="actualValue"
+                    sortable="custom"
+                    label="当月新增"
+                    width="100"
+                />
                 <!-- @vue-generic {Monthly} -->
                 <el-table-column prop="unit" label="单位" width="70" />
                 <!-- @vue-generic {Monthly} -->
@@ -283,6 +335,15 @@ onMounted(async () => {
                         {{ businessStatus[row.status] }}
                         <span v-if="row.changes.some((c) => c.pendingReportId)">／变更待审</span>
                     </template>
+                </el-table-column>
+                <!-- @vue-generic {Monthly} -->
+                <el-table-column
+                    prop="createdAt"
+                    label="创建时间"
+                    min-width="180"
+                    sortable="custom"
+                >
+                    <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                 </el-table-column>
                 <!-- @vue-generic {Monthly} -->
                 <el-table-column label="操作" min-width="280" fixed="right">
@@ -366,9 +427,16 @@ onMounted(async () => {
                 @current-change="load"
             />
         </template>
-        <el-dialog v-model="dialog" title="月报草稿" width="600px">
-            <el-form label-width="100px">
-                <el-form-item label="指标及团队" required>
+        <el-dialog v-model="dialog" destroy-on-close title="月报草稿" width="600px">
+            <el-form
+                ref="formRef"
+                class="business-form"
+                :model="form"
+                :rules="formRules"
+                label-width="100px"
+                scroll-to-error
+            >
+                <el-form-item label="指标及团队" prop="indicatorId" required>
                     <el-select
                         v-model="slot"
                         :disabled="!!selected"
@@ -383,7 +451,7 @@ onMounted(async () => {
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="月份" required>
+                <el-form-item label="月份" prop="month" required>
                     <el-date-picker
                         v-model="form.month"
                         type="month"
@@ -391,7 +459,7 @@ onMounted(async () => {
                         :disabled="!!selected"
                     />
                 </el-form-item>
-                <el-form-item label="当月新增" required>
+                <el-form-item label="当月新增" prop="actualValue" required>
                     <el-input v-model="form.actualValue" placeholder="非负数，最多两位小数" />
                 </el-form-item>
                 <el-form-item label="说明">
@@ -407,14 +475,27 @@ onMounted(async () => {
         </el-dialog>
         <el-dialog
             v-model="changeDialog"
+            destroy-on-close
             :title="`申请${businessStatus[change.operation]}`"
             width="560px"
         >
-            <el-form label-width="100px">
-                <el-form-item v-if="change.operation === 'CORRECT'" label="更正后新增" required>
+            <el-form
+                ref="changeRef"
+                class="business-form"
+                :model="change"
+                :rules="changeRules"
+                label-width="100px"
+                scroll-to-error
+            >
+                <el-form-item
+                    v-if="change.operation === 'CORRECT'"
+                    label="更正后新增"
+                    prop="actualValue"
+                    required
+                >
                     <el-input v-model="change.actualValue" />
                 </el-form-item>
-                <el-form-item label="原因" required>
+                <el-form-item label="原因" prop="reason" required>
                     <el-input v-model="change.reason" type="textarea" maxlength="1000" />
                 </el-form-item>
                 <el-form-item v-if="change.operation === 'CORRECT'" label="更新说明">

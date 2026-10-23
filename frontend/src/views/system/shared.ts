@@ -1,10 +1,17 @@
 import type { Organization } from '@/api/types'
+import { sortTableRows, type SortQuery } from '@/utils/tableSort'
 export interface OrganizationNode extends Organization {
     children: OrganizationNode[]
 }
 /** 将后端的平面组织集合转成树，复制节点以保持接口原数据不变。 */
-export function organizationTree(rows: Organization[]): OrganizationNode[] {
-    const nodes = new Map(rows.map((row) => [row.id, { ...row, children: [] } as OrganizationNode]))
+export function organizationTree(rows: Organization[], sort: SortQuery = {}): OrganizationNode[] {
+    const ordered = sortTableRows(rows, sort, [
+        ['sortOrder', 'asc'],
+        ['id', 'asc'],
+    ])
+    const nodes = new Map(
+        ordered.map((row) => [row.id, { ...row, children: [] } as OrganizationNode]),
+    )
     const roots: OrganizationNode[] = []
     for (const node of nodes.values()) {
         const parent = node.parentId === null ? undefined : nodes.get(node.parentId)

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/utils/dateTime'
+import { useTableSort } from '@/utils/tableSort'
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -15,6 +17,7 @@ import {
     type Candidates,
 } from '@/api/business-types'
 import ProjectForm from './components/ProjectForm.vue'
+const formRef = ref<InstanceType<typeof ProjectForm>>()
 const router = useRouter(),
     store = useUserStore()
 const rows = ref<Project[]>([]),
@@ -47,6 +50,12 @@ const form = ref<ProjectInput>({
     supervisorId: 0,
     serviceFieldCode: '',
 })
+const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
+    query,
+    'createdAt',
+    'descending',
+    load,
+)
 let generation = 0
 /** 按当前筛选读取项目，过时响应不覆盖后续查询。 */
 async function load() {
@@ -71,6 +80,7 @@ function search() {
     void load()
 }
 function reset() {
+    resetSort()
     Object.assign(query, {
         teamId: undefined,
         projectId: undefined,
@@ -107,6 +117,7 @@ async function save() {
     if (busy.value) return
     busy.value = true
     try {
+        if (!(await formRef.value?.validate())) return
         const result = await projectApi.create(form.value)
         dialog.value = false
         ElMessage.success('项目草稿已登记')
@@ -211,12 +222,25 @@ onMounted(async () => {
                     <el-button @click="reset">重置</el-button>
                 </el-form-item>
             </el-form>
-            <el-table v-loading="loading" :data="rows">
+            <el-table
+                :ref="setTableRef"
+                v-loading="loading"
+                :data="rows"
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {Project} -->
-                <el-table-column prop="code" label="编码" min-width="140" show-overflow-tooltip />
+                <el-table-column
+                    prop="code"
+                    sortable="custom"
+                    label="编码"
+                    min-width="140"
+                    show-overflow-tooltip
+                />
                 <!-- @vue-generic {Project} -->
                 <el-table-column
                     prop="name"
+                    sortable="custom"
                     label="项目名称"
                     min-width="200"
                     show-overflow-tooltip
@@ -226,18 +250,27 @@ onMounted(async () => {
                     <template #default="{ row }">{{ projectCategories[row.category] }}</template>
                 </el-table-column>
                 <!-- @vue-generic {Project} -->
-                <el-table-column label="合同周期" min-width="220">
+                <el-table-column prop="startDate" label="合同开始" width="130" sortable="custom">
                     <template #default="{ row }">
-                        {{
-                            row.contract
-                                ? `${row.contract.startDate} 至 ${row.contract.endDate}`
-                                : '待补齐'
-                        }}
+                        {{ row.contract?.startDate ?? '待补齐' }}
                     </template>
+                </el-table-column>
+                <!-- @vue-generic {Project} -->
+                <el-table-column prop="endDate" label="合同结束" width="130" sortable="custom">
+                    <template #default="{ row }">{{ row.contract?.endDate ?? '待补齐' }}</template>
                 </el-table-column>
                 <!-- @vue-generic {Project} -->
                 <el-table-column label="状态" width="100">
                     <template #default="{ row }">{{ businessStatus[row.status] }}</template>
+                </el-table-column>
+                <!-- @vue-generic {Project} -->
+                <el-table-column
+                    prop="createdAt"
+                    label="创建时间"
+                    min-width="180"
+                    sortable="custom"
+                >
+                    <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                 </el-table-column>
                 <!-- @vue-generic {Project} -->
                 <el-table-column label="操作" width="160" fixed="right">
@@ -268,8 +301,8 @@ onMounted(async () => {
                 @current-change="load"
             />
         </template>
-        <el-dialog v-model="dialog" title="登记项目" width="660px">
-            <project-form v-model="form" :candidates="candidates" />
+        <el-dialog v-model="dialog" title="登记项目" destroy-on-close width="660px">
+            <project-form ref="formRef" v-model="form" :candidates="candidates" />
             <template #footer>
                 <el-button @click="dialog = false">取消</el-button>
                 <el-button type="primary" :loading="busy" @click="save">保存草稿</el-button>

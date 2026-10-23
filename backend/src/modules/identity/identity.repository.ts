@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   count,
   desc,
   eq,
@@ -16,6 +17,7 @@ import { db } from "@/db"
 import * as s from "@/db/schema"
 import { safeUser, type Actor, type User } from "@/utils/authorization"
 import { AppError } from "@/utils/errors"
+import { resolveSort, type SortQuery } from "@/utils/list-sort"
 
 export type Database = typeof db
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0]
@@ -46,7 +48,7 @@ export async function loadState(connection: Connection, lock = false) {
   return { orgs, roles, users, permissions, rolePermissions, userRoles, extras, managed }
 }
 export type IdentityState = Awaited<ReturnType<typeof loadState>>
-export interface ListQuery {
+export interface ListQuery extends SortQuery {
   page: number
   pageSize: number
   keyword?: string
@@ -128,11 +130,19 @@ export class IdentityRepository {
         ? or(like(s.users.name, `%${query.keyword}%`), like(s.users.username, `%${query.keyword}%`))
         : undefined,
     )
+    const fields = {
+      id: s.users.id,
+      name: s.users.name,
+      username: s.users.username,
+      createdAt: s.users.createdAt,
+    }
+    const sortKey = resolveSort(query, fields, "createdAt") as keyof typeof fields
+    const order = query.sortOrder === "asc" ? asc : desc
     const rows = await this.database
       .select()
       .from(s.users)
       .where(where)
-      .orderBy(desc(s.users.id))
+      .orderBy(order(fields[sortKey]), desc(s.users.createdAt), desc(s.users.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize)
     const [total] = await this.database.select({ count: count() }).from(s.users).where(where)
@@ -306,13 +316,21 @@ export class IdentityRepository {
         ? lte(s.auditLogs.createdAt, new Date(`${filters.dateTo}T23:59:59.999+08:00`))
         : undefined,
     )
+    const fields = { id: s.auditLogs.id, createdAt: s.auditLogs.createdAt, actorName: s.users.name }
+    const sortKey = resolveSort(query, fields, "createdAt") as keyof typeof fields
+    const order = query.sortOrder === "asc" ? asc : desc
     const list = await this.database
       .select({ ...getTableColumns(s.auditLogs), actorName: s.users.name })
       .from(s.auditLogs)
       // 取当前姓名，不限制账号状态；未登录申请等无操作人的日志仍保留。
       .leftJoin(s.users, eq(s.auditLogs.actorId, s.users.id))
       .where(where)
-      .orderBy(desc(s.auditLogs.id))
+      .orderBy(
+        asc(sql`${fields[sortKey]} IS NULL`),
+        order(fields[sortKey]),
+        desc(s.auditLogs.createdAt),
+        desc(s.auditLogs.id),
+      )
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize)
     const [total] = await this.database

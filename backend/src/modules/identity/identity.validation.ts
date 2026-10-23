@@ -1,4 +1,5 @@
 import { t } from "elysia"
+import { sortFields } from "@/utils/list-sort"
 import { accountStatuses, dataScopes, orgTypes } from "@/db/schema"
 
 /** 创建非空文本校验，拒绝全空白输入并限制最大长度。 */
@@ -13,6 +14,7 @@ const enumOf = <T extends string>(values: readonly T[]) =>
   t.Union(values.map((value) => t.Literal(value)))
 /** 人员列表的分页及筛选参数，页码和每页数量须为正整数。 */
 export const listQuery = t.Object({
+  ...sortFields,
   page: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1, default: 1 })),
   pageSize: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1, maximum: 100, default: 20 })),
   keyword: t.Optional(t.String({ maxLength: 100 })),

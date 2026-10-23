@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useTableSort } from '@/utils/tableSort'
 import { onMounted, reactive, ref } from 'vue'
 import { useMock } from '@/api/config'
 import { systemApi, type AuditLog } from '@/api/modules/system'
@@ -25,6 +26,12 @@ const query = reactive({
     dateTo: '',
 })
 // 筛选与重置可能连续发起请求，仅最后一次查询可以更新表格。
+const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
+    query,
+    'createdAt',
+    'descending',
+    load,
+)
 let generation = 0
 /** 移除空筛选条件后分页查询日志，mock 模式不请求真实管理接口。 */
 async function load() {
@@ -56,6 +63,7 @@ function search() {
 }
 /** 清空全部手动筛选条件，并立即查询第一页日志。 */
 function resetSearch() {
+    resetSort()
     Object.assign(query, {
         actorName: '',
         action: '',
@@ -126,12 +134,19 @@ onMounted(load)
                     <el-button @click="resetSearch">重置</el-button>
                 </el-form-item>
             </el-form>
-            <el-table v-loading="loading" :data="rows">
+            <el-table
+                :ref="setTableRef"
+                v-loading="loading"
+                :data="rows"
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {AuditLog} -->
-                <el-table-column prop="id" label="ID" width="80" />
+                <el-table-column prop="id" sortable="custom" label="ID" width="80" />
                 <!-- @vue-generic {AuditLog} -->
                 <el-table-column
                     prop="createdAt"
+                    sortable="custom"
                     :label="`时间（${APP_TIME_ZONE_LABEL}）`"
                     min-width="210"
                 >
@@ -140,6 +155,7 @@ onMounted(load)
                 <!-- @vue-generic {AuditLog} -->
                 <el-table-column
                     prop="actorName"
+                    sortable="custom"
                     label="操作人"
                     min-width="140"
                     show-overflow-tooltip

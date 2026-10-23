@@ -1,4 +1,5 @@
 import { reactive, ref } from 'vue'
+import type { SortQuery } from '@/utils/tableSort'
 import type { PageResult, UserSummary } from '@/api/types'
 
 type LoadResult = 'loaded' | 'failed' | 'superseded'
@@ -12,7 +13,9 @@ export function useUserList(isRegistration: () => boolean, fetchUsers: FetchUser
     const rows = ref<UserSummary[]>([])
     const total = ref(0)
     const loading = ref(false)
-    const query = reactive({ page: 1, pageSize: 20, keyword: '', status: '' })
+    const query = reactive<
+        { page: number; pageSize: number; keyword: string; status: string } & SortQuery
+    >({ page: 1, pageSize: 20, keyword: '', status: '' })
     let generation = 0
 
     /** 使旧查询失效；路由切换及审核结果落地时均不再接受旧响应。 */
@@ -30,6 +33,7 @@ export function useUserList(isRegistration: () => boolean, fetchUsers: FetchUser
                 {
                     page: query.page,
                     pageSize: query.pageSize,
+                    ...(query.sortBy ? { sortBy: query.sortBy, sortOrder: query.sortOrder } : {}),
                     ...(query.keyword ? { keyword: query.keyword } : {}),
                     ...(query.status ? { status: query.status } : {}),
                 },

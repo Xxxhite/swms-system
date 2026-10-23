@@ -94,3 +94,10 @@ body {
 .form-actions .el-button + .el-button {
     margin-left: 0;
 }
+
+/* 正式业务编辑表单：日期与选择器铺满内容区，与文本输入保持对齐。 */
+.business-form .el-date-editor.el-input,
+.business-form .el-date-editor.el-input__wrapper,
+.business-form .el-select {
+    width: 100%;
+}

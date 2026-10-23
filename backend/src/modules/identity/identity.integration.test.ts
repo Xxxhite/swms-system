@@ -618,5 +618,44 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     expect((await request("/dictionaries/constructor", "GET", adminToken)).body.code).toBe(3000)
     expect((await request("/dictionaries/toString", "GET", adminToken)).body.code).toBe(3000)
   })
+  test("人员和日志在 SQL 分页前排序，未知字段及不完整方向被拒绝", async () => {
+    for (const endpoint of ["/users", "/registrations", "/system/logs"]) {
+      const all = (
+        await request(`${endpoint}?pageSize=100&sortBy=id&sortOrder=asc`, "GET", adminToken)
+      ).body
+      expect(all.code).toBe(0)
+      const ids = all.data.list.map((row: { id: number }) => row.id)
+      expect(ids).toEqual([...ids].sort((a, b) => a - b))
+      const first = (
+        await request(`${endpoint}?pageSize=2&page=1&sortBy=id&sortOrder=asc`, "GET", adminToken)
+      ).body.data
+      const second = (
+        await request(`${endpoint}?pageSize=2&page=2&sortBy=id&sortOrder=asc`, "GET", adminToken)
+      ).body.data
+      expect([...first.list, ...second.list].map((row: { id: number }) => row.id)).toEqual(
+        ids.slice(0, 4),
+      )
+      const defaults = (await request(`${endpoint}?pageSize=100`, "GET", adminToken)).body.data
+        .list as Array<{ id: number; createdAt: string }>
+      expect(defaults.map((r) => r.id)).toEqual(
+        [...defaults]
+          .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id - a.id)
+          .map((r) => r.id),
+      )
+      for (const query of [
+        "sortBy=passwordHash&sortOrder=asc",
+        "sortBy=constructor&sortOrder=asc",
+        "sortBy=createdAt",
+        "sortOrder=asc",
+        "sortBy=id&sortOrder=invalid",
+      ])
+        expect((await request(`${endpoint}?${query}`, "GET", adminToken)).body.code).toBe(1000)
+    }
+    const logs = (
+      await request("/system/logs?pageSize=100&sortBy=actorName&sortOrder=desc", "GET", adminToken)
+    ).body.data.list as Array<{ actorName: string | null }>
+    const firstNull = logs.findIndex((r) => r.actorName == null)
+    if (firstNull !== -1) expect(logs.slice(firstNull).every((r) => r.actorName == null)).toBe(true)
+  })
   registerProjectTests(() => ({ database, handle }))
 })

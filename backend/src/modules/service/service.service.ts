@@ -10,6 +10,7 @@ import {
   type BusinessState,
 } from "@/modules/project/project.repository"
 import { findProject, visibleTeams, fullProject } from "@/modules/project/project.service"
+import { sortRows, sortDecimal } from "@/utils/list-sort"
 import { pageResult, type BusinessQuery } from "@/modules/project/project.validation"
 import {
   assertReportMonth,
@@ -110,26 +111,42 @@ export class ServiceService {
     requirePermission(actor, "service:monthly:view")
     return this.repository.read(actor, (data) =>
       pageResult(
-        data.reports
-          .filter(
-            (r) =>
-              canReadReport(data, data.actor!, r) &&
-              !(r.status === "VOID" && !r.submittedAt) &&
-              (!q.teamId || r.teamId === q.teamId) &&
-              (!q.indicatorId || r.indicatorId === q.indicatorId) &&
-              (!q.projectId ||
-                data.indicators.some(
-                  (i) => i.id === r.indicatorId && i.projectId === q.projectId,
-                )) &&
-              (!q.keyword ||
-                `${data.projects.find((p) => p.id === data.indicators.find((i) => i.id === r.indicatorId)?.projectId)?.name} ${data.indicators.find((i) => i.id === r.indicatorId)?.name}`.includes(
-                  q.keyword,
-                )) &&
-              (!q.month || r.month === q.month) &&
-              (!q.status || r.status === q.status),
-          )
-          .map((r) => reportDto(data, r, data.actor!))
-          .reverse(),
+        sortRows(
+          data.reports
+            .filter(
+              (r) =>
+                canReadReport(data, data.actor!, r) &&
+                !(r.status === "VOID" && !r.submittedAt) &&
+                (!q.teamId || r.teamId === q.teamId) &&
+                (!q.indicatorId || r.indicatorId === q.indicatorId) &&
+                (!q.projectId ||
+                  data.indicators.some(
+                    (i) => i.id === r.indicatorId && i.projectId === q.projectId,
+                  )) &&
+                (!q.keyword ||
+                  `${data.projects.find((p) => p.id === data.indicators.find((i) => i.id === r.indicatorId)?.projectId)?.name} ${data.indicators.find((i) => i.id === r.indicatorId)?.name}`.includes(
+                    q.keyword,
+                  )) &&
+                (!q.month || r.month === q.month) &&
+                (!q.status || r.status === q.status),
+            )
+            .map((r) => reportDto(data, r, data.actor!)),
+          q,
+          {
+            id: (r) => r.id,
+            projectName: (r) => r.projectName,
+            indicatorName: (r) => r.indicatorName,
+            teamName: (r) => r.teamName,
+            month: (r) => r.month,
+            createdAt: (r) => r.createdAt,
+            actualValue: (r) => sortDecimal(r.actualValue),
+          },
+          [
+            ["month", "desc"],
+            ["createdAt", "desc"],
+            ["id", "desc"],
+          ],
+        ),
         q,
       ),
     )
@@ -332,7 +349,35 @@ export class ServiceService {
         })
       }
     }
-    return rows.filter((row) => !q.warningLevel || row.warningLevel === q.warningLevel)
+    return sortRows(
+      rows.filter((row) => !q.warningLevel || row.warningLevel === q.warningLevel),
+      q,
+      {
+        projectName: (r) => r.projectName,
+        indicatorName: (r) => r.indicatorName,
+        teamName: (r) => r.teamName,
+        targetValue: (r) => sortDecimal(r.targetValue),
+        monthlyValue: (r) => sortDecimal(r.monthlyValue),
+        cumulative: (r) => sortDecimal(r.cumulative),
+        completionRate: (r) => r.completionRate,
+        endDate: (r) => r.endDate,
+        warningLevel: (r) =>
+          r.warningLevel == null
+            ? null
+            : { red: 0, orange: 1, yellow: 2, green: 3 }[r.warningLevel],
+        projectId: (r) => r.projectId,
+        indicatorId: (r) => r.indicatorId,
+        statisticsScope: (r) => r.statisticsScope,
+        teamId: (r) => r.teamId ?? 0,
+      },
+      [
+        ["endDate", "asc"],
+        ["projectId", "asc"],
+        ["indicatorId", "asc"],
+        ["statisticsScope", "asc"],
+        ["teamId", "asc"],
+      ],
+    )
   }
 }
 export const serviceService = new ServiceService()

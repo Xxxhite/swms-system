@@ -97,7 +97,9 @@ async function submit(): Promise<void> {
 
 <style scoped>
 .login {
-    min-height: 100%;
+    /* 直接使用视口高度，避免滚动容器的自动高度使登录页只包住卡片。 */
+    min-height: 100vh;
+    min-height: 100dvh;
     padding: 24px;
     box-sizing: border-box;
     display: flex;

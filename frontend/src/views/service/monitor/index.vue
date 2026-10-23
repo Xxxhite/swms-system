@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useTableSort } from '@/utils/tableSort'
 import { projectApi } from '@/api/modules/project'
 import { onMounted, reactive, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
@@ -33,6 +34,12 @@ const warningTypes = {
     orange: 'warning',
     red: 'danger',
 } as const
+const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
+    query,
+    'endDate',
+    'ascending',
+    () => load(props.analysis),
+)
 let generation = 0
 /** 监测与报表使用同一后端口径；日期按所在月份累计，预警按当天计算。 */
 async function load(analysis = false) {
@@ -57,6 +64,7 @@ function search(analysis = false) {
     void load(analysis)
 }
 function reset(analysis = false) {
+    resetSort()
     Object.assign(query, {
         teamId: undefined,
         projectId: undefined,
@@ -178,10 +186,17 @@ onMounted(async () => {
                     <el-button @click="reset(analysis)">重置</el-button>
                 </el-form-item>
             </el-form>
-            <el-table v-loading="loading" :data="rows">
+            <el-table
+                :ref="setTableRef"
+                v-loading="loading"
+                :data="rows"
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {Progress} -->
                 <el-table-column
                     prop="projectName"
+                    sortable="custom"
                     label="项目"
                     min-width="180"
                     show-overflow-tooltip
@@ -189,6 +204,7 @@ onMounted(async () => {
                 <!-- @vue-generic {Progress} -->
                 <el-table-column
                     prop="indicatorName"
+                    sortable="custom"
                     label="指标"
                     min-width="150"
                     show-overflow-tooltip
@@ -201,17 +217,27 @@ onMounted(async () => {
                     show-overflow-tooltip
                 />
                 <!-- @vue-generic {Progress} -->
-                <el-table-column prop="teamName" label="统计范围" min-width="120" />
+                <el-table-column
+                    prop="teamName"
+                    sortable="custom"
+                    label="统计范围"
+                    min-width="120"
+                />
                 <!-- @vue-generic {Progress} -->
                 <el-table-column prop="unit" label="单位" width="70" />
                 <!-- @vue-generic {Progress} -->
-                <el-table-column prop="targetValue" label="目标" width="100" />
+                <el-table-column prop="targetValue" sortable="custom" label="目标" width="100" />
                 <!-- @vue-generic {Progress} -->
-                <el-table-column prop="monthlyValue" label="当月新增" width="110" />
+                <el-table-column
+                    prop="monthlyValue"
+                    sortable="custom"
+                    label="当月新增"
+                    width="110"
+                />
                 <!-- @vue-generic {Progress} -->
-                <el-table-column prop="cumulative" label="累计完成" width="110" />
+                <el-table-column prop="cumulative" sortable="custom" label="累计完成" width="110" />
                 <!-- @vue-generic {Progress} -->
-                <el-table-column label="完成率" width="100">
+                <el-table-column prop="completionRate" sortable="custom" label="完成率" width="100">
                     <template #default="{ row }">
                         {{
                             row.completionRate == null
@@ -221,20 +247,28 @@ onMounted(async () => {
                     </template>
                 </el-table-column>
                 <!-- @vue-generic {Progress} -->
-                <el-table-column prop="endDate" label="到期日" width="120" />
+                <el-table-column prop="endDate" sortable="custom" label="到期日" width="120" />
                 <!-- @vue-generic {Progress} -->
-                <el-table-column label="预警" width="180" fixed="right">
+                <el-table-column
+                    prop="warningLevel"
+                    sortable="custom"
+                    label="预警"
+                    width="180"
+                    fixed="right"
+                >
                     <template #default="{ row }">
-                        <el-tag
-                            v-if="row.warningLevel"
-                            :type="warningTypes[row.warningLevel]"
-                            :class="{ 'warning-tag--yellow': row.warningLevel === 'yellow' }"
-                        >
-                            {{ warningLabels[row.warningLevel] }}
-                        </el-tag>
-                        <span v-else>本人局部数据</span>
-                        <span v-if="row.overdue">已逾期</span>
-                        <span v-if="row.notStarted">未开始</span>
+                        <div class="warning-status">
+                            <el-tag
+                                v-if="row.warningLevel"
+                                :type="warningTypes[row.warningLevel]"
+                                :class="{ 'warning-tag--yellow': row.warningLevel === 'yellow' }"
+                            >
+                                {{ warningLabels[row.warningLevel] }}
+                            </el-tag>
+                            <span v-else>本人局部数据</span>
+                            <span v-if="row.overdue">已逾期</span>
+                            <span v-if="row.notStarted">未开始</span>
+                        </div>
                     </template>
                 </el-table-column>
             </el-table>
@@ -252,6 +286,14 @@ onMounted(async () => {
 <style scoped>
 .notice {
     margin-bottom: 20px;
+}
+
+/* 预警标签与补充状态同行居中，保留明确间距并避免文字折行。 */
+.warning-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
 /* 复用 ElTag 预设尺寸与外观，只覆盖黄色预警的三项颜色变量。 */

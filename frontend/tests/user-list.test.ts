@@ -5,6 +5,7 @@ import { useUserList } from '../src/views/system/users/useUserList'
 function user(id: number, status: UserSummary['status'] = 'PENDING'): UserSummary {
     return {
         id,
+        createdAt: '2026-10-23T00:00:00Z',
         username: `test_${id}`,
         name: `测试人员${id}`,
         phone: '13800000000',

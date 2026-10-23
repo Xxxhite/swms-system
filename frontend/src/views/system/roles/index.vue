@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useTableSort, sortTableRows, type SortQuery } from '@/utils/tableSort'
+import { formatDateTime } from '@/utils/dateTime'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
@@ -7,6 +9,14 @@ import { useMock } from '@/api/config'
 import { identityApi } from '@/api/modules/identity'
 import type { Permission, Role } from '@/api/types'
 const rows = ref<Role[]>([])
+const sortQuery = reactive<SortQuery>({})
+const { setTableRef, defaultSort, onSortChange } = useTableSort(
+    sortQuery,
+    'createdAt',
+    'descending',
+    () => {},
+)
+const sortedRows = computed(() => sortTableRows(rows.value, sortQuery))
 const permissions = ref<Permission[]>([])
 const groups = computed(() =>
     [...new Set(permissions.value.map((item) => item.module))].map((module) => ({
@@ -115,11 +125,16 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <el-table :data="rows">
+            <el-table
+                :ref="setTableRef"
+                :data="sortedRows"
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {Role} -->
-                <el-table-column prop="name" label="角色名称" min-width="140" />
+                <el-table-column prop="name" sortable="custom" label="角色名称" min-width="140" />
                 <!-- @vue-generic {Role} -->
-                <el-table-column prop="code" label="编码" min-width="120" />
+                <el-table-column prop="code" sortable="custom" label="编码" min-width="120" />
                 <!-- @vue-generic {Role} -->
                 <el-table-column prop="description" label="说明" min-width="160" />
                 <!-- @vue-generic {Role} -->
@@ -127,6 +142,15 @@ onMounted(load)
                     <template #default="{ row }">
                         {{ row.status === 'ACTIVE' ? '启用' : '停用' }}
                     </template>
+                </el-table-column>
+                <!-- @vue-generic {Role} -->
+                <el-table-column
+                    prop="createdAt"
+                    label="创建时间"
+                    min-width="180"
+                    sortable="custom"
+                >
+                    <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                 </el-table-column>
                 <!-- @vue-generic {Role} -->
                 <el-table-column label="操作" fixed="right" width="230">

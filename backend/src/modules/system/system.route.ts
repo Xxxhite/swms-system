@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia"
+import { sortFields } from "@/utils/list-sort"
 import { createAuthentication } from "@/plugins/auth"
 import { identityService, type IdentityService } from "@/modules/identity/identity.service"
 import { ok } from "@/utils/response"
@@ -15,12 +16,18 @@ export function createSystemRoutes(identities: IdentityService = identityService
         ok(
           await service.logs(
             await authenticate(),
-            { page: query.page ?? 1, pageSize: query.pageSize ?? 20 },
+            {
+              page: query.page ?? 1,
+              pageSize: query.pageSize ?? 20,
+              sortBy: query.sortBy,
+              sortOrder: query.sortOrder,
+            },
             query,
           ),
         ),
       {
         query: t.Object({
+          ...sortFields,
           page: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
           pageSize: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1, maximum: 100 })),
           actorId: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),

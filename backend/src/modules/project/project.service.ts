@@ -1,4 +1,5 @@
 import * as s from "@/db/schema"
+import { sortRows } from "@/utils/list-sort"
 import { assertVersion, requirePermission, teamFor, type Actor } from "@/utils/authorization"
 import { assertBusinessAccess, canReadTeam } from "@/utils/business-scope"
 import { businessAudit } from "@/utils/business-audit"
@@ -84,6 +85,10 @@ export function projectDto(data: BusinessState, actor: Actor, p: Project) {
     full = fullProject(data, actor, p)
   return {
     ...p,
+    // 只返回已授权项目关联的显示名称，详情无需读取编辑候选或人员管理接口。
+    ownerOrgName: data.identity.orgs.find((o) => o.id === p.ownerOrgId)?.name ?? null,
+    directorName: data.identity.users.find((u) => u.id === p.directorId)?.name ?? null,
+    supervisorName: data.identity.users.find((u) => u.id === p.supervisorId)?.name ?? null,
     statisticsScope: full ? "PROJECT" : "TEAM",
     visibleTeamIds: teams.map((t) => t.teamId),
     contract: data.contracts.find((c) => c.projectId === p.id) ?? null,
@@ -139,7 +144,25 @@ export class ProjectService {
           )
         })
         .map((p) => projectDto(data, current, p))
-      return pageResult(rows, query)
+      return pageResult(
+        sortRows(
+          rows,
+          query,
+          {
+            id: (r) => r.id,
+            code: (r) => r.code,
+            name: (r) => r.name,
+            createdAt: (r) => r.createdAt,
+            startDate: (r) => r.contract?.startDate,
+            endDate: (r) => r.contract?.endDate,
+          },
+          [
+            ["createdAt", "desc"],
+            ["id", "desc"],
+          ],
+        ),
+        query,
+      )
     })
   }
   /** 读取项目及其可见关联配置。 */

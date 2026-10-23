@@ -3,6 +3,7 @@ import { assertBusinessAccess } from "@/utils/business-scope"
 import { AppError } from "@/utils/errors"
 import { businessAudit } from "@/utils/business-audit"
 import { projectRepository, type ProjectRepository } from "@/modules/project/project.repository"
+import { sortRows } from "@/utils/list-sort"
 import { pageResult, type BusinessQuery } from "@/modules/project/project.validation"
 /** 月报审批服务：实际任务关系授予最小快照访问，不扩大整个项目的统计范围。 */
 export class ApprovalService {
@@ -12,17 +13,41 @@ export class ApprovalService {
     requirePermission(actor, "service:monthly:approve")
     return this.repository.approvals(actor, (data) =>
       pageResult(
-        data.tasks
-          .filter(
-            (t) =>
-              t.approverId === actor.user.id &&
-              data.instances.some(
-                (i) => i.id === t.instanceId && i.businessType === "MONTHLY_CHANGE",
-              ) &&
-              (!q.status || t.status === q.status),
-          )
-          .map((t) => ({ ...t, instance: data.instances.find((i) => i.id === t.instanceId) }))
-          .reverse(),
+        sortRows(
+          data.tasks
+            .filter(
+              (t) =>
+                t.approverId === actor.user.id &&
+                data.instances.some(
+                  (i) => i.id === t.instanceId && i.businessType === "MONTHLY_CHANGE",
+                ) &&
+                (!q.status || t.status === q.status),
+            )
+            .map((t) => ({ ...t, instance: data.instances.find((i) => i.id === t.instanceId) })),
+          q,
+          {
+            id: (r) => r.id,
+            createdAt: (r) => r.createdAt,
+            projectName: (r) =>
+              String(
+                (r.instance?.businessSnapshot as Record<string, unknown> | undefined)
+                  ?.projectName ?? "",
+              ),
+            indicatorName: (r) =>
+              String(
+                (r.instance?.businessSnapshot as Record<string, unknown> | undefined)
+                  ?.indicatorName ?? "",
+              ),
+            month: (r) =>
+              String(
+                (r.instance?.businessSnapshot as Record<string, unknown> | undefined)?.month ?? "",
+              ),
+          },
+          [
+            ["createdAt", "desc"],
+            ["id", "desc"],
+          ],
+        ),
         q,
       ),
     )

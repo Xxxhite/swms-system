@@ -71,6 +71,7 @@ export interface RegistrationInput {
     proposedTeam?: string | null
 }
 export interface UserDetail extends CurrentUser {
+    createdAt: string
     version: number
     phone: string
     arrivalDate: string
@@ -87,7 +88,15 @@ export interface UserDetail extends CurrentUser {
 /** 列表仅返回人员摘要；完整授权信息通过详情接口读取。 */
 export type UserSummary = Pick<
     UserDetail,
-    'id' | 'username' | 'name' | 'phone' | 'status' | 'proposedPosition' | 'dataScope' | 'version'
+    | 'id'
+    | 'username'
+    | 'name'
+    | 'phone'
+    | 'status'
+    | 'proposedPosition'
+    | 'dataScope'
+    | 'version'
+    | 'createdAt'
 >
 export type PersonalProfile = Omit<UserDetail, 'roleIds' | 'extraPermissions'>
 export interface Organization {
@@ -101,6 +110,7 @@ export interface Organization {
     version: number
 }
 export interface Role {
+    createdAt: string
     id: number
     code: string
     name: string

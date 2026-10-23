@@ -1,37 +1,29 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { useTableSort } from '@/utils/tableSort'
+import { onMounted, ref } from 'vue'
+import { useApprovalList } from './useApprovalList'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { useMock } from '@/api/config'
 import { approvalApi } from '@/api/modules/approval'
 import { businessStatus, type ApprovalTask, type ApprovalInstance } from '@/api/business-types'
 import { formatDateTime } from '@/utils/dateTime'
-const rows = ref<ApprovalTask[]>([]),
-    total = ref(0),
-    loading = ref(false),
-    busy = ref(false),
+const taskList = useApprovalList(approvalApi.tasks)
+const { rows, total, loading, query } = taskList
+const busy = ref(false),
     dialog = ref(false),
     selected = ref<ApprovalTask>(),
     detail = ref<ApprovalInstance>(),
     comment = ref('')
-const query = reactive({ page: 1, pageSize: 20, status: 'PENDING' })
-let generation = 0
-/** 待办列表仅查询本人实际任务，状态筛选不扩大授权范围。 */
+const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
+    query,
+    'createdAt',
+    'descending',
+    load,
+)
+/** mock 模式保留提示，真实模式读取本人的审批任务。 */
 async function load() {
-    if (useMock) return
-    const request = ++generation
-    loading.value = true
-    try {
-        const result = await approvalApi.tasks(query)
-        if (request === generation) {
-            rows.value = result.list
-            total.value = result.total
-        }
-    } catch {
-        /* 请求层提示 */
-    } finally {
-        if (request === generation) loading.value = false
-    }
+    if (!useMock) return taskList.load()
 }
 /** 状态查询与重置均从第一页加载，重置展示本人全部任务。 */
 function search() {
@@ -39,6 +31,7 @@ function search() {
     void load()
 }
 function reset() {
+    resetSort()
     query.status = ''
     search()
 }
@@ -60,12 +53,15 @@ async function decide(approved: boolean) {
         ElMessage.warning('请填写驳回意见')
         return
     }
+    const task = selected.value
     busy.value = true
     try {
-        await approvalApi.decide(selected.value, approved, comment.value)
+        await approvalApi.decide(task, approved, comment.value)
+        taskList.applyDecision(task.id, approved)
         dialog.value = false
-        await load()
         ElMessage.success('审批已处理')
+        const result = await load()
+        if (result === 'failed') ElMessage.warning('审批已生效，列表刷新失败，请稍后刷新')
     } catch {
         /* 请求层提示 */
     } finally {
@@ -100,21 +96,32 @@ onMounted(load)
                     <el-button @click="reset">重置</el-button>
                 </el-form-item>
             </el-form>
-            <el-table v-loading="loading" :data="rows">
+            <el-table
+                :ref="setTableRef"
+                v-loading="loading"
+                :data="rows"
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {ApprovalTask} -->
-                <el-table-column label="项目" min-width="170">
+                <el-table-column prop="projectName" sortable="custom" label="项目" min-width="170">
                     <template #default="{ row }">
                         {{ row.instance?.businessSnapshot.projectName }}
                     </template>
                 </el-table-column>
                 <!-- @vue-generic {ApprovalTask} -->
-                <el-table-column label="指标" min-width="140">
+                <el-table-column
+                    prop="indicatorName"
+                    sortable="custom"
+                    label="指标"
+                    min-width="140"
+                >
                     <template #default="{ row }">
                         {{ row.instance?.businessSnapshot.indicatorName }}
                     </template>
                 </el-table-column>
                 <!-- @vue-generic {ApprovalTask} -->
-                <el-table-column label="月份" width="110">
+                <el-table-column prop="month" sortable="custom" label="月份" width="110">
                     <template #default="{ row }">
                         {{ row.instance?.businessSnapshot.month }}
                     </template>
@@ -130,6 +137,15 @@ onMounted(load)
                 <!-- @vue-generic {ApprovalTask} -->
                 <el-table-column label="状态" width="100">
                     <template #default="{ row }">{{ businessStatus[row.status] }}</template>
+                </el-table-column>
+                <!-- @vue-generic {ApprovalTask} -->
+                <el-table-column
+                    prop="createdAt"
+                    label="任务创建时间"
+                    min-width="180"
+                    sortable="custom"
+                >
+                    <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                 </el-table-column>
                 <!-- @vue-generic {ApprovalTask} -->
                 <el-table-column label="操作" width="120" fixed="right">

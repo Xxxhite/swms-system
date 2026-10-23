@@ -1,4 +1,6 @@
-export interface BusinessQuery {
+import type { SortQuery } from '@/utils/tableSort'
+
+export interface BusinessQuery extends SortQuery {
     page?: number
     pageSize?: number
     keyword?: string
@@ -36,6 +38,7 @@ export interface Allocation {
     targetValue: string
 }
 export interface Indicator {
+    createdAt: string
     id: number
     projectId: number
     name: string
@@ -47,6 +50,10 @@ export interface Indicator {
     allocations: Allocation[]
 }
 export interface Project extends ProjectInput {
+    ownerOrgName: string | null
+    directorName: string | null
+    supervisorName: string | null
+    createdAt: string
     id: number
     status: 'DRAFT' | 'ACTIVE'
     version: number
@@ -87,6 +94,7 @@ export interface ApprovalInstance {
     }>
 }
 export interface ApprovalTask {
+    createdAt: string
     id: number
     instanceId: number
     approverId: number
@@ -95,6 +103,7 @@ export interface ApprovalTask {
     instance?: ApprovalInstance
 }
 export interface Monthly extends MonthlyInput {
+    createdAt: string
     canMaintain: boolean
     id: number
     status: 'DRAFT' | 'SUBMITTED' | 'VOID'

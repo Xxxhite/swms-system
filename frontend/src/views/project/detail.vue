@@ -1,12 +1,22 @@
 <script setup lang="ts">
+import { useTableSort, sortTableRows, type SortQuery } from '@/utils/tableSort'
+import { formatDateTime } from '@/utils/dateTime'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import {
+    fieldRule,
+    textIssue,
+    decimalIssue,
+    dateIssue,
+    validateForm,
+} from '@/utils/businessValidation'
 import 'element-plus/es/components/message/style/css'
 import { useUserStore } from '@/stores/user'
 import { projectApi } from '@/api/modules/project'
 import {
     businessStatus,
+    projectCategories,
     type Project,
     type ProjectInput,
     type ContractInput,
@@ -41,6 +51,24 @@ const contract = reactive<ContractInput>({
 })
 const teams = ref<Array<{ teamId?: number; reporterId?: number }>>([]),
     points = ref<Project['servicePoints']>([])
+const sortQuery = reactive<SortQuery>({})
+const { setTableRef, defaultSort, onSortChange } = useTableSort(
+    sortQuery,
+    'createdAt',
+    'descending',
+    () => {},
+)
+const indicatorRows = computed(() =>
+    sortTableRows(
+        project.value?.indicators ?? [],
+        sortQuery,
+        [
+            ['createdAt', 'desc'],
+            ['id', 'desc'],
+        ],
+        ['targetValue'],
+    ),
+)
 const canManage = computed(
     () =>
         project.value?.statisticsScope === 'PROJECT' &&
@@ -55,6 +83,40 @@ const allocations = ref<
     Array<{ teamId: number; teamName: string; targetValue: string; selected: boolean }>
 >([])
 const targetPlan = reactive({ targetValue: '0.00', reason: '' })
+const baseRef = ref<InstanceType<typeof ProjectForm>>()
+const contractRef = ref<FormInstance>(),
+    indicatorRef = ref<FormInstance>(),
+    allocationRef = ref<FormInstance>()
+const allocationModel = computed(() => ({ ...targetPlan, allocations: allocations.value }))
+const contractRules: FormRules = {
+    partnerName: [fieldRule((value) => textIssue(value, '合作方', 150))],
+    startDate: [fieldRule((value) => dateIssue(value, '开始日期'))],
+    endDate: [
+        fieldRule(
+            (value) =>
+                dateIssue(value, '结束日期') ||
+                (!dateIssue(contract.startDate, '开始日期') && String(value) < contract.startDate
+                    ? '结束日期不得早于开始日期'
+                    : undefined),
+        ),
+    ],
+    amount: [fieldRule((value) => decimalIssue(value, '合同金额', false, 12))],
+    serviceArea: [fieldRule((value) => textIssue(value, '服务区域', 100))],
+}
+const indicatorRules: FormRules = {
+    name: [fieldRule((value) => textIssue(value, '指标名称', 150))],
+    unit: [fieldRule((value) => textIssue(value, '单位', 20))],
+    definition: [fieldRule((value) => textIssue(value, '统计口径', 5000))],
+    targetValue: [fieldRule((value) => decimalIssue(value, '合同目标', true))],
+}
+const allocationRules: FormRules = {
+    targetValue: [fieldRule((value) => decimalIssue(value, '合同目标', true))],
+    reason: [
+        fieldRule((value) =>
+            selected.value?.status === 'ACTIVE' ? textIssue(value, '调整原因', 1000) : undefined,
+        ),
+    ],
+}
 /** 刷新后统一回填版本和编辑副本，避免直接改动表格中的已保存对象。 */
 async function load() {
     try {
@@ -88,10 +150,11 @@ async function load() {
     }
 }
 /** 阻止重复写入，成功后重读全部版本并给出统一反馈。 */
-async function operate(work: () => Promise<unknown>) {
+async function operate(work: () => Promise<unknown>, validate?: () => Promise<boolean>) {
     if (busy.value) return
     busy.value = true
     try {
+        if (validate && !(await validate())) return
         await work()
         indicatorDialog.value = false
         allocationDialog.value = false
@@ -135,16 +198,18 @@ function editAllocations(row: Indicator) {
 /** 提交整个分配方案；已启用指标同时传入最新合同目标和调整原因。 */
 function saveAllocations() {
     const row = selected.value!
-    void operate(() =>
-        projectApi.allocations(
-            project.value!.id,
-            row,
-            allocations.value
-                .filter((a) => a.selected)
-                .map((a) => ({ teamId: a.teamId, targetValue: a.targetValue })),
-            targetPlan.targetValue,
-            targetPlan.reason,
-        ),
+    void operate(
+        () =>
+            projectApi.allocations(
+                project.value!.id,
+                row,
+                allocations.value
+                    .filter((a) => a.selected)
+                    .map((a) => ({ teamId: a.teamId, targetValue: a.targetValue })),
+                targetPlan.targetValue,
+                targetPlan.reason,
+            ),
+        () => validateForm(allocationRef.value),
     )
 }
 /** 各表单只提交对应资源，所有写入共用忙碌状态及版本刷新。 */
@@ -152,10 +217,16 @@ function activateProject() {
     void operate(() => projectApi.activate(project.value!))
 }
 function saveBase() {
-    void operate(() => projectApi.update(project.value!.id, base.value, project.value!.version))
+    void operate(
+        () => projectApi.update(project.value!.id, base.value, project.value!.version),
+        async () => (await baseRef.value?.validate()) ?? false,
+    )
 }
 function saveContract() {
-    void operate(() => projectApi.contract(project.value!, contract))
+    void operate(
+        () => projectApi.contract(project.value!, contract),
+        () => validateForm(contractRef.value),
+    )
 }
 function saveTeams() {
     const selectedTeams: Array<{ teamId: number; reporterId: number }> = []
@@ -172,7 +243,10 @@ function savePoints() {
     void operate(() => projectApi.points(project.value!, points.value))
 }
 function saveIndicator() {
-    void operate(() => projectApi.indicator(project.value!.id, indicator, selected.value))
+    void operate(
+        () => projectApi.indicator(project.value!.id, indicator, selected.value),
+        () => validateForm(indicatorRef.value),
+    )
 }
 function activateIndicator(row: Indicator) {
     void operate(() => projectApi.activateIndicator(project.value!.id, row))
@@ -210,12 +284,25 @@ onMounted(load)
         <el-tabs>
             <el-tab-pane label="基础信息">
                 <template v-if="has('project:record:update')">
-                    <project-form v-model="base" :candidates="candidates" />
+                    <project-form ref="baseRef" v-model="base" :candidates="candidates" />
                     <el-button type="primary" :loading="busy" @click="saveBase()">
                         保存基础信息
                     </el-button>
                 </template>
                 <el-descriptions v-else :column="2" border>
+                    <el-descriptions-item label="项目名称">{{ project.name }}</el-descriptions-item>
+                    <el-descriptions-item label="项目分类">
+                        {{ projectCategories[project.category] }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="归属组织">
+                        {{ project.ownerOrgName ?? '未设置' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="项目总监">
+                        {{ project.directorName ?? '未设置' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="高级主任 / 督导">
+                        {{ project.supervisorName ?? '未设置' }}
+                    </el-descriptions-item>
                     <el-descriptions-item label="项目编码">{{ project.code }}</el-descriptions-item>
                     <el-descriptions-item label="主服务领域">
                         {{ project.serviceFieldCode }}
@@ -223,23 +310,35 @@ onMounted(load)
                 </el-descriptions>
             </el-tab-pane>
             <el-tab-pane label="合同资料">
-                <el-form label-width="110px" :disabled="!has('project:record:update')">
+                <el-form
+                    ref="contractRef"
+                    class="business-form"
+                    :model="contract"
+                    :rules="contractRules"
+                    label-width="110px"
+                    :disabled="!has('project:record:update')"
+                    scroll-to-error
+                >
                     <el-form-item label="合同编号">
                         <el-input v-model="contract.contractNo" maxlength="100" />
                     </el-form-item>
-                    <el-form-item label="合作方" required>
+                    <el-form-item label="合作方" prop="partnerName" required>
                         <el-input v-model="contract.partnerName" maxlength="150" />
                     </el-form-item>
-                    <el-form-item label="开始日期" required>
-                        <el-date-picker v-model="contract.startDate" value-format="YYYY-MM-DD" />
+                    <el-form-item label="开始日期" prop="startDate" required>
+                        <el-date-picker
+                            v-model="contract.startDate"
+                            value-format="YYYY-MM-DD"
+                            @change="contractRef?.validateField('endDate').catch(() => {})"
+                        />
                     </el-form-item>
-                    <el-form-item label="结束日期" required>
+                    <el-form-item label="结束日期" prop="endDate" required>
                         <el-date-picker v-model="contract.endDate" value-format="YYYY-MM-DD" />
                     </el-form-item>
-                    <el-form-item label="合同金额" required>
+                    <el-form-item label="合同金额" prop="amount" required>
                         <el-input v-model="contract.amount" placeholder="如 10000.00" />
                     </el-form-item>
-                    <el-form-item label="服务区域" required>
+                    <el-form-item label="服务区域" prop="serviceArea" required>
                         <el-input v-model="contract.serviceArea" maxlength="100" />
                     </el-form-item>
                     <el-form-item label="说明">
@@ -349,11 +448,16 @@ onMounted(load)
                 >
                     新增指标
                 </el-button>
-                <el-table :data="project.indicators">
+                <el-table
+                    :ref="setTableRef"
+                    :data="indicatorRows"
+                    :default-sort="defaultSort"
+                    @sort-change="onSortChange"
+                >
                     <!-- @vue-generic {Indicator} -->
-                    <el-table-column prop="name" label="指标" min-width="160" />
+                    <el-table-column prop="name" sortable="custom" label="指标" min-width="160" />
                     <!-- @vue-generic {Indicator} -->
-                    <el-table-column prop="unit" label="单位" width="80" />
+                    <el-table-column prop="unit" sortable="custom" label="单位" width="80" />
                     <!-- @vue-generic {Indicator} -->
                     <el-table-column
                         prop="definition"
@@ -365,12 +469,22 @@ onMounted(load)
                     <el-table-column
                         v-if="project.statisticsScope === 'PROJECT'"
                         prop="targetValue"
+                        sortable="custom"
                         label="合同目标"
                         width="110"
                     />
                     <!-- @vue-generic {Indicator} -->
                     <el-table-column label="状态" width="90">
                         <template #default="{ row }">{{ businessStatus[row.status] }}</template>
+                    </el-table-column>
+                    <!-- @vue-generic {Indicator} -->
+                    <el-table-column
+                        prop="createdAt"
+                        label="创建时间"
+                        min-width="180"
+                        sortable="custom"
+                    >
+                        <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                     </el-table-column>
                     <!-- @vue-generic {Indicator} -->
                     <el-table-column label="操作" min-width="280" fixed="right">
@@ -423,18 +537,26 @@ onMounted(load)
             v-model="indicatorDialog"
             :title="selected ? '编辑指标' : '新增指标'"
             width="580px"
+            destroy-on-close
         >
-            <el-form label-width="100px">
-                <el-form-item label="名称" required>
+            <el-form
+                ref="indicatorRef"
+                class="business-form"
+                :model="indicator"
+                :rules="indicatorRules"
+                label-width="100px"
+                scroll-to-error
+            >
+                <el-form-item label="名称" prop="name" required>
                     <el-input v-model="indicator.name" maxlength="150" />
                 </el-form-item>
-                <el-form-item label="单位" required>
+                <el-form-item label="单位" prop="unit" required>
                     <el-input v-model="indicator.unit" maxlength="20" />
                 </el-form-item>
-                <el-form-item label="统计口径" required>
+                <el-form-item label="统计口径" prop="definition" required>
                     <el-input v-model="indicator.definition" type="textarea" maxlength="5000" />
                 </el-form-item>
-                <el-form-item label="合同目标" required>
+                <el-form-item label="合同目标" prop="targetValue" required>
                     <el-input
                         v-model="indicator.targetValue"
                         :disabled="selected?.status === 'ACTIVE'"
@@ -446,28 +568,58 @@ onMounted(load)
                 <el-button type="primary" :loading="busy" @click="saveIndicator()">保存</el-button>
             </template>
         </el-dialog>
-        <el-dialog v-model="allocationDialog" title="团队目标方案" width="620px">
+        <el-dialog v-model="allocationDialog" destroy-on-close title="团队目标方案" width="620px">
             <el-alert
                 title="启用时团队目标总和须等于合同目标；已有月报的团队不可取消分配。"
                 type="info"
                 :closable="false"
                 class="notice"
             />
-            <el-form label-width="100px">
-                <el-form-item label="合同目标">
+            <el-form
+                ref="allocationRef"
+                class="business-form"
+                :model="allocationModel"
+                :rules="allocationRules"
+                label-width="100px"
+                scroll-to-error
+            >
+                <el-form-item label="合同目标" prop="targetValue" required>
                     <el-input
                         v-model="targetPlan.targetValue"
                         :disabled="selected?.status !== 'ACTIVE'"
                     />
                 </el-form-item>
-                <el-form-item v-if="selected?.status === 'ACTIVE'" label="调整原因" required>
+                <el-form-item
+                    v-if="selected?.status === 'ACTIVE'"
+                    label="调整原因"
+                    prop="reason"
+                    required
+                >
                     <el-input v-model="targetPlan.reason" type="textarea" maxlength="1000" />
                 </el-form-item>
+                <el-form-item
+                    v-for="(a, index) in allocations"
+                    :key="a.teamId"
+                    :prop="`allocations.${index}.targetValue`"
+                    :rules="[
+                        fieldRule((value) =>
+                            a.selected ? decimalIssue(value, '团队目标', true) : undefined,
+                        ),
+                    ]"
+                >
+                    <el-checkbox
+                        v-model="a.selected"
+                        @change="allocationRef?.clearValidate(`allocations.${index}.targetValue`)"
+                    >
+                        {{ a.teamName }}
+                    </el-checkbox>
+                    <el-input
+                        v-model="a.targetValue"
+                        :disabled="!a.selected"
+                        placeholder="团队目标"
+                    />
+                </el-form-item>
             </el-form>
-            <div v-for="a in allocations" :key="a.teamId" class="edit-row">
-                <el-checkbox v-model="a.selected">{{ a.teamName }}</el-checkbox>
-                <el-input v-model="a.targetValue" :disabled="!a.selected" placeholder="团队目标" />
-            </div>
             <template #footer>
                 <el-button @click="allocationDialog = false">取消</el-button>
                 <el-button type="primary" :loading="busy" @click="saveAllocations">

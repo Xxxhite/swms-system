@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useTableSort } from '@/utils/tableSort'
+import { formatDateTime } from '@/utils/dateTime'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -34,6 +36,12 @@ const {
     invalidate,
     applyReview,
 } = useUserList(() => registrations.value, identityApi.users)
+const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
+    query,
+    'createdAt',
+    'descending',
+    load,
+)
 const busy = ref(false)
 const dialog = ref(false)
 // 弹窗模式分别控制展示字段和保存接口，任职资料与功能授权分开提交。
@@ -225,6 +233,7 @@ function search() {
 }
 /** 清空手动筛选条件，从第一页立即重新查询，保留每页条数。 */
 function resetSearch() {
+    resetSort()
     query.keyword = ''
     query.status = ''
     search()
@@ -233,6 +242,7 @@ watch(
     () => route.path,
     () => {
         invalidate()
+        resetSort()
         query.page = 1
         query.keyword = ''
         query.status = ''
@@ -282,12 +292,25 @@ watch(
             <p v-if="!registrations" class="approval-hint">
                 待审核账号须在“注册审核”中批准并分配任职与权限；已驳回账号须由申请人修改后重新提交。
             </p>
-            <el-table v-loading="loading" :data="rows">
+            <el-table
+                :ref="setTableRef"
+                v-loading="loading"
+                :data="rows"
+                :default-sort="defaultSort"
+                @sort-change="onSortChange"
+            >
                 <!-- @vue-generic {UserSummary} -->
-                <el-table-column prop="name" label="姓名" min-width="120" show-overflow-tooltip />
+                <el-table-column
+                    prop="name"
+                    sortable="custom"
+                    label="姓名"
+                    min-width="120"
+                    show-overflow-tooltip
+                />
                 <!-- @vue-generic {UserSummary} -->
                 <el-table-column
                     prop="username"
+                    sortable="custom"
                     label="账号"
                     min-width="180"
                     show-overflow-tooltip
@@ -308,7 +331,23 @@ watch(
                     show-overflow-tooltip
                 />
                 <!-- @vue-generic {UserSummary} -->
-                <el-table-column prop="dataScope" label="范围" width="100" />
+                <el-table-column prop="dataScope" label="范围" min-width="160">
+                    <template #default="{ row }">
+                        {{
+                            scopeOptions.find((scope) => scope.value === row.dataScope)?.label ??
+                            '未知范围'
+                        }}
+                    </template>
+                </el-table-column>
+                <!-- @vue-generic {UserSummary} -->
+                <el-table-column
+                    prop="createdAt"
+                    label="注册时间"
+                    min-width="180"
+                    sortable="custom"
+                >
+                    <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
+                </el-table-column>
                 <!-- @vue-generic {UserSummary} -->
                 <el-table-column label="操作" width="300" fixed="right">
                     <template #default="{ row }">

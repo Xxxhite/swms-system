@@ -68,6 +68,80 @@ export function registerProjectTests(
       teamA = orgs.find((o) => o.code === "demo-team-a")!.id
       teamB = orgs.find((o) => o.code === "demo-team-b")!.id
     })
+    test("业务字段异常返回具体中文提示且不写入数据", async () => {
+      const projectInput = {
+        code: "validation-only",
+        name: "校验项目",
+        category: "CONTRACT_PACKAGE",
+        ownerOrgId: 1,
+        directorId: 1,
+        supervisorId: 1,
+        serviceFieldCode: "社区建设",
+      }
+      const cases: Array<[string, string, unknown, string]> = []
+      for (const [field, value, message] of [
+        ["code", "bad code", "项目编码"],
+        ["name", "  ", "项目名称"],
+        ["category", "UNKNOWN", "项目分类"],
+        ["ownerOrgId", 0, "归属组织"],
+        ["directorId", 0, "项目总监"],
+        ["supervisorId", 0, "督导"],
+        ["serviceFieldCode", "", "主服务领域"],
+      ] as const)
+        cases.push(["/projects", "POST", { ...projectInput, [field]: value }, message])
+      const contract = {
+        version: 1,
+        partnerName: "合作单位",
+        startDate: "2026-01-01",
+        endDate: "2026-12-31",
+        amount: "0.00",
+        serviceArea: "测试区",
+      }
+      for (const [field, value, message] of [
+        ["partnerName", " ", "合作方"],
+        ["startDate", "2026-13-01", "开始日期"],
+        ["endDate", "", "结束日期"],
+        ["amount", "-1", "合同金额"],
+        ["serviceArea", "", "服务区域"],
+      ] as const)
+        cases.push(["/projects/1/contract", "PUT", { ...contract, [field]: value }, message])
+      cases.push([
+        "/projects/1/indicators",
+        "POST",
+        { name: "", unit: "人次", definition: "统计说明", targetValue: "1" },
+        "指标名称",
+      ])
+      cases.push([
+        "/service/monthly-reports",
+        "POST",
+        { indicatorId: 1, teamId: 1, month: "2026-13", actualValue: "0" },
+        "填报月份",
+      ])
+      cases.push([
+        "/service/monthly-reports",
+        "POST",
+        { indicatorId: 1, teamId: 1, month: "2026-10", actualValue: "1.001" },
+        "数量",
+      ])
+      cases.push([
+        "/service/monthly-reports/1/change-requests",
+        "POST",
+        { version: 1, operation: "DELETE", reason: "  " },
+        "变更原因",
+      ])
+      for (const [path, method, body, message] of cases) {
+        const result = await request(path, method, admin, body)
+        expect(result.status).toBe(422)
+        expect(result.code).toBe(1000)
+        expect(result.message).toContain(message)
+      }
+      expect(
+        await context()
+          .database.select()
+          .from(s.projects)
+          .where(eq(s.projects.code, "validation-only")),
+      ).toHaveLength(0)
+    })
     test("项目配置、重复 seed、精确分配及版本检查", async () => {
       const users = await context().database.select().from(s.users),
         a = users.find((u) => u.username === "admin")!,
@@ -241,6 +315,15 @@ export function registerProjectTests(
       ).toMatchObject({ cumulative: "0.30", completionRate: 100, warningLevel: "green" })
       const part = await request(`/projects/${projectId}`, "GET", social)
       expect(part.data.statisticsScope).toBe("TEAM")
+      const linked = await project()
+      expect(part.data.ownerOrgName).toBe(linked.ownerOrgName)
+      expect(part.data.directorName).toBe(linked.directorName)
+      expect(part.data.supervisorName).toBe(linked.supervisorName)
+      expect(typeof part.data.ownerOrgName).toBe("string")
+      expect(typeof part.data.directorName).toBe("string")
+      expect(typeof part.data.supervisorName).toBe("string")
+      expect(part.data.users).toBeUndefined()
+      expect(part.data.passwordHash).toBeUndefined()
       expect(part.data.teams).toHaveLength(1)
       expect(part.data.indicators[0].targetValue).toBeUndefined()
       expect(part.data.indicators[0].allocations).toHaveLength(1)
@@ -524,6 +607,96 @@ export function registerProjectTests(
           (c: { pendingReportId: number | null }) => c.pendingReportId !== null,
         ),
       ).toHaveLength(0)
+    })
+    test("业务列表全量排序后分页，预警与导出顺序一致且范围不扩大", async () => {
+      for (const [endpoint, sortBy] of [
+        ["/projects", "createdAt"],
+        ["/service/monthly-reports", "actualValue"],
+        ["/approvals/tasks", "createdAt"],
+      ]) {
+        const token = endpoint === "/approvals/tasks" ? leader : admin
+        const params = `sortBy=${sortBy}&sortOrder=asc`
+        const all = await request(`${endpoint}?pageSize=100&${params}`, "GET", token)
+        expect(all.code).toBe(0)
+        const first = await request(`${endpoint}?pageSize=2&page=1&${params}`, "GET", token)
+        const second = await request(`${endpoint}?pageSize=2&page=2&${params}`, "GET", token)
+        expect([...first.data.list, ...second.data.list].map((r: { id: number }) => r.id)).toEqual(
+          all.data.list.slice(0, 4).map((r: { id: number }) => r.id),
+        )
+        const values = all.data.list.map((r: Record<string, unknown>) =>
+          sortBy === "actualValue" ? Number(r.actualValue) : Date.parse(String(r.createdAt)),
+        ) as number[]
+        expect(values).toEqual([...values].sort((a, b) => a - b))
+        for (const field of ["constructor", "passwordHash"])
+          expect(
+            (await request(`${endpoint}?sortBy=${field}&sortOrder=asc`, "GET", token)).code,
+          ).toBe(1000)
+      }
+      const defaults = (await request("/service/monthly-reports?pageSize=100")).data.list as Array<{
+        month: string
+        createdAt: string
+        id: number
+      }>
+      expect(defaults.map((r) => r.id)).toEqual(
+        [...defaults]
+          .sort(
+            (a, b) =>
+              b.month.localeCompare(a.month) ||
+              Date.parse(b.createdAt) - Date.parse(a.createdAt) ||
+              b.id - a.id,
+          )
+          .map((r) => r.id),
+      )
+      const params = "sortBy=cumulative&sortOrder=desc"
+      const progress = await request(`/service/indicator-progress?pageSize=100&${params}`)
+      const warnings = await request(`/analysis/monthly-warnings?pageSize=100&${params}`)
+      expect(progress.code).toBe(0)
+      expect(warnings.code).toBe(0)
+      expect(warnings.data.list).toEqual(progress.data.list)
+      const amounts = progress.data.list.map((r: { cumulative: string }) =>
+        Number(r.cumulative),
+      ) as number[]
+      expect(amounts).toEqual([...amounts].sort((a, b) => b - a))
+      const first = await request(`/service/indicator-progress?pageSize=2&${params}`)
+      expect(first.data.list).toEqual(progress.data.list.slice(0, 2))
+      const file = await raw(`/analysis/exports/monthly-warnings?pageSize=1&${params}`)
+      expect(file.status).toBe(200)
+      const book = new ExcelJS.Workbook()
+      await book.xlsx.load(await file.arrayBuffer())
+      for (const [scope, sheetName] of [
+        ["PROJECT", "合同指标"],
+        ["TEAM", "团队指标"],
+      ]) {
+        const expected = progress.data.list
+          .filter((r: { statisticsScope: string }) => r.statisticsScope === scope)
+          .map(
+            (r: {
+              projectName: string
+              indicatorName: string
+              teamName: string
+              cumulative: string
+            }) => [r.projectName, r.indicatorName, r.teamName, r.cumulative],
+          )
+        const sheet = book.getWorksheet(sheetName!)!
+        const actual = Array.from({ length: sheet.rowCount - 1 }, (_, index) =>
+          [1, 2, 5, 8].map((col) => sheet.getCell(index + 2, col).value),
+        )
+        expect(actual).toEqual(expected)
+      }
+      const scoped = await request(`/service/indicator-progress?${params}`, "GET", social)
+      expect(
+        scoped.data.list.every(
+          (r: { teamId: number; statisticsScope: string }) =>
+            r.teamId === teamA && r.statisticsScope === "TEAM",
+        ),
+      ).toBe(true)
+      const hidden = await request(`/projects/${projectId}`, "GET", social)
+      expect(
+        hidden.data.indicators.every((r: { targetValue?: string }) => r.targetValue === undefined),
+      ).toBe(true)
+      expect(
+        (await request("/service/indicator-progress?sortBy=constructor&sortOrder=asc")).code,
+      ).toBe(1000)
     })
   })
 }

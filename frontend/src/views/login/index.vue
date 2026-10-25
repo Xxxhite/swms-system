@@ -5,8 +5,9 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 
 import { useMock } from '@/api/config'
-import { mockAccountsHint } from '@/mock/auth'
+import type { LoginPayload } from '@/api/types'
 import { useUserStore } from '@/stores/user'
+import TestAccountPicker from './components/TestAccountPicker.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -14,6 +15,7 @@ const userStore = useUserStore()
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
+const showTestAccounts = import.meta.env.DEV
 
 const form = reactive({
     username: useMock ? 'admin' : '',
@@ -23,6 +25,13 @@ const form = reactive({
 const rules: FormRules = {
     username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
     password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+}
+
+/** 快捷操作只回填表单并清除旧校验提示，由用户手动提交登录。 */
+function fillTestAccount(account: LoginPayload) {
+    if (submitting.value) return
+    Object.assign(form, account)
+    formRef.value?.clearValidate()
 }
 
 /** 校验表单并登录，受限账号进入审核页，启用账号恢复合法站内目标或工作台。 */
@@ -79,18 +88,11 @@ async function submit(): Promise<void> {
             </el-form>
             <p class="login__register"><router-link to="/register">员工注册</router-link></p>
 
-            <div v-if="useMock" class="login__hint">
-                <div class="login__hint-title">
-                    当前是本地 mock 模式，可用账号（密码都是 123456）
-                </div>
-                <div v-for="item in mockAccountsHint" :key="item.username" class="login__hint-row">
-                    <code>{{ item.username }}</code>
-                    — {{ item.roleName }}
-                </div>
-                <div class="login__hint-tip">
-                    不同角色登录后看到的菜单不同，工作台会显示该账号的数据范围。
-                </div>
-            </div>
+            <TestAccountPicker
+                v-if="showTestAccounts"
+                :disabled="submitting"
+                @select="fillTestAccount"
+            />
         </el-card>
     </div>
 </template>
@@ -124,31 +126,10 @@ async function submit(): Promise<void> {
     width: 100%;
 }
 
-.login__hint {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px dashed var(--el-border-color);
-    font-size: 13px;
-    color: var(--el-text-color-regular);
-}
 .login__register {
     text-align: center;
 }
 .login__register a {
     color: var(--el-color-primary);
-}
-
-.login__hint-title {
-    margin-bottom: 8px;
-    color: var(--el-text-color-secondary);
-}
-
-.login__hint-row {
-    line-height: 1.8;
-}
-
-.login__hint-tip {
-    margin-top: 8px;
-    color: var(--el-text-color-secondary);
 }
 </style>

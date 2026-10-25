@@ -16,7 +16,7 @@ const accounts = computed(() => {
     return [
         { username: 'admin', roleName: '机构管理员', password: administratorPassword },
         { username: 'project_manager', roleName: '项目总监', password: demoPassword },
-        { username: 'supervisor', roleName: '高级主任／督导', password: demoPassword },
+        { username: 'supervisor', roleName: '高级主任（兼督导）', password: demoPassword },
         { username: 'department', roleName: '部门总监', password: demoPassword },
         { username: 'leader', roleName: '团队主任', password: demoPassword },
         { username: 'social', roleName: '社工甲', password: demoPassword },

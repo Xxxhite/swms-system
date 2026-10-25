@@ -144,7 +144,7 @@ export function registerProjectTests(
       await request("/auth/profile", "PUT", social, { version: u.version + 1, isSupervisor: true })
       expect((await request("/auth/profile", "GET", social)).data.isSupervisor).toBe(false)
     })
-    test("第二批：合同包分表、可选多选领域和同人高级主任／督导", async () => {
+    test("第二批：合同包分表、可选多选领域和同人高级主任兼督导", async () => {
       const users = await context().database.select().from(s.users),
         m = users.find((u) => u.id === managerId)!
       const payload = {

@@ -184,7 +184,7 @@ export async function seedIdentity(
       const teamB = await org("demo-team-b", "演示团队乙", "TEAM", other)
       const supervisor = await person(
         "supervisor",
-        "演示项目督导",
+        "演示高级主任（兼督导）",
         "supervisor",
         root,
         admin,

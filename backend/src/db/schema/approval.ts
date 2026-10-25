@@ -11,8 +11,8 @@ import {
 import { users } from "./identity"
 import { businessTimestamps } from "./project"
 import { monthlyReports } from "./indicator"
-/** 月报变更表：保存更正、撤销或恢复的前后值及原因，在途槽位禁止重复申请。 */
-export const monthlyReportChanges = mysqlTable("monthly_report_changes", {
+/** 服务档案变更表：保存更正、撤销或恢复的前后值及原因，在途槽位禁止重复申请。 */
+export const monthlyReportChanges = mysqlTable("service_record_changes", {
   id: int("id", { unsigned: true }).autoincrement().primaryKey(),
   reportId: int("report_id", { unsigned: true })
     .notNull()
@@ -32,7 +32,7 @@ export const monthlyReportChanges = mysqlTable("monthly_report_changes", {
     .references(() => monthlyReports.id),
   ...businessTimestamps(),
 })
-/** 审批实例表：冻结业务内容与节点人员；本阶段仅月报变更单级审批。 */
+/** 审批实例表：冻结首次档案或变更内容及直接主管，保存单级审批轮次。 */
 export const approvalInstances = mysqlTable(
   "approval_instances",
   {

@@ -198,9 +198,11 @@ onMounted(load)
             </el-table>
             <el-pagination
                 v-model:current-page="query.page"
-                :page-size="query.pageSize"
+                v-model:page-size="query.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
                 :total="total"
-                layout="total, prev, pager, next"
+                layout="total, sizes, prev, pager, next"
+                @size-change="search"
                 class="table-pagination"
                 @current-change="load"
             />

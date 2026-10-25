@@ -20,6 +20,31 @@ const fixture = new Elysia()
   .compile()
 
 describe("应用基础契约", () => {
+  test("人员编辑的空领域返回具体提示，不进入鉴权和数据库写入", async () => {
+    const response = await app.handle(
+      new Request("http://localhost/api/users/1", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          version: 1,
+          orgId: 1,
+          positionCode: "position-8",
+          supervisorId: null,
+          isSupervisor: true,
+          name: "测试高级主任",
+          phone: "13800000000",
+          serviceFieldCodes: [],
+        }),
+      }),
+    )
+    expect(response.status).toBe(422)
+    expect(await response.json()).toEqual({
+      code: 1000,
+      message: "请至少选择一个服务领域，且不超过23个",
+      data: null,
+    })
+  })
+
   test("注册无效输入返回字段提示，不进入数据库写入", async () => {
     const valid = {
       username: "validation_probe",

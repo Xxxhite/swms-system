@@ -72,7 +72,7 @@ onMounted(load)
 </script>
 <template>
     <el-card>
-        <template #header>月报变更待办</template>
+        <template #header>服务档案审批</template>
         <el-alert
             v-if="useMock"
             title="审批任务请使用真实接口模式。"
@@ -121,9 +121,12 @@ onMounted(load)
                     </template>
                 </el-table-column>
                 <!-- @vue-generic {ApprovalTask} -->
-                <el-table-column prop="month" sortable="custom" label="月份" width="110">
+                <el-table-column prop="month" sortable="custom" label="服务日期" width="150">
                     <template #default="{ row }">
-                        {{ row.instance?.businessSnapshot.month }}
+                        {{
+                            row.instance?.businessSnapshot.serviceDate ||
+                            row.instance?.businessSnapshot.month
+                        }}
                     </template>
                 </el-table-column>
                 <!-- @vue-generic {ApprovalTask} -->
@@ -151,7 +154,11 @@ onMounted(load)
                 <el-table-column label="操作" width="120" fixed="right">
                     <template #default="{ row }">
                         <el-button link type="primary" @click="open(row)">
-                            {{ row.status === 'PENDING' ? '查看并处理' : '查看记录' }}
+                            {{
+                                row.status === 'PENDING' && row.canDecide !== false
+                                    ? '查看并处理'
+                                    : '查看记录'
+                            }}
                         </el-button>
                     </template>
                 </el-table-column>
@@ -159,13 +166,15 @@ onMounted(load)
             <el-pagination
                 v-model:current-page="query.page"
                 :total="total"
-                :page-size="query.pageSize"
+                v-model:page-size="query.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
                 class="table-pagination"
-                layout="total, prev, pager, next"
+                layout="total, sizes, prev, pager, next"
+                @size-change="search"
                 @current-change="load"
             />
         </template>
-        <el-dialog v-model="dialog" title="月报变更申请" width="700px">
+        <el-dialog v-model="dialog" title="服务档案审批详情" width="700px">
             <template v-if="detail">
                 <el-descriptions :column="2" border>
                     <el-descriptions-item label="项目">
@@ -177,8 +186,8 @@ onMounted(load)
                     <el-descriptions-item label="团队">
                         {{ detail.businessSnapshot.teamName }}
                     </el-descriptions-item>
-                    <el-descriptions-item label="月份">
-                        {{ detail.businessSnapshot.month }}
+                    <el-descriptions-item label="服务日期">
+                        {{ detail.businessSnapshot.serviceDate || detail.businessSnapshot.month }}
                     </el-descriptions-item>
                     <el-descriptions-item label="操作">
                         {{ businessStatus[String(detail.businessSnapshot.operation)] }}
@@ -203,7 +212,10 @@ onMounted(load)
                         }}
                     </el-timeline-item>
                 </el-timeline>
-                <el-form v-if="selected?.status === 'PENDING'" label-width="80px">
+                <el-form
+                    v-if="selected?.status === 'PENDING' && selected.canDecide !== false"
+                    label-width="80px"
+                >
                     <el-form-item label="审批意见">
                         <el-input
                             v-model="comment"
@@ -216,7 +228,7 @@ onMounted(load)
             </template>
             <template #footer>
                 <el-button @click="dialog = false">关闭</el-button>
-                <template v-if="selected?.status === 'PENDING'">
+                <template v-if="selected?.status === 'PENDING' && selected.canDecide !== false">
                     <el-button type="danger" :loading="busy" @click="decide(false)">驳回</el-button>
                     <el-button type="primary" :loading="busy" @click="decide(true)">通过</el-button>
                 </template>

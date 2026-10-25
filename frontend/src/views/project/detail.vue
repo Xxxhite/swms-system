@@ -28,6 +28,8 @@ defineOptions({ name: 'ProjectDetail' })
 const route = useRoute(),
     router = useRouter(),
     store = useUserStore()
+const contractInput = ref<HTMLInputElement>()
+const files = ref<import('@/api/business-types').ContractFile[]>([])
 const project = ref<Project>(),
     busy = ref(false),
     candidates = ref<Candidates>({ organizations: [], users: [], serviceFields: [] })
@@ -37,7 +39,10 @@ const base = ref<ProjectInput>({
     category: 'CONTRACT_PACKAGE',
     ownerOrgId: 0,
     directorId: 0,
-    supervisorId: 0,
+    seniorDirectorId: 0,
+    supervisorId: null,
+    subFieldCodes: [],
+    brandCodes: [],
     serviceFieldCode: '',
 })
 const contract = reactive<ContractInput>({
@@ -49,14 +54,19 @@ const contract = reactive<ContractInput>({
     serviceArea: '',
     note: '',
 })
+const members = ref<Project['members']>([])
 const teams = ref<Array<{ teamId?: number; reporterId?: number }>>([]),
     points = ref<Project['servicePoints']>([])
+const indicatorPage = ref(1),
+    indicatorPageSize = ref(20)
 const sortQuery = reactive<SortQuery>({})
 const { setTableRef, defaultSort, onSortChange } = useTableSort(
     sortQuery,
     'createdAt',
     'descending',
-    () => {},
+    () => {
+        indicatorPage.value = 1
+    },
 )
 const indicatorRows = computed(() =>
     sortTableRows(
@@ -69,11 +79,7 @@ const indicatorRows = computed(() =>
         ['targetValue'],
     ),
 )
-const canManage = computed(
-    () =>
-        project.value?.statisticsScope === 'PROJECT' &&
-        (store.profile?.roles.includes('admin') || project.value.directorId === store.profile?.id),
-)
+const canManage = computed(() => project.value?.canManage ?? false)
 const has = (permission: string) => canManage.value && store.hasPermission(permission)
 const indicatorDialog = ref(false),
     allocationDialog = ref(false),
@@ -122,13 +128,17 @@ async function load() {
     try {
         const p = await projectApi.detail(Number(route.params.id))
         project.value = p
+        files.value = await projectApi.files(p.id)
         base.value = {
             code: p.code,
             name: p.name,
             category: p.category,
             ownerOrgId: p.ownerOrgId,
             directorId: p.directorId,
+            seniorDirectorId: p.seniorDirectorId,
             supervisorId: p.supervisorId,
+            subFieldCodes: p.subFieldCodes ?? [],
+            brandCodes: p.brandCodes ?? [],
             serviceFieldCode: p.serviceFieldCode,
         }
         if (p.contract)
@@ -141,6 +151,7 @@ async function load() {
                 serviceArea: p.contract.serviceArea,
                 note: p.contract.note ?? '',
             })
+        members.value = p.members.map((m) => ({ ...m }))
         teams.value = p.teams.map((t) => ({ teamId: t.teamId, reporterId: t.reporterId }))
         points.value = p.servicePoints.map((p) => ({ ...p }))
         if (canManage.value && store.hasPermission('project:record:update'))
@@ -232,7 +243,7 @@ function saveTeams() {
     const selectedTeams: Array<{ teamId: number; reporterId: number }> = []
     for (const [index, team] of teams.value.entries()) {
         if (!team.teamId || !team.reporterId) {
-            ElMessage.warning(`请完整选择第 ${index + 1} 行的承担团队和填报负责人`)
+            ElMessage.warning(`请完整选择第 ${index + 1} 行的服务团队和填报负责人`)
             return
         }
         selectedTeams.push({ teamId: team.teamId, reporterId: team.reporterId })
@@ -254,6 +265,49 @@ function activateIndicator(row: Indicator) {
 function removeIndicator(row: Indicator) {
     void operate(() => projectApi.removeIndicator(project.value!.id, row))
 }
+/** 多个电子合同逐项上传并刷新结果，已成功文件在后续文件失败时保留。 */
+async function uploadContract(event: Event) {
+    const input = event.target as HTMLInputElement
+    if (!project.value || busy.value) return
+    busy.value = true
+    try {
+        for (const file of Array.from(input.files ?? []))
+            await projectApi.upload(project.value.id, file)
+        ElMessage.success('合同附件已上传')
+    } catch {
+        /* 请求层提示 */
+    } finally {
+        busy.value = false
+        input.value = ''
+        try {
+            files.value = await projectApi.files(project.value.id)
+        } catch {
+            /* 请求层提示 */
+        }
+    }
+}
+/** 下载经过鉴权的合同文件，浏览器仅接收文件数据。 */
+async function downloadContract(file: import('@/api/business-types').ContractFile) {
+    try {
+        const blob = await projectApi.downloadFile(file.id)
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = file.name
+        a.click()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch {
+        /* 请求层提示 */
+    }
+}
+/** 保存项目成员使用当前项目版本。 */
+function saveMembers() {
+    void operate(() => projectApi.members(project.value!, members.value))
+}
+/** 移除附件关联后刷新合同列表。 */
+function removeContract(id: number) {
+    void operate(() => projectApi.removeFile(id))
+}
 onMounted(load)
 </script>
 <template>
@@ -262,7 +316,9 @@ onMounted(load)
             <div class="page-header">
                 <span>{{ project.name }}</span>
                 <div class="page-actions">
-                    <el-button @click="router.push('/project')">返回项目</el-button>
+                    <el-button @click="router.push('/service/contract-package-projects')">
+                        返回项目
+                    </el-button>
                     <el-button @click="load">刷新</el-button>
                     <el-button
                         v-if="project.status === 'DRAFT' && has('project:record:update')"
@@ -300,8 +356,17 @@ onMounted(load)
                     <el-descriptions-item label="项目总监">
                         {{ project.directorName ?? '未设置' }}
                     </el-descriptions-item>
-                    <el-descriptions-item label="高级主任 / 督导">
+                    <el-descriptions-item label="高级主任">
+                        {{ project.seniorDirectorName ?? '未设置' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="督导">
                         {{ project.supervisorName ?? '未设置' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="细分领域">
+                        {{ project.subFieldCodes?.join('、') || '未填写' }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="品牌归属">
+                        {{ project.brandCodes?.join('、') || '未填写' }}
                     </el-descriptions-item>
                     <el-descriptions-item label="项目编码">{{ project.code }}</el-descriptions-item>
                     <el-descriptions-item label="主服务领域">
@@ -335,7 +400,12 @@ onMounted(load)
                     <el-form-item label="结束日期" prop="endDate" required>
                         <el-date-picker v-model="contract.endDate" value-format="YYYY-MM-DD" />
                     </el-form-item>
-                    <el-form-item label="合同金额" prop="amount" required>
+                    <el-form-item
+                        v-if="project.statisticsScope === 'PROJECT'"
+                        label="合同金额"
+                        prop="amount"
+                        required
+                    >
                         <el-input v-model="contract.amount" placeholder="如 10000.00" />
                     </el-form-item>
                     <el-form-item label="服务区域" prop="serviceArea" required>
@@ -350,8 +420,46 @@ onMounted(load)
                         </el-button>
                     </el-form-item>
                 </el-form>
+                <div class="notice">
+                    <p>电子合同附件</p>
+                    <el-button
+                        v-if="has('project:record:update')"
+                        type="primary"
+                        :loading="busy"
+                        :disabled="!project.contract"
+                        @click="contractInput?.click()"
+                    >
+                        上传合同附件
+                    </el-button>
+                    <input
+                        ref="contractInput"
+                        hidden
+                        v-if="has('project:record:update')"
+                        type="file"
+                        multiple
+                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                        :disabled="busy || !project.contract"
+                        @change="uploadContract"
+                    />
+                    <p>支持 PDF、图片、Word，每个文件最多 20MB。</p>
+                    <div v-for="file in files" :key="file.id" class="page-actions">
+                        <el-button link type="primary" @click="downloadContract(file)">
+                            {{ file.name }}
+                        </el-button>
+                        <span>{{ (file.size / 1024).toFixed(1) }} KB</span>
+                        <el-button
+                            v-if="has('project:record:update')"
+                            link
+                            type="danger"
+                            :disabled="busy"
+                            @click="removeContract(file.id)"
+                        >
+                            移除
+                        </el-button>
+                    </div>
+                </div>
             </el-tab-pane>
-            <el-tab-pane label="承担团队">
+            <el-tab-pane label="服务团队">
                 <p>每个团队指定一名填报负责人；出现指标目标后，团队关系须保留。</p>
                 <div
                     v-for="(team, index) in teams"
@@ -362,7 +470,7 @@ onMounted(load)
                     <el-select
                         v-model="team.teamId"
                         :disabled="!has('project:record:update')"
-                        placeholder="承担团队"
+                        placeholder="服务团队"
                         @change="team.reporterId = undefined"
                     >
                         <el-option
@@ -405,6 +513,67 @@ onMounted(load)
                         {{ team.teamName }}：{{ team.reporterName }}
                     </p>
                 </template>
+            </el-tab-pane>
+            <el-tab-pane label="项目成员">
+                <p>成员有效期间位于合同周期内；团队主任及以下同一时间只分配一个合同包项目。</p>
+                <div v-for="(member, index) in members" :key="index" class="edit-row">
+                    <el-select
+                        v-if="has('project:record:update')"
+                        :model-value="member.userId || undefined"
+                        @update:model-value="member.userId = $event ?? 0"
+                        filterable
+                        @change="
+                            member.teamId =
+                                candidates.users.find((u) => u.id === member.userId)?.teamId ?? 0
+                        "
+                    >
+                        <el-option
+                            v-for="u in candidates.users.filter((u) =>
+                                project?.teams.some((t) => t.teamId === u.teamId),
+                            )"
+                            :key="u.id"
+                            :value="u.id"
+                            :label="u.name"
+                        />
+                    </el-select>
+                    <span v-else>{{ member.name }}</span>
+                    <el-date-picker
+                        v-model="member.startDate"
+                        value-format="YYYY-MM-DD"
+                        :disabled="!has('project:record:update')"
+                        placeholder="开始日期"
+                    />
+                    <el-date-picker
+                        v-model="member.endDate"
+                        value-format="YYYY-MM-DD"
+                        :disabled="!has('project:record:update')"
+                        placeholder="结束日期"
+                    />
+                    <el-button
+                        v-if="has('project:record:update')"
+                        @click="members.splice(index, 1)"
+                    >
+                        移除
+                    </el-button>
+                </div>
+                <div v-if="has('project:record:update')" class="page-actions">
+                    <el-button
+                        :disabled="!project.contract"
+                        @click="
+                            members.push({
+                                userId: 0,
+                                teamId: 0,
+                                startDate: project.contract?.startDate ?? '',
+                                endDate: project.contract?.endDate ?? '',
+                            })
+                        "
+                    >
+                        添加成员
+                    </el-button>
+                    <el-button type="primary" :loading="busy" @click="saveMembers">
+                        保存成员
+                    </el-button>
+                </div>
             </el-tab-pane>
             <el-tab-pane label="服务点">
                 <div v-for="(point, index) in points" :key="index" class="edit-row">
@@ -450,7 +619,12 @@ onMounted(load)
                 </el-button>
                 <el-table
                     :ref="setTableRef"
-                    :data="indicatorRows"
+                    :data="
+                        indicatorRows.slice(
+                            (indicatorPage - 1) * indicatorPageSize,
+                            indicatorPage * indicatorPageSize,
+                        )
+                    "
                     :default-sort="defaultSort"
                     @sort-change="onSortChange"
                 >
@@ -524,6 +698,15 @@ onMounted(load)
                         </template>
                     </el-table-column>
                 </el-table>
+                <el-pagination
+                    v-model:current-page="indicatorPage"
+                    v-model:page-size="indicatorPageSize"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="indicatorRows.length"
+                    layout="total, sizes, prev, pager, next"
+                    class="table-pagination"
+                    @size-change="indicatorPage = 1"
+                />
                 <p v-for="i in project.indicators" :key="i.id">
                     {{ i.name }}：
                     <span v-for="a in i.allocations" :key="a.teamId">

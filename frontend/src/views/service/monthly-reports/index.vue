@@ -7,19 +7,14 @@ import {
     fieldRule,
     textIssue,
     decimalIssue,
-    monthIssue,
+    dateIssue,
     validateForm,
 } from '@/utils/businessValidation'
 import 'element-plus/es/components/message/style/css'
 import { useUserStore } from '@/stores/user'
 import { useMock } from '@/api/config'
 import { serviceApi } from '@/api/modules/service'
-import {
-    businessStatus,
-    type Monthly,
-    type MonthlyInput,
-    type Progress,
-} from '@/api/business-types'
+import { businessStatus, type Monthly, type MonthlyInput } from '@/api/business-types'
 import { formatDateTime } from '@/utils/dateTime'
 const store = useUserStore(),
     rows = ref<Monthly[]>([]),
@@ -31,14 +26,25 @@ const store = useUserStore(),
     historyDialog = ref(false)
 const selected = ref<Monthly>(),
     history = ref<Monthly>(),
-    slots = ref<Progress[]>([]),
-    slot = ref('')
+    context = ref<Awaited<ReturnType<typeof serviceApi.context>>>({
+        fixedProject: true,
+        projects: [],
+        slots: [],
+    }),
+    selectedProjectId = ref(0)
 const form = reactive<MonthlyInput>({
     indicatorId: 0,
     teamId: 0,
-    month: formatDateTime(new Date()).slice(0, 7),
+    serviceDate: formatDateTime(new Date()).slice(0, 10),
+    requestKey: crypto.randomUUID(),
     actualValue: '0.00',
     note: '',
+})
+const selectedIndicatorId = computed({
+    get: () => form.indicatorId || undefined,
+    set: (value: number | undefined) => {
+        form.indicatorId = value ?? 0
+    },
 })
 const change = reactive({ operation: 'CORRECT', actualValue: '0.00', note: '', reason: '' })
 const formRef = ref<FormInstance>(),
@@ -47,8 +53,8 @@ const formRules: FormRules = {
     indicatorId: [
         fieldRule(() => (form.indicatorId > 0 && form.teamId > 0 ? undefined : '请选择指标及团队')),
     ],
-    month: [fieldRule((value) => monthIssue(value, formatDateTime(new Date()).slice(0, 7)))],
-    actualValue: [fieldRule((value) => decimalIssue(value, '当月新增'))],
+    serviceDate: [fieldRule((value) => dateIssue(value, '服务日期'))],
+    actualValue: [fieldRule((value) => decimalIssue(value, '本次完成量'))],
 }
 const changeRules: FormRules = {
     actualValue: [
@@ -69,10 +75,29 @@ const query = reactive({
     month: '',
     status: '',
 })
-const slotOptions = computed(() => slots.value.filter((r) => r.teamId !== null && r.canReport))
+const teamOptions = computed(() => [
+    ...new Map(
+        context.value.slots
+            .filter((s) => s.projectId === selectedProjectId.value)
+            .map((s) => [s.teamId, { id: s.teamId, name: s.teamName }]),
+    ).values(),
+])
+const indicatorOptions = computed(() =>
+    context.value.slots.filter(
+        (s) => s.projectId === selectedProjectId.value && s.teamId === form.teamId,
+    ),
+)
+/** 项目改变后清除过期团队及指标选择。 */
+function chooseProject() {
+    form.teamId = teamOptions.value.length === 1 ? teamOptions.value[0]!.id : 0
+    form.indicatorId = 0
+}
+function chooseTeam() {
+    form.indicatorId = 0
+}
 const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
     query,
-    'month',
+    'serviceDate',
     'descending',
     load,
 )
@@ -130,13 +155,12 @@ async function operate(work: () => Promise<unknown>, validate?: () => Promise<bo
 /** 读取全部可见指标团队候选，不将第一页误作完整列表。 */
 async function edit(row?: Monthly) {
     try {
-        const all: Progress[] = []
-        for (let page = 1; ; page++) {
-            const result = await serviceApi.progress({ page, pageSize: 100 })
-            all.push(...result.list)
-            if (all.length >= result.total || !result.list.length) break
+        context.value = await serviceApi.context()
+        if (!context.value.projects.length) {
+            ElMessage.warning('尚未分配有效合同包项目或指标，请联系负责人')
+            return
         }
-        slots.value = all
+        selectedProjectId.value = row?.projectId ?? context.value.projects[0]?.id ?? 0
         selected.value = row
         Object.assign(
             form,
@@ -144,29 +168,25 @@ async function edit(row?: Monthly) {
                 ? {
                       indicatorId: row.indicatorId,
                       teamId: row.teamId,
-                      month: row.month,
+                      serviceDate: row.serviceDate ?? '',
+                      requestKey: row.requestKey,
                       actualValue: row.actualValue,
                       note: row.note ?? '',
                   }
                 : {
                       indicatorId: 0,
                       teamId: 0,
-                      month: formatDateTime(new Date()).slice(0, 7),
+                      serviceDate: formatDateTime(new Date()).slice(0, 10),
+                      requestKey: crypto.randomUUID(),
                       actualValue: '0.00',
                       note: '',
                   },
         )
-        slot.value = row ? `${row.indicatorId}:${row.teamId}` : ''
+        if (!row) chooseProject()
         dialog.value = true
     } catch {
         /* 请求层提示 */
     }
-}
-/** 选择组合后仅发送指标、团队及月份，项目归属由后端推导。 */
-function chooseSlot(value: string) {
-    const [indicatorId, teamId] = value.split(':').map(Number)
-    form.indicatorId = indicatorId!
-    form.teamId = teamId!
 }
 /** 更正、撤销和恢复均提交原因，等待主管确认后才改变累计。 */
 function openChange(row: Monthly, operation: string) {
@@ -211,6 +231,10 @@ async function withdraw(id: number) {
     await operate(() => serviceApi.withdraw(id))
     historyDialog.value = false
 }
+/** 撤回本人首次提交并回到草稿，保留历史审批记录。 */
+function withdrawInitial(id: number) {
+    void operate(() => serviceApi.withdrawSubmission(id))
+}
 onMounted(async () => {
     await load()
     if (!useMock) {
@@ -228,25 +252,25 @@ onMounted(async () => {
     <el-card>
         <template #header>
             <div class="page-header">
-                <span>月度填报</span>
+                <span>服务档案填报</span>
                 <el-button
                     v-if="!useMock && store.hasPermission('service:monthly:create')"
                     type="primary"
                     @click="edit()"
                 >
-                    新增月报
+                    新增服务档案
                 </el-button>
             </div>
         </template>
         <el-alert
             v-if="useMock"
-            title="月度填报请使用真实接口模式。"
+            title="服务档案填报请使用真实接口模式。"
             type="info"
             :closable="false"
         />
         <template v-else>
             <el-alert
-                title="填写当月新增完成量；草稿不计累计，提交后更正、撤销及恢复须主管确认。"
+                title="每次完成服务后填写本次完成量；首次及更正均由直接主管审批，通过后计入累计。"
                 type="info"
                 :closable="false"
                 class="notice"
@@ -255,13 +279,13 @@ onMounted(async () => {
                 <el-form-item label="项目／指标">
                     <el-input v-model="query.keyword" clearable />
                 </el-form-item>
-                <el-form-item label="填报月份">
+                <el-form-item label="服务月份">
                     <el-date-picker v-model="query.month" type="month" value-format="YYYY-MM" />
                 </el-form-item>
                 <el-form-item label="状态">
                     <el-select v-model="query.status" clearable>
                         <el-option
-                            v-for="value in ['DRAFT', 'SUBMITTED', 'VOID']"
+                            v-for="value in ['DRAFT', 'IN_REVIEW', 'REJECTED', 'SUBMITTED', 'VOID']"
                             :key="value"
                             :value="value"
                             :label="businessStatus[value]"
@@ -319,12 +343,16 @@ onMounted(async () => {
                 <!-- @vue-generic {Monthly} -->
                 <el-table-column prop="teamName" sortable="custom" label="团队" min-width="130" />
                 <!-- @vue-generic {Monthly} -->
-                <el-table-column prop="month" sortable="custom" label="月份" width="110" />
+                <el-table-column prop="serviceDate" sortable="custom" label="服务日期" width="150">
+                    <template #default="{ row }">
+                        {{ row.serviceDate || `${row.month}（历史月汇总）` }}
+                    </template>
+                </el-table-column>
                 <!-- @vue-generic {Monthly} -->
                 <el-table-column
                     prop="actualValue"
                     sortable="custom"
-                    label="当月新增"
+                    label="本次完成量"
                     width="100"
                 />
                 <!-- @vue-generic {Monthly} -->
@@ -349,7 +377,13 @@ onMounted(async () => {
                 <el-table-column label="操作" min-width="280" fixed="right">
                     <template #default="{ row }">
                         <el-button link type="primary" @click="showHistory(row)">详情</el-button>
-                        <template v-if="row.status === 'DRAFT' && row.canMaintain">
+                        <template
+                            v-if="
+                                ['DRAFT', 'REJECTED'].includes(row.status) &&
+                                row.canMaintain &&
+                                !row.legacyReportId
+                            "
+                        >
                             <el-button
                                 v-if="store.hasPermission('service:monthly:update')"
                                 link
@@ -376,6 +410,21 @@ onMounted(async () => {
                                 删除
                             </el-button>
                         </template>
+                        <el-button
+                            v-if="
+                                row.status === 'IN_REVIEW' &&
+                                row.submissions?.some(
+                                    (i) =>
+                                        i.status === 'IN_REVIEW' &&
+                                        i.applicantId === store.profile?.id,
+                                )
+                            "
+                            link
+                            type="warning"
+                            @click="withdrawInitial(row.id)"
+                        >
+                            撤回提交
+                        </el-button>
                         <template
                             v-else-if="
                                 row.canMaintain && !row.changes.some((c) => c.pendingReportId)
@@ -422,12 +471,14 @@ onMounted(async () => {
                 v-model:current-page="query.page"
                 class="table-pagination"
                 :total="total"
-                :page-size="query.pageSize"
-                layout="total, prev, pager, next"
+                v-model:page-size="query.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next"
+                @size-change="search"
                 @current-change="load"
             />
         </template>
-        <el-dialog v-model="dialog" destroy-on-close title="月报草稿" width="600px">
+        <el-dialog v-model="dialog" destroy-on-close title="服务档案草稿" width="600px">
             <el-form
                 ref="formRef"
                 class="business-form"
@@ -436,30 +487,56 @@ onMounted(async () => {
                 label-width="100px"
                 scroll-to-error
             >
-                <el-form-item label="指标及团队" prop="indicatorId" required>
+                <el-form-item label="项目" required>
                     <el-select
-                        v-model="slot"
-                        :disabled="!!selected"
-                        filterable
-                        @change="chooseSlot"
+                        v-model="selectedProjectId"
+                        :disabled="context.fixedProject || !!selected"
+                        @change="chooseProject"
                     >
                         <el-option
-                            v-for="r in slotOptions"
-                            :key="`${r.indicatorId}:${r.teamId}`"
-                            :value="`${r.indicatorId}:${r.teamId}`"
-                            :label="`${r.projectName}／${r.indicatorName}／${r.teamName}`"
+                            v-for="p in context.projects"
+                            :key="p.id"
+                            :label="p.name"
+                            :value="p.id"
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="月份" prop="month" required>
+                <el-form-item label="服务团队" required>
+                    <el-select
+                        v-model="form.teamId"
+                        :disabled="!!selected || teamOptions.length === 1"
+                        @change="chooseTeam"
+                    >
+                        <el-option
+                            v-for="t in teamOptions"
+                            :key="t.id"
+                            :label="t.name"
+                            :value="t.id"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="指标" prop="indicatorId" required>
+                    <el-select
+                        v-model="selectedIndicatorId"
+                        :disabled="!!selected || !form.teamId"
+                        filterable
+                    >
+                        <el-option
+                            v-for="i in indicatorOptions"
+                            :key="i.indicatorId"
+                            :label="`${i.indicatorName}（${i.unit}）`"
+                            :value="i.indicatorId"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="服务日期" prop="serviceDate" required>
                     <el-date-picker
-                        v-model="form.month"
-                        type="month"
-                        value-format="YYYY-MM"
-                        :disabled="!!selected"
+                        v-model="form.serviceDate"
+                        type="date"
+                        value-format="YYYY-MM-DD"
                     />
                 </el-form-item>
-                <el-form-item label="当月新增" prop="actualValue" required>
+                <el-form-item label="本次完成量" prop="actualValue" required>
                     <el-input v-model="form.actualValue" placeholder="非负数，最多两位小数" />
                 </el-form-item>
                 <el-form-item label="说明">
@@ -509,15 +586,25 @@ onMounted(async () => {
                 </el-button>
             </template>
         </el-dialog>
-        <el-dialog v-model="historyDialog" title="月报及变更历史" width="700px">
+        <el-dialog v-model="historyDialog" title="服务档案及审批历史" width="700px">
             <template v-if="history">
                 <p>
-                    {{ history.projectName }}／{{ history.indicatorName }}／{{ history.month }}：{{
-                        history.actualValue
-                    }}{{ history.unit }}
+                    {{ history.projectName }}／{{ history.indicatorName }}／{{
+                        history.serviceDate || history.month
+                    }}：{{ history.actualValue }}{{ history.unit }}
                 </p>
                 <p>{{ history.note }}</p>
                 <el-timeline>
+                    <el-timeline-item
+                        v-for="submission in history.submissions ?? []"
+                        :key="`submission-${submission.id}`"
+                    >
+                        <p>首次填报：{{ businessStatus[submission.status] }}</p>
+                        <p v-for="r in submission.records ?? []" :key="r.id">
+                            {{ formatDateTime(r.createdAt) }} {{ r.actorName }} ·
+                            {{ businessStatus[r.action] }}：{{ r.comment || '无补充意见' }}
+                        </p>
+                    </el-timeline-item>
                     <el-timeline-item v-for="c in history.changes" :key="c.id">
                         <p>
                             {{ businessStatus[c.operation] }}：{{ c.reason }}；{{

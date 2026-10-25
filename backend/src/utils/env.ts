@@ -10,7 +10,11 @@ function toPositiveInt(value: string | undefined, fallback: number): number {
 }
 
 export const env = {
+  uploadDir: process.env.UPLOAD_DIR?.trim() || "./storage/contracts",
+  uploadMaxBytes: toPositiveInt(process.env.UPLOAD_MAX_BYTES, 20 * 1024 * 1024),
   nodeEnv: process.env.NODE_ENV ?? "development",
+  // 仅开发环境中显式指定的启用账号可全局查看、维护项目和填写服务档案。
+  devSuperadminUsername: process.env.DEV_SUPERADMIN_USERNAME?.trim() ?? "",
   // 线上由本机 Nginx 转发；显式指定 HOST 可调整监听地址。
   host: process.env.HOST?.trim() || "127.0.0.1",
   port: toPositiveInt(process.env.PORT, 3000),

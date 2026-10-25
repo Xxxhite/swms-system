@@ -18,8 +18,16 @@ const busy = ref(false)
 async function load() {
     try {
         detail.value = await authApi.detail()
-        for (const key of Object.keys(form) as Array<keyof typeof form>)
-            form[key] = detail.value[key] ?? ''
+        Object.assign(
+            form,
+            Object.fromEntries(
+                Object.keys(form).map((key) => [
+                    key,
+                    detail.value?.[key as keyof PersonalProfile] ??
+                        (key === 'serviceFieldCodes' ? [] : ''),
+                ]),
+            ),
+        )
     } catch {
         /* 请求层统一提示 */
     }

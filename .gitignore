@@ -30,3 +30,6 @@ coverage/
 
 # 按实际服务器生成的部署配置
 /deploy/generated/
+
+# Local contract file storage
+backend/storage/

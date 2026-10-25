@@ -11,21 +11,8 @@ const title = computed(() => route.meta.title ?? '页面')
 <template>
     <el-card class="placeholder">
         <template #header>{{ title }}</template>
-        <el-empty description="页面待接入">
-            <div class="placeholder__tip">
-                该模块的页面和接口要等数据库表结构确定后再实现。
-                <br />
-                路由、菜单和权限判断已经跑通，现在可以直接演示「不同角色看到不同菜单」。
-            </div>
+        <el-empty description="待接入">
             <el-button type="primary" @click="router.push('/dashboard')">返回工作台</el-button>
         </el-empty>
     </el-card>
 </template>
-
-<style scoped>
-.placeholder__tip {
-    margin-bottom: 16px;
-    color: var(--el-text-color-secondary);
-    line-height: 1.8;
-}
-</style>

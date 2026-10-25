@@ -21,12 +21,13 @@ export const projectBody = t.Object({
     error: "项目编码须为 1—32 位字母、数字、下划线或连字符",
   }),
   name: shortText(150, "项目名称"),
-  category: t.Union([t.Literal("CONTRACT_PACKAGE"), t.Literal("HEADQUARTERS"), t.Literal("FUND")], {
-    error: "请选择有效的项目分类",
-  }),
+  category: t.Literal("CONTRACT_PACKAGE", { error: "合同包项目分类不正确" }),
   ownerOrgId: t.Integer({ minimum: 1, error: "请选择归属组织" }),
   directorId: t.Integer({ minimum: 1, error: "请选择项目总监" }),
-  supervisorId: t.Integer({ minimum: 1, error: "请选择高级主任 / 督导" }),
+  seniorDirectorId: t.Integer({ minimum: 1, error: "请选择高级主任" }),
+  supervisorId: t.Union([t.Integer({ minimum: 1, error: "请选择有效的督导" }), t.Null()]),
+  subFieldCodes: t.Optional(t.Array(shortText(100), { maxItems: 5 })),
+  brandCodes: t.Optional(t.Array(shortText(100), { maxItems: 5 })),
   serviceFieldCode: shortText(100, "主服务领域"),
 })
 export const contractBody = t.Object({
@@ -44,6 +45,15 @@ export const contractBody = t.Object({
 export const teamBody = t.Array(
   t.Object({ teamId: t.Integer({ minimum: 1 }), reporterId: t.Integer({ minimum: 1 }) }),
   { maxItems: 100 },
+)
+export const memberBody = t.Array(
+  t.Object({
+    userId: t.Integer({ minimum: 1 }),
+    teamId: t.Integer({ minimum: 1 }),
+    startDate: t.String({ format: "date" }),
+    endDate: t.String({ format: "date" }),
+  }),
+  { maxItems: 1000 },
 )
 export const pointBody = t.Array(
   t.Object({

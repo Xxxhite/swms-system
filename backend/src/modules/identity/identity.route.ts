@@ -73,6 +73,13 @@ export function createIdentityRoutes(service: IdentityService = identityService)
           phone: text(32),
           socialWorkerNo: nullableText(),
           serviceFieldCode: nullableText(),
+          serviceFieldCodes: t.Optional(
+            t.Array(text(), {
+              minItems: 1,
+              maxItems: 23,
+              error: "请至少选择一个服务领域，且不超过23个",
+            }),
+          ),
         }),
       },
     )

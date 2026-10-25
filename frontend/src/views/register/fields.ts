@@ -12,6 +12,7 @@ export function personnelDefaults(): Omit<RegistrationInput, 'username' | 'passw
         politicalStatus: '',
         socialWorkerNo: '',
         proposedTeam: '',
+        serviceFieldCodes: [],
     }
 }
 const PERSONNEL_FIELDS = {
@@ -26,6 +27,8 @@ const PERSONNEL_FIELDS = {
 
 /** 返回具体字段的中文错误；日期按原字符串回验，拒绝日期自动进位。 */
 export function registrationIssue(field: string, value: unknown): string | undefined {
+    if (field === 'serviceFieldCodes')
+        return Array.isArray(value) && value.length > 0 ? undefined : '请至少选择一个服务领域'
     const text = typeof value === 'string' ? value : ''
     if (field === 'username')
         return /^[a-z0-9_]{3,32}$/.test(text) ? undefined : '账号为 3—32 位小写字母、数字或下划线'
@@ -65,9 +68,10 @@ function fieldRules(fields: string[]): FormRules {
         ]),
     )
 }
-export const personnelRules = fieldRules(Object.keys(PERSONNEL_FIELDS))
+export const personnelRules = fieldRules([...Object.keys(PERSONNEL_FIELDS), 'serviceFieldCodes'])
 export const registrationRules = fieldRules([
     ...Object.keys(PERSONNEL_FIELDS),
+    'serviceFieldCodes',
     'username',
     'password',
 ])

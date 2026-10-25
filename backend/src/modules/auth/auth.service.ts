@@ -2,6 +2,7 @@ import {
   identityService,
   type IdentityService,
   validateServiceField,
+  validateServiceFields,
 } from "@/modules/identity/identity.service"
 import { assertVersion, safeUser, type Actor } from "@/utils/authorization"
 import { AppError } from "@/utils/errors"
@@ -20,6 +21,7 @@ export interface RegistrationInput {
   politicalStatus: string
   socialWorkerNo?: string | null
   serviceFieldCode?: string | null
+  serviceFieldCodes?: string[]
   proposedTeam?: string | null
 }
 export type ProfileInput = Partial<Omit<RegistrationInput, "username" | "password">> & {
@@ -47,6 +49,7 @@ export class AuthService {
   async register(input: RegistrationInput) {
     assertArrivalDate(input.arrivalDate)
     validateServiceField(input.serviceFieldCode)
+    validateServiceFields(input.serviceFieldCodes, true)
     const { password, ...fields } = input
     return this.repository.register({ ...fields, passwordHash: await hashPassword(password) })
   }
@@ -75,6 +78,7 @@ export class AuthService {
   updateProfile(actor: Actor, input: ProfileInput) {
     if (input.arrivalDate !== undefined) assertArrivalDate(input.arrivalDate)
     validateServiceField(input.serviceFieldCode)
+    validateServiceFields(input.serviceFieldCodes)
     return this.repository.changeUser(
       actor.user.id,
       actor.user.id,
@@ -91,7 +95,8 @@ export class AuthService {
         if (
           target.status === "ACTIVE" &&
           Object.keys(fields).some(
-            (key) => !["phone", "socialWorkerNo", "serviceFieldCode"].includes(key),
+            (key) =>
+              !["phone", "socialWorkerNo", "serviceFieldCode", "serviceFieldCodes"].includes(key),
           )
         )
           throw AppError.forbidden("任职和身份资料请由管理员维护")

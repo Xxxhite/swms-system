@@ -1,37 +1,51 @@
-import { and, eq, exists, inArray, or, sql } from "drizzle-orm"
+import { and, eq, exists, or, sql } from "drizzle-orm"
 import * as s from "@/db/schema"
 import type { Actor } from "./authorization"
 import { AppError } from "./errors"
-/** 项目查询范围在 SQL 层收紧；项目可见并不授予其他团队统计访问权。 */
-export function projectScope(actor: Actor) {
-  const team =
-    actor.profile.dataScope === "SELF"
-      ? eq(s.projectTeams.reporterId, actor.user.id)
-      : inArray(s.projectTeams.teamId, actor.orgIds)
-  const participating = exists(
-    sql`(select 1 from ${s.projectTeams} where ${and(eq(s.projectTeams.projectId, s.projects.id), team)})`,
-  )
-  if (actor.profile.dataScope === "ALL") return sql`true`
-  if (actor.profile.dataScope === "SELF")
-    return or(
-      eq(s.projects.createdBy, actor.user.id),
-      eq(s.projects.directorId, actor.user.id),
-      eq(s.projects.supervisorId, actor.user.id),
-      participating,
-      exists(
-        sql`(select 1 from ${s.monthlyReports} inner join ${s.projectIndicators} on ${s.monthlyReports.indicatorId} = ${s.projectIndicators.id} where ${s.projectIndicators.projectId} = ${s.projects.id} and ${s.monthlyReports.createdBy} = ${actor.user.id})`,
-      ),
-    )
-  if (actor.profile.dataScope === "SUBTREE")
-    return or(inArray(s.projects.ownerOrgId, actor.orgIds), participating)
-  return participating
+import { managementPositions } from "@/modules/identity/identity.constants"
+/** 管理岗位由固定编码表达，与账号角色、组织数据范围分别判断。 */
+export function isManagement(actor: Actor): boolean {
+  return managementPositions.includes(actor.user.positionCode ?? "")
 }
-/** 完整团队范围仅 ALL、TEAM 或组织子树拥有；SELF 只能访问本人相关记录。 */
-export function canReadTeam(actor: Actor, teamId: number): boolean {
+/** 明确的项目负责人关系用于读取与维护；创建人不能永久保留已转出项目的权限。 */
+export function responsibleFor(
+  actor: Actor,
+  project: { directorId: number; seniorDirectorId: number; supervisorId: number | null },
+): boolean {
   return (
-    actor.profile.dataScope === "ALL" ||
-    (actor.profile.dataScope !== "SELF" && actor.orgIds.includes(teamId))
+    isManagement(actor) &&
+    [project.directorId, project.seniorDirectorId, project.supervisorId].includes(actor.user.id)
   )
+}
+/** 开发超级管理员可配置业务，普通账号继续检查实际管理岗位。 */
+export function canConfigureProjects(actor: Actor): boolean {
+  return !!actor.profile.isDevSuperadmin || isManagement(actor)
+}
+/** 开发维护能力独立于项目负责关系，不改变实际岗位及督导资格。 */
+export function canMaintainProject(
+  actor: Actor,
+  project: Parameters<typeof responsibleFor>[1],
+): boolean {
+  return !!actor.profile.isDevSuperadmin || responsibleFor(actor, project)
+}
+/** 只有显式开发账号全局读取；其他查询由负责信息或本人团队成员关联收紧。 */
+export function projectScope(actor: Actor) {
+  if (actor.profile.isDevSuperadmin) return sql`true`
+  if (isManagement(actor))
+    return or(
+      eq(s.projects.directorId, actor.user.id),
+      eq(s.projects.seniorDirectorId, actor.user.id),
+      eq(s.projects.supervisorId, actor.user.id),
+    )
+  const teamId = actor.profile.teamId
+  if (!teamId) return sql`false`
+  return exists(
+    sql`(select 1 from ${s.projectMemberships} where ${and(eq(s.projectMemberships.projectId, s.projects.id), eq(s.projectMemberships.userId, actor.user.id), eq(s.projectMemberships.teamId, teamId))})`,
+  )
+}
+/** 团队成员始终仅本团队；管理人员的具体项目关系由项目上下文再验证。 */
+export function canReadTeam(actor: Actor, teamId: number): boolean {
+  return !!actor.profile.isDevSuperadmin || isManagement(actor) || actor.profile.teamId === teamId
 }
 /** 写入失败统一返回权限错误，避免继续执行部分更新。 */
 export function assertBusinessAccess(

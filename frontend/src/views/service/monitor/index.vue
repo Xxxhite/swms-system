@@ -276,8 +276,10 @@ onMounted(async () => {
                 v-model:current-page="query.page"
                 class="table-pagination"
                 :total="total"
-                :page-size="query.pageSize"
-                layout="total, prev, pager, next"
+                v-model:page-size="query.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next"
+                @size-change="search(analysis)"
                 @current-change="load(analysis)"
             />
         </template>

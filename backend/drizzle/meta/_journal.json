@@ -15,6 +15,20 @@
       "when": 1792579132528,
       "tag": "0001_good_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1792933034998,
+      "tag": "0002_personnel-fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1792933897884,
+      "tag": "0003_contract-service-records",
+      "breakpoints": true
     }
   ]
 }

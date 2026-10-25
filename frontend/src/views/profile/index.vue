@@ -4,13 +4,14 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { useMock } from '@/api/config'
+import { serviceFields } from '@/constants/personnel'
 import { authApi } from '@/api/modules/auth'
 import type { PersonalProfile } from '@/api/types'
 import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const store = useUserStore()
 const detail = ref<PersonalProfile>()
-const form = reactive({ phone: '', socialWorkerNo: '' })
+const form = reactive({ phone: '', socialWorkerNo: '', serviceFieldCodes: [] as string[] })
 const passwords = reactive({ oldPassword: '', newPassword: '', confirm: '' })
 const busy = ref(false)
 /** 加载本人资料及版本，回填个人中心可编辑的联系信息。 */
@@ -18,6 +19,7 @@ async function load() {
     if (useMock) return
     try {
         detail.value = await authApi.detail()
+        form.serviceFieldCodes = detail.value.serviceFieldCodes ?? []
         form.phone = detail.value.phone
         form.socialWorkerNo = detail.value.socialWorkerNo ?? ''
     } catch {
@@ -35,6 +37,7 @@ async function save() {
     try {
         await authApi.updateProfile({
             phone: form.phone,
+            serviceFieldCodes: form.serviceFieldCodes,
             socialWorkerNo: form.socialWorkerNo || null,
             version: detail.value.version,
         })
@@ -83,6 +86,12 @@ onMounted(load)
             <el-descriptions-item label="角色">
                 {{ store.profile?.roleNames.join('、') }}
             </el-descriptions-item>
+            <el-descriptions-item label="督导身份">
+                {{ store.profile?.isSupervisor ? '是' : '否' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="开发超级管理员">
+                {{ store.profile?.isDevSuperadmin ? '已启用' : '未启用' }}
+            </el-descriptions-item>
             <el-descriptions-item label="数据范围">{{ store.dataScopeText }}</el-descriptions-item>
         </el-descriptions>
         <el-alert
@@ -97,6 +106,16 @@ onMounted(load)
                 <h2>个人资料</h2>
                 <el-form-item label="联系电话">
                     <el-input v-model="form.phone" maxlength="32" />
+                </el-form-item>
+                <el-form-item label="服务领域" required>
+                    <el-select v-model="form.serviceFieldCodes" multiple filterable>
+                        <el-option
+                            v-for="field in serviceFields"
+                            :key="field"
+                            :label="field"
+                            :value="field"
+                        />
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="社工号">
                     <el-input v-model="form.socialWorkerNo" maxlength="100" />

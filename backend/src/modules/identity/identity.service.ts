@@ -10,7 +10,8 @@ import {
   type User,
 } from "@/utils/authorization"
 import { AppError } from "@/utils/errors"
-import { dictionaries, positions } from "./identity.constants"
+import { env } from "@/utils/env"
+import { dictionaries, positions, canSupervise } from "./identity.constants"
 import {
   identityRepository,
   type IdentityRepository,
@@ -36,6 +37,12 @@ export function actorFrom(state: IdentityState, user: User): Actor {
       ...state.extras.filter((item) => item.userId === user.id).map((item) => item.permissionCode),
     ]),
   ]
+  const effectiveScope =
+    ["position-1", "position-2", "position-3", "position-4"].includes(user.positionCode ?? "") &&
+    !assigned.some((r) => r.code === "admin") &&
+    ["ALL", "SUBTREE"].includes(user.dataScope)
+      ? "TEAM"
+      : user.dataScope
   const org = state.orgs.find((item) => item.id === user.orgId)
   // 待分配人员仅保留本人及已授权知识入口；管理员例外，确保初始化后能管理机构。
   const unassigned =
@@ -47,11 +54,11 @@ export function actorFrom(state: IdentityState, user: User): Actor {
   // TEAM/SUBTREE 展开成组织 ID 集合供列表和详情复用；SELF 直接按人员 ID 校验。
   const orgIds = unassigned
     ? []
-    : user.dataScope === "ALL"
+    : effectiveScope === "ALL"
       ? state.orgs.map((item) => item.id)
-      : user.dataScope === "TEAM"
+      : effectiveScope === "TEAM"
         ? descendants(state.orgs, team ? [team.id] : [])
-        : user.dataScope === "SUBTREE"
+        : effectiveScope === "SUBTREE"
           ? descendants(state.orgs, managedOrgIds)
           : []
   return {
@@ -67,10 +74,17 @@ export function actorFrom(state: IdentityState, user: User): Actor {
       orgName: active ? (state.orgs.find((item) => item.id === user.orgId)?.name ?? null) : null,
       teamId: team?.id ?? null,
       teamName: team?.name ?? null,
+      isSupervisor: active && user.isSupervisor,
+      serviceFieldCodes: user.serviceFieldCodes ?? [],
+      isDevSuperadmin:
+        active &&
+        env.nodeEnv !== "production" &&
+        !!env.devSuperadminUsername &&
+        user.username === env.devSuperadminUsername,
       positionCode: active ? user.positionCode : null,
       supervisorId: active ? user.supervisorId : null,
       managedOrgIds,
-      dataScope: active && !unassigned ? user.dataScope : "SELF",
+      dataScope: active && !unassigned ? effectiveScope : "SELF",
       roles: active ? assigned.map((item) => item.code) : [],
       roleNames: active ? assigned.map((item) => item.name) : [],
       permissions: active
@@ -141,13 +155,20 @@ function protectAdministrator(
   )
     throw AppError.conflict("必须保留至少一名启用的机构管理员")
 }
-export type Placement = { orgId: number; positionCode: string; supervisorId: number | null }
+export type Placement = {
+  orgId: number
+  positionCode: string
+  supervisorId: number | null
+  isSupervisor?: boolean
+}
 /** 校验任职组织、岗位和直接主管链，阻止无效任职与循环主管关系。 */
 function validatePlacement(state: IdentityState, target: User, input: Placement) {
   if (!state.orgs.some((org) => org.id === input.orgId && org.status === "ACTIVE"))
     throw AppError.badRequest("请选择启用的组织")
   if (!positions.some((item) => item.code === input.positionCode))
     throw AppError.badRequest("岗位编码不存在")
+  if ((input.isSupervisor ?? target.isSupervisor) && !canSupervise(input.positionCode))
+    throw AppError.badRequest("总部专员和团队主任及以下岗位不能担任督导，请先取消督导身份")
   let id = input.supervisorId
   // 从目标本人开始记录，既拦截自设主管，也拦截经多级主管回到本人的间接循环。
   const visited = new Set<number>([target.id])
@@ -165,6 +186,19 @@ export function validateServiceField(value: string | null | undefined) {
   if (value && !dictionaries.serviceFields.some((item) => item.code === value))
     throw AppError.badRequest("服务领域不存在")
 }
+
+/** 验证多领域选择；未修改该字段时保留旧资料。 */
+export function validateServiceFields(values: string[] | undefined, required = false) {
+  if (values === undefined && !required) return
+  if (
+    !values?.length ||
+    values.length > serviceFieldCount ||
+    new Set(values).size !== values.length
+  )
+    throw AppError.badRequest("请至少选择一个不重复的服务领域")
+  for (const value of values) validateServiceField(value)
+}
+const serviceFieldCount = dictionaries.serviceFields.length
 
 /** 身份业务服务：负责有效授权、组织人员维护、注册审核及角色管理规则。 */
 export class IdentityService {
@@ -248,6 +282,7 @@ export class IdentityService {
           if (
             target.orgId !== input.orgId ||
             target.positionCode !== input.positionCode ||
+            target.isSupervisor !== (input.isSupervisor ?? false) ||
             target.supervisorId !== input.supervisorId ||
             target.dataScope !== input.dataScope ||
             assigned !== [...input.roleIds].sort().join(",") ||
@@ -266,6 +301,7 @@ export class IdentityService {
           patch: {
             orgId: input.orgId,
             positionCode: input.positionCode,
+            isSupervisor: input.isSupervisor ?? false,
             supervisorId: input.supervisorId,
             dataScope: input.dataScope,
             status: "ACTIVE",
@@ -309,10 +345,11 @@ export class IdentityService {
       phone: string
       socialWorkerNo?: string | null
       serviceFieldCode?: string | null
+      serviceFieldCodes?: string[]
     },
   ) {
     requireAdmin(actor, "system:user:manage")
-    validateServiceField(input.serviceFieldCode)
+    validateServiceFields(input.serviceFieldCodes)
     return this.repository.changeUser(id, actor.user.id, "update-user", (state, target) => {
       const currentActor = fresh(state, actor, "system:user:manage")
       if (!canSee(currentActor, target)) throw AppError.forbidden()
@@ -327,7 +364,9 @@ export class IdentityService {
           orgId: input.orgId,
           positionCode: input.positionCode,
           supervisorId: input.supervisorId,
+          isSupervisor: input.isSupervisor ?? target.isSupervisor,
           socialWorkerNo: input.socialWorkerNo,
+          serviceFieldCodes: input.serviceFieldCodes,
           serviceFieldCode: input.serviceFieldCode,
         },
       }

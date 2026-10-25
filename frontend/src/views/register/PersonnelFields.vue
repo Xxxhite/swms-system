@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { serviceFields } from '@/constants/personnel'
 import type { RegistrationInput } from '@/api/types'
 const model = defineModel<Omit<RegistrationInput, 'username' | 'password'>>({ required: true })
 </script>
@@ -41,6 +42,11 @@ const model = defineModel<Omit<RegistrationInput, 'username' | 'password'>>({ re
                 :label="item"
                 :value="item"
             />
+        </el-select>
+    </el-form-item>
+    <el-form-item label="服务领域" prop="serviceFieldCodes" required>
+        <el-select v-model="model.serviceFieldCodes" multiple filterable>
+            <el-option v-for="field in serviceFields" :key="field" :label="field" :value="field" />
         </el-select>
     </el-form-item>
     <el-form-item label="社工号">

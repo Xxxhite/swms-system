@@ -6,6 +6,9 @@ export type Organization = typeof organizations.$inferSelect
 export type DataScope = User["dataScope"]
 export type SafeUser = Omit<User, "passwordHash">
 export interface CurrentUser {
+  isSupervisor?: boolean
+  isDevSuperadmin?: boolean
+  serviceFieldCodes?: string[]
   id: number
   username: string
   name: string

@@ -33,7 +33,7 @@ export const app = new Elysia()
         tags: [
           { name: "基本信息", description: "登录、人员、角色权限" },
           { name: "服务管理", description: "合同包项目立项、指标设置与监测、服务档案" },
-          { name: "项目管理", description: "总部项目立项到结项" },
+          { name: "总部项目管理", description: "总部与基金项目数据预留" },
           { name: "活动管理", description: "指标外活动" },
           { name: "资源管理", description: "利益相关方与合作情况" },
           { name: "数据分析", description: "多维分析与报表" },

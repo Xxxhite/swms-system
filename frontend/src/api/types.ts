@@ -32,6 +32,9 @@ export interface CurrentUser {
     reviewComment: string | null
     orgId: number | null
     orgName: string | null
+    isSupervisor?: boolean
+    isDevSuperadmin?: boolean
+    serviceFieldCodes?: string[]
     positionCode: string | null
     supervisorId: number | null
     managedOrgIds: number[]
@@ -67,6 +70,7 @@ export interface RegistrationInput {
     education: string
     politicalStatus: string
     socialWorkerNo?: string | null
+    serviceFieldCodes?: string[]
     serviceFieldCode?: string | null
     proposedTeam?: string | null
 }

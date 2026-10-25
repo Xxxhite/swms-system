@@ -1,3 +1,4 @@
+import { createFileRoutes } from "@/modules/file/file.route"
 import { registerProjectTests } from "@/modules/project/project.integration"
 import { ProjectRepository } from "@/modules/project/project.repository"
 import { createProjectRoutes } from "@/modules/project/project.route"
@@ -75,6 +76,17 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "contract_files",
+        "contract_memberships",
+        "service_record_changes",
+        "service_records",
+        "contract_targets",
+        "contract_indicators",
+        "contract_teams",
+        "contract_service_points",
+        "contract_contracts",
+        "contract_projects",
+        "headquarters_projects",
         "approval_records",
         "approval_tasks",
         "approval_instances",
@@ -127,7 +139,18 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
           createIdentityRoutes(identities),
           createSystemRoutes(identities),
           createProjectRoutes(new ProjectRepository(database), identities),
+          createProjectRoutes(
+            new ProjectRepository(database),
+            identities,
+            "/service/contract-package-projects",
+          ),
+          createFileRoutes(
+            new ProjectRepository(database),
+            identities,
+            "./storage/integration-contracts",
+          ),
           createServiceRoutes(new ProjectRepository(database), identities),
+          createServiceRoutes(new ProjectRepository(database), identities, "records"),
           createApprovalRoutes(new ProjectRepository(database), identities),
           createAnalysisRoutes(new ProjectRepository(database), identities),
         ]),
@@ -142,6 +165,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
 
   test("真实注册、哈希和唯一约束，受限账号无法访问管理数据", async () => {
     const input = {
+      serviceFieldCodes: ["社区建设", "社会福利"],
       username: "registered",
       password: demoPassword,
       name: "集成测试社工",
@@ -344,6 +368,71 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     const unassigned = await login("intern")
     expect((await request("/users", "GET", unassigned)).body.code).toBe(2003)
     expect((await request("/auth/profile", "GET", unassigned)).body.data.dataScope).toBe("SELF")
+  })
+
+  test("旧人员补填领域后可保存督导身份，低岗位限制不变", async () => {
+    const target = await user("project_manager")
+    await database
+      .update(schema.users)
+      .set({ serviceFieldCodes: [] })
+      .where(eq(schema.users.id, target.id))
+    const input = {
+      version: target.version,
+      orgId: target.orgId,
+      positionCode: target.positionCode,
+      supervisorId: target.supervisorId,
+      name: target.name,
+      phone: target.phone,
+      isSupervisor: true,
+      serviceFieldCodes: [] as string[],
+    }
+    const invalid = await request(`/users/${target.id}`, "PUT", adminToken, input)
+    expect(invalid.status).toBe(422)
+    expect(invalid.body.message).toBe("请至少选择一个服务领域，且不超过23个")
+    const unchanged = await user("project_manager")
+    expect(unchanged.version).toBe(target.version)
+    expect(unchanged.isSupervisor).toBe(target.isSupervisor)
+    expect(unchanged.serviceFieldCodes).toEqual([])
+
+    const saved = await request(`/users/${target.id}`, "PUT", adminToken, {
+      ...input,
+      serviceFieldCodes: ["社区建设", "社会福利"],
+    })
+    expect(saved.status).toBe(200)
+    expect(saved.body.code).toBe(0)
+    const detail = await request(`/users/${target.id}`, "GET", adminToken)
+    expect(detail.body.data.isSupervisor).toBe(true)
+    expect(detail.body.data.serviceFieldCodes).toEqual(["社区建设", "社会福利"])
+
+    for (const positionCode of [
+      "position-1",
+      "position-2",
+      "position-3",
+      "position-4",
+      "position-7",
+    ]) {
+      const forbidden = await request(`/users/${target.id}`, "PUT", adminToken, {
+        ...input,
+        version: detail.body.data.version,
+        positionCode,
+        serviceFieldCodes: ["社区建设"],
+      })
+      expect(forbidden.status).toBe(400)
+      expect(forbidden.body.message).toBe(
+        "总部专员和团队主任及以下岗位不能担任督导，请先取消督导身份",
+      )
+    }
+    const cleared = await request(`/users/${target.id}`, "PUT", adminToken, {
+      ...input,
+      version: detail.body.data.version,
+      isSupervisor: false,
+      serviceFieldCodes: target.serviceFieldCodes,
+    })
+    expect(cleared.body.code).toBe(0)
+    const restored = await user("project_manager")
+    expect(restored.isSupervisor).toBe(false)
+    expect(restored.positionCode).toBe(target.positionCode)
+    expect(restored.serviceFieldCodes).toEqual(target.serviceFieldCodes)
   })
 
   test("组织循环、主管循环、引用删除与最后管理员受保护", async () => {

@@ -31,6 +31,7 @@ export const authorizationFields = {
 export const placementFields = {
   orgId: id,
   positionCode: text(32),
+  isSupervisor: t.Optional(t.Boolean()),
   supervisorId: t.Union([id, t.Null()]),
 }
 /** 注册及受限资料表单的人员字段，不包含账号授权和审核结果。 */
@@ -74,6 +75,7 @@ export const registrationFields = {
   }),
   socialWorkerNo: nullableText(),
   serviceFieldCode: nullableText(),
+  serviceFieldCodes: t.Optional(t.Array(text(), { minItems: 1, maxItems: 23 })),
   proposedTeam: nullableText(),
 }
 export const password = t.String({ minLength: 8, maxLength: 128, error: "密码须为 8—128 字符" })

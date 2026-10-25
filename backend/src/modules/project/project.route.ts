@@ -12,6 +12,7 @@ import {
   contractBody,
   teamBody,
   pointBody,
+  memberBody,
   indicatorBody,
   allocationBody,
   quantity,
@@ -25,9 +26,10 @@ const indicatorParam = t.Object({
 export function createProjectRoutes(
   repository: ProjectRepository = projectRepository,
   identities: IdentityService = identityService,
+  prefix = "/projects",
 ) {
   const service = new ProjectService(repository)
-  return new Elysia({ prefix: "/projects", tags: ["项目管理"] })
+  return new Elysia({ prefix, tags: ["服务管理"] })
     .use(createAuthentication(identities))
     .get(
       "",
@@ -114,6 +116,15 @@ export function createProjectRoutes(
       async ({ authenticate, params, body }) =>
         ok(await service.teams(await authenticate(), params.id, body.teams, body.version)),
       { params: idParam, body: t.Object({ version: t.Integer({ minimum: 1 }), teams: teamBody }) },
+    )
+    .put(
+      "/:id/members",
+      async ({ authenticate, params, body }) =>
+        ok(await service.members(await authenticate(), params.id, body.members, body.version)),
+      {
+        params: idParam,
+        body: t.Object({ version: t.Integer({ minimum: 1 }), members: memberBody }),
+      },
     )
     .get(
       "/:id/service-points",

@@ -67,9 +67,9 @@ onMounted(async () => {
         <div v-if="!useMock" class="page-actions">
             <el-button
                 v-if="userStore.hasPermission('service:monthly:approve')"
-                @click="$router.push('/approvals')"
+                @click="$router.push('/service/approvals')"
             >
-                月报变更待办 {{ pendingCount }} 条
+                服务档案待办 {{ pendingCount }} 条
             </el-button>
             <el-button
                 v-if="userStore.hasPermission('service:indicator:view')"

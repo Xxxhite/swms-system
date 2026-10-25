@@ -49,6 +49,28 @@ function writer(connection: RawConnection) {
         return connection.delete(s.projectServicePoints).where(eq(s.projectServicePoints.id, id))
       },
     },
+    contractFiles: {
+      insert(values: typeof s.contractFiles.$inferInsert) {
+        return connection.insert(s.contractFiles).values(values)
+      },
+      update(id: number, values: Partial<typeof s.contractFiles.$inferInsert>) {
+        return connection.update(s.contractFiles).set(values).where(eq(s.contractFiles.id, id))
+      },
+    },
+    projectMemberships: {
+      insert(values: typeof s.projectMemberships.$inferInsert) {
+        return connection.insert(s.projectMemberships).values(values)
+      },
+      update(id: number, values: Partial<typeof s.projectMemberships.$inferInsert>) {
+        return connection
+          .update(s.projectMemberships)
+          .set(values)
+          .where(eq(s.projectMemberships.id, id))
+      },
+      remove(id: number) {
+        return connection.delete(s.projectMemberships).where(eq(s.projectMemberships.id, id))
+      },
+    },
     projectTeams: {
       insert(values: typeof s.projectTeams.$inferInsert) {
         return connection.insert(s.projectTeams).values(values)
@@ -200,6 +222,14 @@ async function state(tx: RawConnection, actor?: Actor, lock = false) {
       .select()
       .from(s.projectTeams)
       .where(actor ? inArray(s.projectTeams.projectId, ids) : undefined),
+    files: await tx
+      .select()
+      .from(s.contractFiles)
+      .where(actor ? inArray(s.contractFiles.projectId, ids) : undefined),
+    members: await tx
+      .select()
+      .from(s.projectMemberships)
+      .where(actor ? inArray(s.projectMemberships.projectId, ids) : undefined),
     points: await tx
       .select()
       .from(s.projectServicePoints)
@@ -213,6 +243,7 @@ async function state(tx: RawConnection, actor?: Actor, lock = false) {
       .select()
       .from(s.monthlyReports)
       .where(actor ? inArray(s.monthlyReports.indicatorId, indicatorIds) : undefined),
+    legacyChanges: await tx.select().from(s.legacyMonthlyReportChanges),
     changes: await tx.select().from(s.monthlyReportChanges),
     instances: await tx.select().from(s.approvalInstances),
     tasks: await tx.select().from(s.approvalTasks),

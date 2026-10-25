@@ -19,9 +19,9 @@ export const PERM = {
 
     /** 服务管理 — 指标监测端：合同包立项、指标设置、完成情况与预警 */
     SERVICE_MONITOR: 'service:monitor:view',
-    /** 服务管理 — 执行端：9 类服务档案 */
+    /** 服务管理 — 历史档案查询入口标识 */
     SERVICE_ARCHIVE: 'service:archive:view',
-    /** 档案审批（团队主任初审、督导审批） */
+    /** 历史档案审批入口标识；当前档案使用直接主管单级审批 */
     SERVICE_APPROVE: 'service:archive:approve',
     MONTHLY_VIEW: 'service:monthly:view',
     MONTHLY_APPROVE: 'service:monthly:approve',

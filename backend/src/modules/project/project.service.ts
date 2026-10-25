@@ -1,11 +1,20 @@
 import * as s from "@/db/schema"
 import { sortRows } from "@/utils/list-sort"
 import { assertVersion, requirePermission, teamFor, type Actor } from "@/utils/authorization"
-import { assertBusinessAccess, canReadTeam } from "@/utils/business-scope"
+import {
+  assertBusinessAccess,
+  canConfigureProjects,
+  canMaintainProject,
+} from "@/utils/business-scope"
 import { businessAudit } from "@/utils/business-audit"
 import { decimalUnits, decimalText } from "@/utils/decimal"
 import { AppError } from "@/utils/errors"
-import { serviceFields } from "@/modules/identity/identity.constants"
+import {
+  serviceFields,
+  subFields,
+  brands,
+  canSupervise,
+} from "@/modules/identity/identity.constants"
 import {
   projectRepository,
   type ProjectRepository,
@@ -29,38 +38,23 @@ export function findProject(data: BusinessState, id: number): Project {
 }
 /** 当前账号能访问的承担团队，SELF 仅保留自己负责的团队上下文。 */
 export function visibleTeams(data: BusinessState, actor: Actor, projectId: number) {
+  const project = data.projects.find((p) => p.id === projectId)
+  const full = !!project && canMaintainProject(actor, project)
   return data.teams.filter(
     (t) =>
       t.projectId === projectId &&
-      (canReadTeam(actor, t.teamId) ||
-        (actor.profile.dataScope === "SELF" &&
-          (t.reporterId === actor.user.id ||
-            data.reports.some(
-              (r) =>
-                r.teamId === t.teamId &&
-                r.createdBy === actor.user.id &&
-                data.indicators.some((i) => i.id === r.indicatorId && i.projectId === projectId),
-            )))),
+      (full ||
+        (t.teamId === actor.profile.teamId &&
+          data.members.some(
+            (m) => m.projectId === projectId && m.teamId === t.teamId && m.userId === actor.user.id,
+          ))),
   )
 }
-/** 只有覆盖全部承担团队的非 SELF 身份才能读取合同级统计。 */
-export function fullProject(data: BusinessState, actor: Actor, p: Project) {
-  const teams = data.teams.filter((t) => t.projectId === p.id)
-  return (
-    actor.profile.dataScope === "ALL" ||
-    (actor.profile.dataScope !== "SELF" &&
-      teams.length > 0 &&
-      teams.every((t) => canReadTeam(actor, t.teamId))) ||
-    (teams.length === 0 &&
-      (p.createdBy === actor.user.id ||
-        p.directorId === actor.user.id ||
-        actor.profile.roles.includes("admin")) &&
-      (actor.profile.dataScope === "SELF"
-        ? p.ownerOrgId === actor.user.orgId
-        : actor.orgIds.includes(p.ownerOrgId)))
-  )
+/** 只有开发全局查看或明确负责本项目的管理人员取得完整项目范围。 */
+export function fullProject(_data: BusinessState, actor: Actor, p: Project) {
+  return canMaintainProject(actor, p)
 }
-/** 项目写操作同时检查动作、负责人身份及完整项目范围。 */
+/** 项目写操作统一检查管理岗位、动作权限及项目负责关系。 */
 export function manageProject(
   data: BusinessState,
   actor: Actor,
@@ -69,10 +63,7 @@ export function manageProject(
 ): Project {
   requirePermission(actor, permission)
   const p = findProject(data, id)
-  assertBusinessAccess(
-    (actor.profile.roles.includes("admin") || p.directorId === actor.user.id) &&
-      fullProject(data, actor, p),
-  )
+  assertBusinessAccess(canMaintainProject(actor, p), "仅高级主任及以上且负责本项目的人员可维护")
   return p
 }
 /** 在嵌套资源更新后递增项目版本，避免旧详情覆盖已改变的配置。 */
@@ -88,10 +79,23 @@ export function projectDto(data: BusinessState, actor: Actor, p: Project) {
     // 只返回已授权项目关联的显示名称，详情无需读取编辑候选或人员管理接口。
     ownerOrgName: data.identity.orgs.find((o) => o.id === p.ownerOrgId)?.name ?? null,
     directorName: data.identity.users.find((u) => u.id === p.directorId)?.name ?? null,
+    canManage: canMaintainProject(actor, p),
+    seniorDirectorName: data.identity.users.find((u) => u.id === p.seniorDirectorId)?.name ?? null,
+    members: data.members
+      .filter((m) => m.projectId === p.id && (full || m.teamId === actor.profile.teamId))
+      .map((m) => ({
+        ...m,
+        name: data.identity.users.find((u) => u.id === m.userId)?.name,
+        teamName: data.identity.orgs.find((o) => o.id === m.teamId)?.name,
+      })),
     supervisorName: data.identity.users.find((u) => u.id === p.supervisorId)?.name ?? null,
     statisticsScope: full ? "PROJECT" : "TEAM",
     visibleTeamIds: teams.map((t) => t.teamId),
-    contract: data.contracts.find((c) => c.projectId === p.id) ?? null,
+    contract: (() => {
+      const c = data.contracts.find((c) => c.projectId === p.id)
+      if (!c) return null
+      return full ? c : { ...c, amount: undefined, note: undefined }
+    })(),
     teams: teams.map((t) => ({
       ...t,
       teamName: data.identity.orgs.find((o) => o.id === t.teamId)?.name,
@@ -138,7 +142,7 @@ export class ProjectService {
             (!query.serviceFieldCode || p.serviceFieldCode === query.serviceFieldCode) &&
             (!query.teamId ||
               visibleTeams(data, current, p.id).some((t) => t.teamId === query.teamId)) &&
-            (!query.serviceArea || c?.serviceArea.includes(query.serviceArea)) &&
+            (!query.serviceArea || c?.serviceArea === query.serviceArea) &&
             (!query.dateFrom || (!!c && c.endDate >= query.dateFrom)) &&
             (!query.dateTo || (!!c && c.startDate <= query.dateTo))
           )
@@ -194,15 +198,18 @@ export class ProjectService {
             .map((o) => ({ id: o.id, name: o.name, type: o.type })),
           users: [],
           serviceFields,
+          subFields,
+          brands,
+          serviceAreas: [...new Set(data.contracts.map((c) => c.serviceArea))].sort(),
           projects: data.projects.map((p) => ({ id: p.id, name: p.name })),
         }
       }
       if (projectId) manageProject(data, current, projectId, "project:record:update")
-      else requirePermission(current, "project:record:create")
-      const allowedOrg = (id: number) =>
-        current.profile.dataScope === "ALL" ||
-        current.orgIds.includes(id) ||
-        (current.profile.dataScope === "SELF" && id === current.user.orgId)
+      else {
+        requirePermission(current, "project:record:create")
+        assertBusinessAccess(canConfigureProjects(current), "仅高级主任及以上可登记项目")
+      }
+      const allowedOrg = (_id: number) => canConfigureProjects(current)
       const orgs = data.identity.orgs.filter((o) => o.status === "ACTIVE" && allowedOrg(o.id))
       return {
         organizations: (kind === "users"
@@ -224,8 +231,12 @@ export class ProjectService {
             name: u.name,
             username: u.username,
             teamId: teamFor(data.identity.orgs, u.orgId)?.id ?? null,
+            positionCode: u.positionCode,
+            isSupervisor: u.isSupervisor,
           })),
         serviceFields,
+        subFields,
+        brands,
       }
     })
   }
@@ -233,6 +244,12 @@ export class ProjectService {
   create(actor: Actor, input: ProjectInput) {
     return this.repository.write(actor, async (tx, data, current) => {
       requirePermission(current, "project:record:create")
+      assertBusinessAccess(canConfigureProjects(current), "仅高级主任及以上可登记项目")
+      assertBusinessAccess(
+        !!current.profile.isDevSuperadmin ||
+          [input.directorId, input.seniorDirectorId, input.supervisorId].includes(current.user.id),
+        "请将本人填写为项目负责人员",
+      )
       this.validatePeople(data, current, input)
       if (data.projects.some((p) => p.code.toLowerCase() === input.code.toLowerCase()))
         throw AppError.conflict("项目编码已存在")
@@ -281,7 +298,14 @@ export class ProjectService {
       if (operation === "delete") {
         if (
           p.status !== "DRAFT" ||
-          reports.some((r) => r.submittedAt) ||
+          reports.some(
+            (r) =>
+              r.submittedAt ||
+              r.status === "IN_REVIEW" ||
+              data.instances.some(
+                (i) => i.businessType === "SERVICE_SUBMISSION" && i.businessId === r.id,
+              ),
+          ) ||
           data.changes.some((c) => reports.some((r) => r.id === c.reportId))
         )
           throw AppError.conflict("只允许删除无提交及审批历史的草稿项目")
@@ -315,6 +339,12 @@ export class ProjectService {
         )
       )
         throw AppError.conflict("已有月报，合同起止日期已锁定")
+      if (
+        data.members.some(
+          (m) => m.projectId === id && (m.startDate < input.startDate || m.endDate > input.endDate),
+        )
+      )
+        throw AppError.conflict("请先将成员有效期间调整至新的合同周期内")
       if (old) await tx.projectContracts.update(old.id, { ...input, version: old.version + 1 })
       else await tx.projectContracts.insert({ ...input, projectId: id })
       await bumpProject(tx, p)
@@ -335,10 +365,11 @@ export class ProjectService {
       this.validateTeams(data, teams)
       if (p.status === "ACTIVE" && !teams.length)
         throw AppError.conflict("启用项目至少保留一个团队")
-      for (const t of teams) assertBusinessAccess(canReadTeam(current, t.teamId))
+
       const old = data.teams.filter((t) => t.projectId === id)
       for (const row of old.filter((t) => !teams.some((next) => next.teamId === t.teamId))) {
         if (
+          data.members.some((m) => m.projectId === id && m.teamId === row.teamId) ||
           data.targets.some(
             (target) =>
               target.teamId === row.teamId &&
@@ -538,25 +569,88 @@ export class ProjectService {
     })
   }
   /** 校验负责人及组织资格，防止任意关联跨范围人员。 */
-  private validatePeople(data: BusinessState, actor: Actor, input: ProjectInput) {
+  private validatePeople(data: BusinessState, _actor: Actor, input: ProjectInput) {
     if (!data.identity.orgs.some((o) => o.id === input.ownerOrgId && o.status === "ACTIVE"))
       throw AppError.badRequest("请选择启用组织")
-    assertBusinessAccess(
-      actor.profile.dataScope === "ALL" ||
-        actor.orgIds.includes(input.ownerOrgId) ||
-        (actor.profile.dataScope === "SELF" && input.ownerOrgId === actor.user.orgId),
-    )
-    for (const id of [input.directorId, input.supervisorId]) {
+    for (const id of [input.directorId, input.seniorDirectorId]) {
       const u = data.identity.users.find((u) => u.id === id && u.status === "ACTIVE")
-      if (!u) throw AppError.badRequest("负责人须为启用人员")
-      assertBusinessAccess(
-        actor.profile.dataScope === "ALL" ||
-          (u.orgId !== null && actor.orgIds.includes(u.orgId)) ||
-          id === actor.user.id,
+      if (!u || !canSupervise(u.positionCode))
+        throw AppError.badRequest("项目总监和高级主任须为合格的启用管理人员")
+    }
+    if (input.supervisorId !== null) {
+      const u = data.identity.users.find(
+        (u) => u.id === input.supervisorId && u.status === "ACTIVE",
       )
+      if (!u?.isSupervisor || !canSupervise(u.positionCode))
+        throw AppError.badRequest("请选择具有督导身份的启用管理人员")
+    }
+    for (const [values, dictionary, label] of [
+      [input.subFieldCodes ?? [], subFields, "细分领域"],
+      [input.brandCodes ?? [], brands, "品牌归属"],
+    ] as const) {
+      if (
+        new Set(values).size !== values.length ||
+        values.some((v) => !dictionary.some((d) => d.code === v))
+      )
+        throw AppError.badRequest(`${label}不合法或重复`)
     }
     if (!serviceFields.some((f) => f.code === input.serviceFieldCode))
       throw AppError.badRequest("服务领域不合法")
+  }
+  /** 服务成员调整与重叠校验在锁定身份和业务记录的同一事务执行。 */
+  members(
+    actor: Actor,
+    id: number,
+    members: Array<{ userId: number; teamId: number; startDate: string; endDate: string }>,
+    version: number,
+  ) {
+    return this.repository.write(actor, async (tx, data, current) => {
+      const p = manageProject(data, current, id, "project:record:update")
+      assertVersion(p.version, version)
+      const contract = data.contracts.find((c) => c.projectId === id)
+      if (!contract) throw AppError.conflict("请先保存合同资料")
+      if (new Set(members.map((m) => m.userId)).size !== members.length)
+        throw AppError.badRequest("项目成员重复")
+      for (const m of members) {
+        const u = data.identity.users.find((u) => u.id === m.userId && u.status === "ACTIVE")
+        if (
+          !u ||
+          teamFor(data.identity.orgs, u.orgId)?.id !== m.teamId ||
+          !data.teams.some((t) => t.projectId === id && t.teamId === m.teamId)
+        )
+          throw AppError.badRequest("成员须属于本项目服务团队")
+        if (
+          m.startDate > m.endDate ||
+          m.startDate < contract.startDate ||
+          m.endDate > contract.endDate
+        )
+          throw AppError.badRequest("成员有效期间须处于合同周期内")
+        if (
+          !canSupervise(u.positionCode) &&
+          data.members.some(
+            (other) =>
+              other.userId === m.userId &&
+              other.projectId !== id &&
+              other.startDate <= m.endDate &&
+              other.endDate >= m.startDate &&
+              data.projects.some((p) => p.id === other.projectId && !p.deletedAt),
+          )
+        )
+          throw AppError.conflict(`${u.name}在该期间已分配其他合同包项目`)
+      }
+      const old = data.members.filter((m) => m.projectId === id)
+      for (const m of old)
+        if (!members.some((n) => n.userId === m.userId)) await tx.projectMemberships.remove(m.id)
+      for (const m of members) {
+        const prior = old.find((n) => n.userId === m.userId)
+        if (prior)
+          await tx.projectMemberships.update(prior.id, { ...m, version: prior.version + 1 })
+        else await tx.projectMemberships.insert({ ...m, projectId: id })
+      }
+      await bumpProject(tx, p)
+      await businessAudit(tx, current.user.id, "save-project-members", "project", id, old, members)
+      return { id }
+    })
   }
   /** 团队须启用且负责人属于该团队，不以岗位名称代替业务关系。 */
   private validateTeams(data: BusinessState, teams: Array<{ teamId: number; reporterId: number }>) {

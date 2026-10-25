@@ -58,8 +58,16 @@ export function createApiClient(options: ClientOptions): AxiosInstance {
         async (response) => {
             if (response.config.responseType === 'blob' && response.data instanceof Blob) {
                 if (
-                    String(response.headers['content-type'] ?? '').includes(
+                    [
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/pdf',
+                        'image/png',
+                        'image/jpeg',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ].some(
+                        (type) =>
+                            String(response.headers['content-type'] ?? '').split(';')[0] === type,
                     )
                 )
                     return response

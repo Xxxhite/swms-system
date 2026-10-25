@@ -156,6 +156,8 @@ export async function seedIdentity(
         politicalStatus: "群众",
         orgId,
         positionCode,
+        serviceFieldCodes: ["社区建设"],
+        isSupervisor: role === "supervisor",
         supervisorId,
         dataScope: scope,
         status: "ACTIVE",
@@ -188,7 +190,7 @@ export async function seedIdentity(
         admin,
         "ALL",
         demoHash,
-        "position-5",
+        "position-8",
       )
       await person(
         "project_manager",

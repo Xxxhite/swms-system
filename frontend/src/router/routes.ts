@@ -21,57 +21,19 @@ export const menuTree: MenuNode[] = [
         title: '服务管理',
         children: [
             { path: '/service/monitor', title: '指标监测', permission: PERM.SERVICE_MONITOR },
-            { path: '/service/monthly-reports', title: '月度填报', permission: PERM.MONTHLY_VIEW },
             {
-                path: '/service/archive',
-                title: '服务档案',
-                permission: PERM.SERVICE_ARCHIVE,
-                children: [
-                    {
-                        path: '/service/archive/activity',
-                        title: '专-活动',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
-                        path: '/service/archive/volunteer',
-                        title: '专-志愿者活动',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
-                        path: '/service/archive/record',
-                        title: '专-建档',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
-                        path: '/service/archive/visit',
-                        title: '专-探访',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
-                        path: '/service/archive/consult',
-                        title: '专-咨询',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
-                        path: '/service/archive/meeting',
-                        title: '行-会议记录',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                    {
-                        path: '/service/archive/monthly',
-                        title: '行-月计划',
-                        permission: PERM.SERVICE_ARCHIVE,
-                    },
-                ],
+                path: '/service/contract-package-projects',
+                title: '合同包项目管理',
+                permission: PERM.PROJECT_RECORD_VIEW,
             },
-            { path: '/service/approval', title: '档案审批', permission: PERM.SERVICE_APPROVE },
+            { path: '/service/records', title: '服务档案填报', permission: PERM.MONTHLY_VIEW },
+            { path: '/service/approvals', title: '服务档案审批', permission: PERM.MONTHLY_APPROVE },
         ],
     },
-    { path: '/project', title: '项目管理', permission: PERM.PROJECT },
+    { path: '/project', title: '总部项目管理', permission: PERM.PROJECT },
     { path: '/activity', title: '活动管理', permission: PERM.ACTIVITY },
     { path: '/resource', title: '资源管理', permission: PERM.RESOURCE },
     { path: '/analysis', title: '数据分析', permission: PERM.ANALYSIS },
-    { path: '/approvals', title: '月报变更待办', permission: PERM.MONTHLY_APPROVE },
     { path: '/knowledge', title: '知识管理', permission: PERM.KNOWLEDGE },
     {
         path: '/system',
@@ -129,10 +91,11 @@ function flattenMenu(
 /** 为每个可见菜单节点生成路由；业务页面接入时在此替换对应占位组件。 */
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
     const pages: Record<string, RouteRecordRaw['component']> = {
-        '/project': () => import('@/views/project/index.vue'),
+        '/project': () => import('@/views/project/headquarters.vue'),
+        '/service/contract-package-projects': () => import('@/views/project/index.vue'),
         '/service/monitor': () => import('@/views/service/monitor/index.vue'),
-        '/service/monthly-reports': () => import('@/views/service/monthly-reports/index.vue'),
-        '/approvals': () => import('@/views/approval/index.vue'),
+        '/service/records': () => import('@/views/service/monthly-reports/index.vue'),
+        '/service/approvals': () => import('@/views/approval/index.vue'),
         '/analysis': () => import('@/views/analysis/index.vue'),
         '/system/organizations': () => import('@/views/system/organizations/index.vue'),
         '/system/users': () => import('@/views/system/users/index.vue'),
@@ -146,12 +109,28 @@ export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
         component: pages[node.path] ?? (() => import('@/views/placeholder/ModulePlaceholder.vue')),
         meta: { title: node.title, parents },
     }))
-    if (routes.some((route) => route.path === '/project'))
+    if (routes.some((route) => route.path === '/service/contract-package-projects'))
         routes.push({
-            path: '/project/:id',
+            path: '/service/contract-package-projects/:id',
             name: 'ProjectDetail',
             component: () => import('@/views/project/detail.vue'),
-            meta: { title: '项目详情', parents: ['项目管理'] },
+            meta: { title: '项目详情', parents: ['服务管理', '合同包项目管理'] },
+        })
+    const aliases: Array<[string, string]> = [
+        ['/service/monthly-reports', '/service/records'],
+        ['/service/archive', '/service/records'],
+        ...['activity', 'volunteer', 'record', 'visit', 'consult', 'meeting', 'monthly'].map(
+            (kind): [string, string] => [`/service/archive/${kind}`, '/service/records'],
+        ),
+        ['/approvals', '/service/approvals'],
+        ['/service/approval', '/service/approvals'],
+    ]
+    for (const [path, redirect] of aliases)
+        if (routes.some((r) => r.path === redirect)) routes.push({ path, redirect })
+    if (routes.some((r) => r.path === '/service/contract-package-projects'))
+        routes.push({
+            path: '/project/:id',
+            redirect: (to) => `/service/contract-package-projects/${String(to.params.id)}`,
         })
     return routes
 }

@@ -1,3 +1,4 @@
+import { matchesRecordChange } from "@/modules/approval/approval-link"
 import { actorFrom } from "@/modules/identity/identity.service"
 import { assertVersion, requirePermission, type Actor } from "@/utils/authorization"
 import { assertBusinessAccess } from "@/utils/business-scope"
@@ -7,10 +8,10 @@ import { AppError } from "@/utils/errors"
 import { projectRepository, type ProjectRepository } from "@/modules/project/project.repository"
 import { maintainReport } from "./service.service"
 import type { MonthlyChangeInput } from "./service.validation"
-/** 月报更正审批：旧值保持有效直到指定主管批准，完整变更同事务提交。 */
+/** 服务档案变更审批：旧值保持有效直到指定主管批准，完整变更同事务提交。 */
 export class MonthlyChangeService {
   constructor(readonly repository: ProjectRepository = projectRepository) {}
-  /** 创建变更申请，冻结月报版本、拟值、直接主管和节点快照。 */
+  /** 创建变更申请，冻结服务档案版本、拟值、直接主管和节点快照。 */
   create(actor: Actor, id: number, input: MonthlyChangeInput) {
     return this.repository.write(actor, async (tx, data, current) => {
       const r = data.reports.find((r) => r.id === id)
@@ -30,7 +31,7 @@ export class MonthlyChangeService {
       )
         throw AppError.conflict("当前状态不能申请此项变更")
       if (data.changes.some((c) => c.pendingReportId === id))
-        throw AppError.conflict("该月报已有待处理申请")
+        throw AppError.conflict("该服务档案已有待处理申请")
       const supervisor = data.identity.users.find(
         (u) => u.id === current.user.supervisorId && u.status === "ACTIVE",
       )
@@ -55,7 +56,7 @@ export class MonthlyChangeService {
       })
       const indicator = data.indicators.find((i) => i.id === r.indicatorId)!
       const [instance] = await tx.approvalInstances.insert({
-        businessType: "MONTHLY_CHANGE",
+        businessType: "SERVICE_CHANGE",
         businessId: change.insertId,
         applicantId: current.user.id,
         workflowSnapshot: {
@@ -71,6 +72,7 @@ export class MonthlyChangeService {
           indicatorId: r.indicatorId,
           teamId: r.teamId,
           month: r.month,
+          serviceDate: r.serviceDate,
           operation: input.operation,
           beforeValue: r.actualValue,
           proposedValue: value,
@@ -88,8 +90,8 @@ export class MonthlyChangeService {
       await businessAudit(
         tx,
         current.user.id,
-        "request-monthly-change",
-        "monthly_change",
+        "request-service-change",
+        "service_record_change",
         change.insertId,
         null,
         input,
@@ -101,9 +103,7 @@ export class MonthlyChangeService {
   withdraw(actor: Actor, id: number) {
     return this.repository.write(actor, async (tx, data, current) => {
       const c = data.changes.find((c) => c.id === id),
-        instance = data.instances.find(
-          (i) => i.businessId === id && i.businessType === "MONTHLY_CHANGE",
-        )
+        instance = data.instances.find((i) => !!c && matchesRecordChange(data, i, c))
       if (!c || !instance) throw AppError.notFound()
       requirePermission(
         current,
@@ -131,9 +131,17 @@ export class MonthlyChangeService {
         actorId: current.user.id,
         action: "WITHDRAW",
       })
-      await businessAudit(tx, current.user.id, "withdraw-monthly-change", "monthly_change", id, c, {
-        status: "CANCELLED",
-      })
+      await businessAudit(
+        tx,
+        current.user.id,
+        "withdraw-service-change",
+        "service_record_change",
+        id,
+        c,
+        {
+          status: "CANCELLED",
+        },
+      )
       return { id }
     })
   }

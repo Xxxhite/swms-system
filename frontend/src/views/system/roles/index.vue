@@ -9,12 +9,16 @@ import { useMock } from '@/api/config'
 import { identityApi } from '@/api/modules/identity'
 import type { Permission, Role } from '@/api/types'
 const rows = ref<Role[]>([])
+const page = ref(1),
+    pageSize = ref(20)
 const sortQuery = reactive<SortQuery>({})
 const { setTableRef, defaultSort, onSortChange } = useTableSort(
     sortQuery,
     'createdAt',
     'descending',
-    () => {},
+    () => {
+        page.value = 1
+    },
 )
 const sortedRows = computed(() => sortTableRows(rows.value, sortQuery))
 const permissions = ref<Permission[]>([])
@@ -127,7 +131,7 @@ onMounted(load)
         <template v-else>
             <el-table
                 :ref="setTableRef"
-                :data="sortedRows"
+                :data="sortedRows.slice((page - 1) * pageSize, page * pageSize)"
                 :default-sort="defaultSort"
                 @sort-change="onSortChange"
             >
@@ -165,6 +169,15 @@ onMounted(load)
                     </template>
                 </el-table-column>
             </el-table>
+            <el-pagination
+                v-model:current-page="page"
+                v-model:page-size="pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                :total="rows.length"
+                layout="total, sizes, prev, pager, next"
+                class="table-pagination"
+                @size-change="page = 1"
+            />
         </template>
         <el-dialog v-model="dialog" :title="selected ? '编辑角色' : '新增角色'" width="520px">
             <el-form label-width="90px">

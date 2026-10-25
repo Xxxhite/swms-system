@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { canSupervise } from '@/constants/personnel'
 import { formatDateTime } from '@/utils/dateTime'
 import { useTableSort } from '@/utils/tableSort'
 import { onMounted, reactive, ref } from 'vue'
@@ -26,6 +27,8 @@ const rows = ref<Project[]>([]),
     busy = ref(false),
     dialog = ref(false)
 const candidates = ref<Candidates>({ organizations: [], users: [], serviceFields: [] })
+const filterFields = ref<Array<{ code: string; name: string }>>([])
+const filterAreas = ref<string[]>([])
 const filterTeams = ref<Array<{ id: number; name: string }>>([])
 const filterProjects = ref<Array<{ id: number; name: string }>>([])
 const query = reactive({
@@ -47,7 +50,10 @@ const form = ref<ProjectInput>({
     category: 'CONTRACT_PACKAGE',
     ownerOrgId: 0,
     directorId: 0,
-    supervisorId: 0,
+    seniorDirectorId: 0,
+    supervisorId: null,
+    subFieldCodes: [],
+    brandCodes: [],
     serviceFieldCode: '',
 })
 const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
@@ -98,14 +104,21 @@ function reset() {
 async function create() {
     try {
         candidates.value = await projectApi.candidates()
+        const managers = candidates.value.users.filter((user) =>
+            canSupervise(user.positionCode ?? null),
+        )
+        const manager = managers.find((user) => user.id === store.profile?.id) ?? managers[0]
         form.value = {
             code: '',
             name: '',
             category: 'CONTRACT_PACKAGE',
             ownerOrgId: candidates.value.organizations[0]?.id ?? 0,
-            directorId: store.profile?.id ?? 0,
-            supervisorId: store.profile?.id ?? 0,
-            serviceFieldCode: candidates.value.serviceFields[0]?.code ?? '',
+            directorId: manager?.id ?? 0,
+            seniorDirectorId: manager?.id ?? 0,
+            supervisorId: null,
+            subFieldCodes: [],
+            brandCodes: [],
+            serviceFieldCode: '',
         }
         dialog.value = true
     } catch {
@@ -121,7 +134,7 @@ async function save() {
         const result = await projectApi.create(form.value)
         dialog.value = false
         ElMessage.success('项目草稿已登记')
-        await router.push(`/project/${result.id}`)
+        await router.push(`/service/contract-package-projects/${result.id}`)
     } catch {
         /* 请求层提示 */
     } finally {
@@ -143,6 +156,8 @@ onMounted(async () => {
     if (!useMock) {
         try {
             const options = await projectApi.filterOptions()
+            filterFields.value = options.serviceFields
+            filterAreas.value = options.serviceAreas ?? []
             filterTeams.value = options.organizations
             filterProjects.value = options.projects ?? []
         } catch {
@@ -155,14 +170,18 @@ onMounted(async () => {
     <el-card>
         <template #header>
             <div class="page-header">
-                <span>项目管理</span>
+                <span>合同包项目管理</span>
                 <div v-if="!useMock" class="page-actions">
                     <el-button
-                        v-if="store.hasPermission('project:record:create')"
+                        v-if="
+                            (store.profile?.isDevSuperadmin ||
+                                canSupervise(store.profile?.positionCode ?? null)) &&
+                            store.hasPermission('project:record:create')
+                        "
                         type="primary"
                         @click="create"
                     >
-                        登记项目
+                        新增项目
                     </el-button>
                     <el-button @click="load">刷新</el-button>
                 </div>
@@ -196,10 +215,24 @@ onMounted(async () => {
                     </el-select>
                 </el-form-item>
                 <el-form-item label="服务领域">
-                    <el-input v-model="query.serviceFieldCode" clearable />
+                    <el-select v-model="query.serviceFieldCode" clearable filterable>
+                        <el-option
+                            v-for="f in filterFields"
+                            :key="f.code"
+                            :value="f.code"
+                            :label="f.name"
+                        />
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="区域">
-                    <el-input v-model="query.serviceArea" clearable />
+                    <el-select v-model="query.serviceArea" clearable filterable>
+                        <el-option
+                            v-for="area in filterAreas"
+                            :key="area"
+                            :value="area"
+                            :label="area"
+                        />
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="合同区间起">
                     <el-date-picker v-model="query.dateFrom" value-format="YYYY-MM-DD" />
@@ -275,11 +308,16 @@ onMounted(async () => {
                 <!-- @vue-generic {Project} -->
                 <el-table-column label="操作" width="160" fixed="right">
                     <template #default="{ row }">
-                        <el-button link type="primary" @click="router.push(`/project/${row.id}`)">
+                        <el-button
+                            link
+                            type="primary"
+                            @click="router.push(`/service/contract-package-projects/${row.id}`)"
+                        >
                             查看配置
                         </el-button>
                         <el-button
                             v-if="
+                                row.canManage &&
                                 row.status === 'DRAFT' &&
                                 store.hasPermission('project:record:delete')
                             "
@@ -296,8 +334,10 @@ onMounted(async () => {
                 v-model:current-page="query.page"
                 class="table-pagination"
                 :total="total"
-                :page-size="query.pageSize"
-                layout="total, prev, pager, next"
+                v-model:page-size="query.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next"
+                @size-change="search"
                 @current-change="load"
             />
         </template>

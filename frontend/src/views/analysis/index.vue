@@ -1,4 +1,7 @@
 <script setup lang="ts">
-import IndicatorMonitor from '@/views/service/monitor/index.vue'
+import ModulePlaceholder from '@/views/placeholder/ModulePlaceholder.vue'
 </script>
-<template><indicator-monitor analysis /></template>
+
+<template>
+    <ModulePlaceholder />
+</template>

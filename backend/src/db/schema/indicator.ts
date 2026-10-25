@@ -1,5 +1,6 @@
 import {
   char,
+  date,
   datetime,
   decimal,
   foreignKey,
@@ -15,7 +16,7 @@ import { organizations, users } from "./identity"
 import { projects, businessTimestamps } from "./project"
 /** 项目指标表：同名指标依项目及统计口径独立管理。 */
 export const projectIndicators = mysqlTable(
-  "project_indicators",
+  "contract_indicators",
   {
     id: int("id", { unsigned: true }).autoincrement().primaryKey(),
     projectId: int("project_id", { unsigned: true })
@@ -33,7 +34,7 @@ export const projectIndicators = mysqlTable(
 )
 /** 团队指标目标表：指标启用前核对团队目标之和，已有月报的分配保留。 */
 export const teamIndicatorTargets = mysqlTable(
-  "team_indicator_targets",
+  "contract_targets",
   {
     id: int("id", { unsigned: true }).autoincrement().primaryKey(),
     indicatorId: int("indicator_id", { unsigned: true })
@@ -47,17 +48,22 @@ export const teamIndicatorTargets = mysqlTable(
   },
   (t) => [uniqueIndex("indicator_team_unique").on(t.indicatorId, t.teamId)],
 )
-/** 月报表：团队、指标、月份的永久唯一槽位；仅正式提交的新增量参与累计。 */
+/** 按次服务档案：同日同指标可多次记录，仅审批生效的完成量参与累计；旧月报保留原月份。 */
 export const monthlyReports = mysqlTable(
-  "monthly_reports",
+  "service_records",
   {
     id: int("id", { unsigned: true }).autoincrement().primaryKey(),
     indicatorId: int("indicator_id", { unsigned: true }).notNull(),
     teamId: int("team_id", { unsigned: true }).notNull(),
+    serviceDate: date("service_date", { mode: "string" }),
+    requestKey: varchar("request_key", { length: 64 }),
+    legacyReportId: int("legacy_report_id", { unsigned: true }).unique(),
     month: char("month", { length: 7 }).notNull(),
     actualValue: decimal("actual_value", { precision: 12, scale: 2 }).notNull(),
     note: varchar("note", { length: 1000 }),
-    status: mysqlEnum("status", ["DRAFT", "SUBMITTED", "VOID"]).notNull().default("DRAFT"),
+    status: mysqlEnum("status", ["DRAFT", "IN_REVIEW", "REJECTED", "SUBMITTED", "VOID"])
+      .notNull()
+      .default("DRAFT"),
     createdBy: int("created_by", { unsigned: true })
       .notNull()
       .references(() => users.id),
@@ -66,9 +72,9 @@ export const monthlyReports = mysqlTable(
     ...businessTimestamps(),
   },
   (t) => [
-    uniqueIndex("monthly_slot_unique").on(t.indicatorId, t.teamId, t.month),
+    uniqueIndex("service_request_unique").on(t.createdBy, t.requestKey),
     foreignKey({
-      name: "monthly_target_fk",
+      name: "service_record_target_fk",
       columns: [t.indicatorId, t.teamId],
       foreignColumns: [teamIndicatorTargets.indicatorId, teamIndicatorTargets.teamId],
     }),

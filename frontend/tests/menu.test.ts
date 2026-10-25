@@ -5,14 +5,15 @@ import { filterMenuTree, menuTree, menuToRoutes } from '../src/router/routes'
 
 describe('菜单权限', () => {
     test('社工只看到服务档案和知识管理，不注册系统管理路由', () => {
-        const menu = filterMenuTree(menuTree, [PERM.SERVICE_ARCHIVE, PERM.KNOWLEDGE])
+        const menu = filterMenuTree(menuTree, [PERM.MONTHLY_VIEW, PERM.KNOWLEDGE])
         expect(menu.map((item) => item.path)).toEqual(['/service', '/knowledge'])
-        expect(menu[0]?.children?.map((item) => item.path)).toEqual(['/service/archive'])
-        expect(menu[0]?.children?.[0]?.children).toHaveLength(7)
+        expect(menu[0]?.children?.map((item) => item.path)).toEqual(['/service/records'])
+        expect(menu[0]?.children?.[0]?.title).toBe('服务档案填报')
         const paths = menuToRoutes(menu).map((route) => route.path)
         expect(paths).not.toContain('/service/archive/case')
         expect(paths).not.toContain('/service/archive/group')
-        expect(paths).toContain('/service/archive/activity')
+        expect(paths).toContain('/service/records')
+        expect(menu[0]?.children?.some((m) => m.path === '/service/monthly-reports')).toBe(false)
         expect(paths).not.toContain('/system')
     })
 

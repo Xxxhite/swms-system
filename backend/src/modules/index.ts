@@ -1,3 +1,4 @@
+import { createFileRoutes } from "./file/file.route"
 import { createProjectRoutes } from "./project/project.route"
 import { createServiceRoutes } from "./service/service.route"
 import { createApprovalRoutes } from "./approval/approval.route"
@@ -25,7 +26,10 @@ export const modules: AnyElysia[] = [
   createIdentityRoutes(),
   createSystemRoutes(),
   createProjectRoutes(),
+  createProjectRoutes(undefined, undefined, "/service/contract-package-projects"),
   createServiceRoutes(),
+  createServiceRoutes(undefined, undefined, "records"),
   createApprovalRoutes(),
   createAnalysisRoutes(),
+  createFileRoutes(),
 ]

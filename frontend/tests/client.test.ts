@@ -191,3 +191,15 @@ describe('受控 Excel 下载', () => {
         expect(messages).toEqual(['无导出权限'])
     })
 })
+
+describe('受控合同附件下载', () => {
+    test('合法PDF保持二进制响应并携带认证头', async () => {
+        const file = new Blob(['%PDF-1.7'], { type: 'application/pdf' })
+        const { http, messages } = fixture(async (config) => {
+            expect(config.headers.Authorization).toBe('Bearer test-token')
+            return { ...response(config, file), headers: { 'content-type': 'application/pdf' } }
+        })
+        expect(await http.download('/files/1/download')).toBe(file)
+        expect(messages).toEqual([])
+    })
+})

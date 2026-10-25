@@ -12,7 +12,9 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() =>
+    route.name === 'ProjectDetail' ? '/service/contract-package-projects' : route.path,
+)
 const breadcrumb = computed(() =>
     route.path === '/dashboard' ? [] : [...(route.meta.parents ?? []), route.meta.title ?? ''],
 )
@@ -66,8 +68,8 @@ async function handleCommand(command: string): Promise<void> {
                         v-for="(item, index) in breadcrumb"
                         :key="index"
                         :to="
-                            route.name === 'ProjectDetail' && item === '项目管理'
-                                ? '/project'
+                            route.name === 'ProjectDetail' && item === '合同包项目管理'
+                                ? '/service/contract-package-projects'
                                 : undefined
                         "
                     >
@@ -77,7 +79,13 @@ async function handleCommand(command: string): Promise<void> {
 
                 <div class="layout__actions">
                     <!-- 展示当前用户的数据访问范围 -->
-                    <el-tag type="warning" effect="plain">{{ userStore.dataScopeText }}</el-tag>
+                    <el-tag type="warning" effect="plain">
+                        {{
+                            userStore.profile?.isDevSuperadmin
+                                ? '开发超级管理员'
+                                : userStore.dataScopeText
+                        }}
+                    </el-tag>
 
                     <el-dropdown @command="handleCommand">
                         <span class="layout__user">{{ userName }}（{{ roleNames }}）▾</span>

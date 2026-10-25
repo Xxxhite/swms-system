@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { canSupervise } from '@/constants/personnel'
 import { useTableSort } from '@/utils/tableSort'
 import { formatDateTime } from '@/utils/dateTime'
 import { computed, reactive, ref, watch } from 'vue'
@@ -60,13 +61,20 @@ const form = reactive({
     positionCode: '',
     supervisorId: null as number | null,
     socialWorkerNo: '',
-    serviceFieldCode: '',
+    serviceFieldCodes: [] as string[],
+    isSupervisor: false,
     roleIds: [] as number[],
     extraPermissions: [] as string[],
     dataScope: 'SELF' as AuthorizationInput['dataScope'],
     managedOrgIds: [] as number[],
     comment: '',
 })
+watch(
+    () => form.positionCode,
+    (value) => {
+        if (!canSupervise(value)) form.isSupervisor = false
+    },
+)
 /** 真实接口模式按当前入口查询；演示模式不发送人员管理请求。 */
 async function load() {
     if (useMock) return 'superseded'
@@ -114,7 +122,8 @@ async function open(row: UserSummary, nextMode: typeof mode.value) {
             positionCode: detail.positionCode ?? '',
             supervisorId: detail.supervisorId,
             socialWorkerNo: detail.socialWorkerNo ?? '',
-            serviceFieldCode: detail.serviceFieldCode ?? '',
+            serviceFieldCodes: detail.serviceFieldCodes ?? [],
+            isSupervisor: detail.isSupervisor ?? false,
             roleIds: detail.roleIds,
             extraPermissions: detail.extraPermissions,
             dataScope: detail.dataScope,
@@ -139,6 +148,10 @@ async function save() {
         ElMessage.warning('请填写姓名和联系电话')
         return
     }
+    if (mode.value === 'edit' && !form.serviceFieldCodes.length) {
+        ElMessage.warning('请至少选择一个服务领域')
+        return
+    }
     if (mode.value === 'reject' && !form.comment.trim()) {
         ElMessage.warning('请填写驳回意见')
         return
@@ -161,6 +174,7 @@ async function save() {
             orgId: form.orgId,
             positionCode: form.positionCode,
             supervisorId: form.supervisorId,
+            isSupervisor: form.isSupervisor,
         }
         const authorization = {
             roleIds: form.roleIds,
@@ -177,7 +191,7 @@ async function save() {
                 name: form.name,
                 phone: form.phone,
                 socialWorkerNo: form.socialWorkerNo || null,
-                serviceFieldCode: form.serviceFieldCode || null,
+                serviceFieldCodes: form.serviceFieldCodes,
             })
         else if (mode.value === 'approve')
             reviewed = await identityApi.approve(id, { ...placement, ...authorization, version })
@@ -433,9 +447,11 @@ watch(
             </el-table>
             <el-pagination
                 v-model:current-page="query.page"
-                :page-size="query.pageSize"
+                v-model:page-size="query.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
                 :total="total"
-                layout="total, prev, pager, next"
+                layout="total, sizes, prev, pager, next"
+                @size-change="search"
                 class="table-pagination"
                 @current-change="load"
             />
@@ -477,6 +493,16 @@ watch(
                     <el-descriptions-item label="社工号">
                         {{ target.socialWorkerNo ?? '未填写' }}
                     </el-descriptions-item>
+                    <el-descriptions-item label="服务领域" :span="2">
+                        {{
+                            target.serviceFieldCodes?.join('、') ||
+                            target.serviceFieldCode ||
+                            '待补充'
+                        }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="督导身份">
+                        {{ target.isSupervisor ? '是' : '否' }}
+                    </el-descriptions-item>
                     <el-descriptions-item v-if="target.reviewComment" label="审核意见" :span="2">
                         {{ target.reviewComment }}
                     </el-descriptions-item>
@@ -497,8 +523,8 @@ watch(
                         <el-form-item label="社工号">
                             <el-input v-model="form.socialWorkerNo" maxlength="100" />
                         </el-form-item>
-                        <el-form-item label="服务领域">
-                            <el-select v-model="form.serviceFieldCode" clearable>
+                        <el-form-item label="服务领域" required>
+                            <el-select v-model="form.serviceFieldCodes" multiple filterable>
                                 <el-option
                                     v-for="field in fields"
                                     :key="field.code"
@@ -528,6 +554,14 @@ watch(
                                     :label="position.name"
                                 />
                             </el-select>
+                        </el-form-item>
+                        <el-form-item label="督导身份">
+                            <el-checkbox
+                                v-model="form.isSupervisor"
+                                :disabled="!canSupervise(form.positionCode)"
+                            >
+                                兼任督导
+                            </el-checkbox>
                         </el-form-item>
                         <el-form-item label="直接主管">
                             <el-select

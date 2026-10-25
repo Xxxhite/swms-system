@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { canSupervise } from '@/constants/personnel'
 import { ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { fieldRule, textIssue, validateForm } from '@/utils/businessValidation'
@@ -19,7 +20,7 @@ const rules: FormRules = {
     category: [{ required: true, message: '请选择项目分类', trigger: 'change' }],
     ownerOrgId: [fieldRule((value) => (Number(value) > 0 ? undefined : '请选择归属组织'))],
     directorId: [fieldRule((value) => (Number(value) > 0 ? undefined : '请选择项目总监'))],
-    supervisorId: [fieldRule((value) => (Number(value) > 0 ? undefined : '请选择高级主任 / 督导'))],
+    seniorDirectorId: [fieldRule((value) => (Number(value) > 0 ? undefined : '请选择高级主任'))],
     serviceFieldCode: [{ required: true, message: '请选择主服务领域', trigger: 'change' }],
 }
 /** 新建和详情共用校验，保存前由父页面调用。 */
@@ -68,20 +69,61 @@ defineExpose({ validate: () => validateForm(formRef.value) })
         <el-form-item label="项目总监" prop="directorId" required>
             <el-select v-model="model.directorId" filterable>
                 <el-option
-                    v-for="u in candidates.users"
+                    v-for="u in candidates.users.filter((u) =>
+                        canSupervise(u.positionCode ?? null),
+                    )"
                     :key="u.id"
                     :label="`${u.name}（${u.username}）`"
                     :value="u.id"
                 />
             </el-select>
         </el-form-item>
-        <el-form-item label="高级主任 / 督导" prop="supervisorId" required>
-            <el-select v-model="model.supervisorId" filterable>
+        <el-form-item label="高级主任" prop="seniorDirectorId" required>
+            <el-select v-model="model.seniorDirectorId" filterable>
                 <el-option
-                    v-for="u in candidates.users"
+                    v-for="u in candidates.users.filter((u) =>
+                        canSupervise(u.positionCode ?? null),
+                    )"
                     :key="u.id"
                     :label="`${u.name}（${u.username}）`"
                     :value="u.id"
+                />
+            </el-select>
+        </el-form-item>
+        <el-form-item label="督导" prop="supervisorId">
+            <el-select
+                v-model="model.supervisorId"
+                clearable
+                filterable
+                @clear="model.supervisorId = null"
+            >
+                <el-option
+                    v-for="u in candidates.users.filter(
+                        (u) => u.isSupervisor && canSupervise(u.positionCode ?? null),
+                    )"
+                    :key="u.id"
+                    :label="`${u.name}（${u.username}）`"
+                    :value="u.id"
+                />
+            </el-select>
+        </el-form-item>
+        <el-form-item label="细分领域">
+            <el-select v-model="model.subFieldCodes" multiple clearable>
+                <el-option
+                    v-for="f in candidates.subFields ?? []"
+                    :key="f.code"
+                    :label="f.name"
+                    :value="f.code"
+                />
+            </el-select>
+        </el-form-item>
+        <el-form-item label="机构品牌归属">
+            <el-select v-model="model.brandCodes" multiple clearable>
+                <el-option
+                    v-for="f in candidates.brands ?? []"
+                    :key="f.code"
+                    :label="f.name"
+                    :value="f.code"
                 />
             </el-select>
         </el-form-item>

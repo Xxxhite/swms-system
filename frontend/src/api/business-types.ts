@@ -18,11 +18,29 @@ export interface BusinessQuery extends SortQuery {
 export interface ProjectInput {
     code: string
     name: string
-    category: 'CONTRACT_PACKAGE' | 'HEADQUARTERS' | 'FUND'
+    category: 'CONTRACT_PACKAGE'
     ownerOrgId: number
     directorId: number
-    supervisorId: number
+    seniorDirectorId: number
+    supervisorId: number | null
+    subFieldCodes?: string[]
+    brandCodes?: string[]
     serviceFieldCode: string
+}
+export interface ProjectMember {
+    userId: number
+    teamId: number
+    startDate: string
+    endDate: string
+    name?: string
+    teamName?: string
+}
+export interface ContractFile {
+    id: number
+    name: string
+    size: number
+    contentType: string
+    createdAt: string
 }
 export interface ContractInput {
     contractNo?: string
@@ -52,6 +70,9 @@ export interface Indicator {
 export interface Project extends ProjectInput {
     ownerOrgName: string | null
     directorName: string | null
+    seniorDirectorName: string | null
+    canManage: boolean
+    members: ProjectMember[]
     supervisorName: string | null
     createdAt: string
     id: number
@@ -67,13 +88,25 @@ export interface Project extends ProjectInput {
 export interface Candidates {
     projects?: Array<{ id: number; name: string }>
     organizations: Array<{ id: number; name: string; type: string }>
-    users: Array<{ id: number; name: string; username: string; teamId: number | null }>
+    users: Array<{
+        id: number
+        name: string
+        username: string
+        teamId: number | null
+        positionCode?: string | null
+        isSupervisor?: boolean
+    }>
+    subFields?: Array<{ code: string; name: string }>
+    brands?: Array<{ code: string; name: string }>
+    serviceAreas?: string[]
     serviceFields: Array<{ code: string; name: string }>
 }
 export interface MonthlyInput {
     indicatorId: number
     teamId: number
-    month: string
+    month?: string
+    serviceDate: string
+    requestKey?: string
     actualValue: string
     note?: string
 }
@@ -98,15 +131,19 @@ export interface ApprovalTask {
     id: number
     instanceId: number
     approverId: number
+    canDecide?: boolean
     status: string
     version: number
     instance?: ApprovalInstance
 }
-export interface Monthly extends MonthlyInput {
+export interface Monthly extends Omit<MonthlyInput, 'serviceDate'> {
+    serviceDate: string | null
     createdAt: string
+    legacyReportId?: number | null
+    submissions?: ApprovalInstance[]
     canMaintain: boolean
     id: number
-    status: 'DRAFT' | 'SUBMITTED' | 'VOID'
+    status: 'DRAFT' | 'IN_REVIEW' | 'REJECTED' | 'SUBMITTED' | 'VOID'
     version: number
     submittedAt: string | null
     projectId: number
@@ -151,13 +188,11 @@ export function queryParams(query: BusinessQuery): Record<string, unknown> {
 }
 export const projectCategories = {
     CONTRACT_PACKAGE: '合同包',
-    HEADQUARTERS: '总部项目',
-    FUND: '基金项目',
 }
 export const businessStatus: Record<string, string> = {
     DRAFT: '草稿',
     ACTIVE: '已启用',
-    SUBMITTED: '已提交',
+    SUBMITTED: '已通过',
     VOID: '已撤销',
     PENDING: '待审批',
     IN_REVIEW: '审批中',

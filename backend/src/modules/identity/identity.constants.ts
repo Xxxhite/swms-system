@@ -1,37 +1,99 @@
 import { businessPermissionEntries } from "@/modules/project/business-permissions"
 export const positions = [
-  "实习生",
-  "助理",
-  "社工",
-  "团队主任",
-  "项目督导",
-  "项目总监",
-  "总部专员",
-  "高级主任",
-  "部门总监",
-  "高管",
-  "机构负责人",
-  "机构管理员",
-].map((name, index) => ({ code: `position-${index + 1}`, name }))
+  {
+    code: "position-1",
+    name: "实习生",
+  },
+  {
+    code: "position-2",
+    name: "助理",
+  },
+  {
+    code: "position-3",
+    name: "社工",
+  },
+  {
+    code: "position-4",
+    name: "团队主任",
+  },
+  {
+    code: "position-6",
+    name: "项目总监",
+  },
+  {
+    code: "position-7",
+    name: "总部专员",
+  },
+  {
+    code: "position-8",
+    name: "高级主任",
+  },
+  {
+    code: "position-9",
+    name: "部门总监",
+  },
+  {
+    code: "position-10",
+    name: "高管",
+  },
+  {
+    code: "position-11",
+    name: "机构负责人",
+  },
+  {
+    code: "position-12",
+    name: "机构管理员",
+  },
+]
+/** 业务管理岗位使用显式稳定编码；系统角色与岗位分别授权。 */
+export const managementPositions = [
+  "position-6",
+  "position-8",
+  "position-9",
+  "position-10",
+  "position-11",
+]
+export const canSupervise = (positionCode: string | null) =>
+  managementPositions.includes(positionCode ?? "")
 export const serviceFields = [
-  "福利救助",
+  "社会福利",
   "社会救助",
-  "其他-退役军人",
+  "慈善事业",
   "社区建设",
-  "其他-场馆",
-  "禁毒戒毒",
-  "其他-社会福利",
-  "其他-双百",
-  "其他-反恐",
-  "其他-心理",
-  "教育辅导",
-  "残障康复",
+  "婚姻家庭",
   "精神卫生",
+  "残障康复",
+  "教育辅导",
+  "就业援助",
   "职工帮扶",
-  "纠纷调节",
+  "犯罪预防",
+  "禁毒戒毒",
+  "矫治帮教",
+  "卫生健康",
+  "纠纷调解",
+  "应急处置",
+  "其他-街道反邪教服务",
+  "其他-现退役军人服务",
+  "其他-场馆运营",
+  "其他-双百服务",
+  "其他-心理服务",
+  "其他-督导输出",
   "其他",
 ].map((name) => ({ code: name, name }))
+export const subFields = [
+  "未成年人保护",
+  "长者服务",
+  "妇女家庭服务",
+  "新就业群体服务",
+  "志愿者服务",
+].map((name) => ({ code: name, name }))
+export const brands = ["馨守护", "馨起点", "馨生活", "馨生剧团", "馨+"].map((name) => ({
+  code: name,
+  name,
+}))
 export const dictionaries = {
+  subFields,
+  brands,
   positions,
   serviceFields,
   education: ["博士", "硕士", "本科", "大专", "高中及以下", "其他"].map((name) => ({

@@ -16,6 +16,7 @@ import {
 import { db } from "@/db"
 import * as s from "@/db/schema"
 import { safeUser, type Actor, type User } from "@/utils/authorization"
+import { canSupervise } from "./identity.constants"
 import { AppError } from "@/utils/errors"
 import { resolveSort, type SortQuery } from "@/utils/list-sort"
 
@@ -177,6 +178,30 @@ export class IdentityRepository {
         const target = state.users.find((item) => item.id === id)
         if (!target) throw AppError.notFound()
         const change = prepare(state, target)
+        if (
+          change.patch.positionCode &&
+          change.patch.positionCode !== target.positionCode &&
+          !canSupervise(change.patch.positionCode)
+        ) {
+          const memberships = await tx
+            .select()
+            .from(s.projectMemberships)
+            .innerJoin(s.projects, eq(s.projects.id, s.projectMemberships.projectId))
+            .where(and(eq(s.projectMemberships.userId, id), sql`${s.projects.deletedAt} is null`))
+          const rows = memberships.map((m) => m.contract_memberships)
+          if (
+            rows.some((m, i) =>
+              rows.some(
+                (n, j) =>
+                  i !== j &&
+                  m.projectId !== n.projectId &&
+                  m.startDate <= n.endDate &&
+                  m.endDate >= n.startDate,
+              ),
+            )
+          )
+            throw AppError.conflict("该人员存在期间重叠的合同包项目，请先调整项目归属再变更岗位")
+        }
         // 同内容重复批准返回空补丁，不重复递增 version，也不产生重复审计。
         if (!change.authorization && Object.keys(change.patch).length === 0) return safeUser(target)
         await tx

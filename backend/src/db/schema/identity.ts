@@ -3,6 +3,8 @@ import {
   datetime,
   date,
   int,
+  json,
+  boolean,
   mysqlEnum,
   mysqlTable,
   primaryKey,
@@ -50,6 +52,11 @@ export const users = mysqlTable("users", {
   major: varchar("major", { length: 100 }).notNull(),
   socialWorkerNo: varchar("social_worker_no", { length: 100 }),
   serviceFieldCode: varchar("service_field_code", { length: 100 }),
+  serviceFieldCodes: json("service_field_codes")
+    .$type<string[]>()
+    .notNull()
+    .$defaultFn(() => []),
+  isSupervisor: boolean("is_supervisor").notNull().default(false),
   proposedPosition: varchar("proposed_position", { length: 100 }).notNull(),
   proposedTeam: varchar("proposed_team", { length: 100 }),
   orgId: int("org_id", { unsigned: true }).references(() => organizations.id),

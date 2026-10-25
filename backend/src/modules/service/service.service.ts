@@ -1,6 +1,12 @@
+import { matchesRecordChange } from "@/modules/approval/approval-link"
 import * as s from "@/db/schema"
 import { requirePermission, assertVersion, type Actor } from "@/utils/authorization"
-import { canReadTeam, assertBusinessAccess } from "@/utils/business-scope"
+import {
+  canReadTeam,
+  assertBusinessAccess,
+  canMaintainProject,
+  canConfigureProjects,
+} from "@/utils/business-scope"
 import { AppError } from "@/utils/errors"
 import { decimalUnits } from "@/utils/decimal"
 import { businessAudit } from "@/utils/business-audit"
@@ -12,68 +18,94 @@ import {
 import { findProject, visibleTeams, fullProject } from "@/modules/project/project.service"
 import { sortRows, sortDecimal } from "@/utils/list-sort"
 import { pageResult, type BusinessQuery } from "@/modules/project/project.validation"
-import {
-  assertReportMonth,
-  businessToday,
-  sumValues,
-  indicatorWarning,
-} from "./indicator-calculation"
+import { businessToday, sumValues, indicatorWarning } from "./indicator-calculation"
+import { actorFrom } from "@/modules/identity/identity.service"
 import type { MonthlyInput } from "./service.validation"
 export type Monthly = typeof s.monthlyReports.$inferSelect
-/** 月报可见范围：SELF 仅本人创建或当前负责记录，其他范围以完整团队为界。 */
+/** 服务档案按项目负责信息或本人服务团队及成员关系裁剪读取。 */
 export function canReadReport(data: BusinessState, actor: Actor, r: Monthly) {
+  const indicator = data.indicators.find((i) => i.id === r.indicatorId)
+  const p = data.projects.find((p) => p.id === indicator?.projectId && !p.deletedAt)
   return (
-    canReadTeam(actor, r.teamId) ||
-    (actor.profile.dataScope === "SELF" &&
-      (r.createdBy === actor.user.id ||
-        data.teams.some(
-          (t) =>
-            t.teamId === r.teamId &&
-            t.reporterId === actor.user.id &&
-            data.indicators.some((i) => i.id === r.indicatorId && i.projectId === t.projectId),
+    !!p &&
+    (canMaintainProject(actor, p) ||
+      (r.teamId === actor.profile.teamId &&
+        data.members.some(
+          (m) => m.projectId === p.id && m.userId === actor.user.id && m.teamId === r.teamId,
         )))
   )
 }
-/** 月报维护必须具备动作及当前填报责任，管理员仍须完整团队范围。 */
+/** 填报校验动作和项目维护能力或团队成员关系，团队目标及日期规则始终适用。 */
 export function maintainReport(
   data: BusinessState,
   actor: Actor,
   indicatorId: number,
   teamId: number,
   permission: string,
+  serviceDate?: string,
 ) {
   requirePermission(actor, permission)
   const indicator = data.indicators.find((i) => i.id === indicatorId && !i.deletedAt)
   if (!indicator) throw AppError.notFound()
-  const project = findProject(data, indicator.projectId),
-    team = data.teams.find((t) => t.projectId === project.id && t.teamId === teamId)
+  const project = findProject(data, indicator.projectId)
+  const team = data.teams.find((t) => t.projectId === project.id && t.teamId === teamId)
+  const membership = data.members.find(
+    (m) =>
+      m.projectId === project.id &&
+      m.userId === actor.user.id &&
+      m.teamId === teamId &&
+      (!serviceDate || (m.startDate <= serviceDate && m.endDate >= serviceDate)),
+  )
   assertBusinessAccess(
     !!team &&
-      (team.reporterId === actor.user.id || actor.profile.roles.includes("admin")) &&
-      (canReadTeam(actor, teamId) ||
-        (actor.profile.dataScope === "SELF" && team.reporterId === actor.user.id)),
+      (canMaintainProject(actor, project) || (actor.profile.teamId === teamId && !!membership)),
   )
   if (
     !data.identity.orgs.some((o) => o.id === teamId && o.type === "TEAM" && o.status === "ACTIVE")
   )
-    throw AppError.conflict("承担团队已停用")
+    throw AppError.conflict("服务团队已停用")
   if (!data.targets.some((t) => t.indicatorId === indicatorId && t.teamId === teamId))
     throw AppError.conflict("未分配该指标的团队目标")
   return { project, indicator, contract: data.contracts.find((c) => c.projectId === project.id) }
 }
-/** 输出月报及本记录审批历史，不夹带项目其他团队数据。 */
+/** 校验实际日期和合同期间，避免伪造日期与超前填报。 */
+function assertServiceDate(value: string, start: string, end: string) {
+  const d = new Date(`${value}T00:00:00Z`)
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+    !Number.isFinite(d.getTime()) ||
+    d.toISOString().slice(0, 10) !== value ||
+    value < start ||
+    value > end ||
+    value > businessToday()
+  )
+    throw AppError.badRequest("服务日期须有效、处于合同周期内且不得晚于今天")
+}
+/** 输出服务档案及首次、变更审批历史，不夹带项目其他团队数据。 */
 export function reportDto(data: BusinessState, r: Monthly, actor: Actor) {
   const indicator = data.indicators.find((i) => i.id === r.indicatorId),
     project = data.projects.find((p) => p.id === indicator?.projectId)
   return {
     ...r,
     canMaintain:
-      (actor.profile.roles.includes("admin") ||
-        data.teams.some(
-          (t) =>
-            t.projectId === project?.id && t.teamId === r.teamId && t.reporterId === actor.user.id,
-        )) &&
-      (canReadTeam(actor, r.teamId) || actor.profile.dataScope === "SELF"),
+      !!project &&
+      (canMaintainProject(actor, project) ||
+        (r.teamId === actor.profile.teamId &&
+          data.members.some(
+            (m) =>
+              m.projectId === project.id && m.userId === actor.user.id && m.teamId === r.teamId,
+          ))),
+    submissions: data.instances
+      .filter((i) => i.businessType === "SERVICE_SUBMISSION" && i.businessId === r.id)
+      .map((i) => ({
+        ...i,
+        records: data.records
+          .filter((record) => record.instanceId === i.id)
+          .map((record) => ({
+            ...record,
+            actorName: data.identity.users.find((u) => u.id === record.actorId)?.name ?? "未知人员",
+          })),
+      })),
     projectId: project?.id,
     projectName: project?.name,
     indicatorName: indicator?.name,
@@ -82,9 +114,7 @@ export function reportDto(data: BusinessState, r: Monthly, actor: Actor) {
     changes: data.changes
       .filter((c) => c.reportId === r.id)
       .map((c) => {
-        const instance = data.instances.find(
-          (i) => i.businessId === c.id && i.businessType === "MONTHLY_CHANGE",
-        )
+        const instance = data.instances.find((i) => matchesRecordChange(data, i, c))
         return {
           ...c,
           instance: instance
@@ -103,7 +133,7 @@ export function reportDto(data: BusinessState, r: Monthly, actor: Actor) {
       }),
   }
 }
-/** 月报提交与指标统计服务；正式累计始终由有效行回算，不维护重复加算缓存。 */
+/** 服务档案与指标统计服务；正式累计由已生效有效行回算，不维护重复加算缓存。 */
 export class ServiceService {
   constructor(readonly repository: ProjectRepository = projectRepository) {}
   /** 列表只返回可见记录，未提交且已删除的草稿从默认列表隐藏。 */
@@ -138,11 +168,12 @@ export class ServiceService {
             indicatorName: (r) => r.indicatorName,
             teamName: (r) => r.teamName,
             month: (r) => r.month,
+            serviceDate: (r) => r.serviceDate ?? `${r.month}-00`,
             createdAt: (r) => r.createdAt,
             actualValue: (r) => sortDecimal(r.actualValue),
           },
           [
-            ["month", "desc"],
+            ["serviceDate", "desc"],
             ["createdAt", "desc"],
             ["id", "desc"],
           ],
@@ -151,7 +182,7 @@ export class ServiceService {
       ),
     )
   }
-  /** 详情复用列表范围校验，保留该月报全部变更轮次。 */
+  /** 详情复用列表范围校验，保留首次提交及全部变更轮次。 */
   detail(actor: Actor, id: number) {
     requirePermission(actor, "service:monthly:view")
     return this.repository.read(actor, (data) => {
@@ -161,7 +192,56 @@ export class ServiceService {
       return reportDto(data, r, data.actor!)
     })
   }
-  /** 新建或更新草稿，唯一槽位存在时不插入第二份；已提交撤销不可绕过审批。 */
+  /** 填报上下文从明确的有效项目归属取得，项目与指标、团队分开显示。 */
+  context(actor: Actor) {
+    requirePermission(actor, "service:monthly:create")
+    return this.repository.read(actor, (data) => {
+      const current = data.actor!,
+        today = businessToday()
+      const projects = data.projects.filter(
+        (p) =>
+          p.status === "ACTIVE" &&
+          (canMaintainProject(current, p) ||
+            data.members.some(
+              (m) =>
+                m.projectId === p.id &&
+                m.userId === current.user.id &&
+                m.teamId === current.profile.teamId &&
+                m.startDate <= today &&
+                m.endDate >= today,
+            )),
+      )
+      if (!canConfigureProjects(current) && projects.length > 1)
+        throw AppError.conflict("存在多个有效合同包项目归属，请联系负责人调整后填报")
+      const slots = projects.flatMap((p) =>
+        data.indicators
+          .filter((i) => i.projectId === p.id && i.status === "ACTIVE" && !i.deletedAt)
+          .flatMap((i) =>
+            data.targets
+              .filter(
+                (t) =>
+                  t.indicatorId === i.id &&
+                  (canMaintainProject(current, p) || t.teamId === current.profile.teamId),
+              )
+              .map((t) => ({
+                projectId: p.id,
+                projectName: p.name,
+                indicatorId: i.id,
+                indicatorName: i.name,
+                unit: i.unit,
+                teamId: t.teamId,
+                teamName: data.identity.orgs.find((o) => o.id === t.teamId)?.name ?? "",
+              })),
+          ),
+      )
+      return {
+        fixedProject: !canConfigureProjects(current),
+        projects: projects.map((p) => ({ id: p.id, name: p.name })),
+        slots,
+      }
+    })
+  }
+  /** 按次草稿允许同日同指标多条记录；幂等键只合并同一次请求的重试。 */
   save(actor: Actor, input: MonthlyInput, id?: number, version?: number) {
     return this.repository.write(actor, async (tx, data, current) => {
       const { project, indicator, contract } = maintainReport(
@@ -170,51 +250,89 @@ export class ServiceService {
         input.indicatorId,
         input.teamId,
         id ? "service:monthly:update" : "service:monthly:create",
+        input.serviceDate,
       )
       if (project.status !== "ACTIVE" || indicator.status !== "ACTIVE" || !contract)
         throw AppError.conflict("请先启用项目及指标")
-      assertReportMonth(input.month, contract.startDate, contract.endDate)
+      assertServiceDate(input.serviceDate, contract.startDate, contract.endDate)
+      if (!canConfigureProjects(current)) {
+        const active = new Set(
+          data.members
+            .filter(
+              (m) =>
+                m.userId === current.user.id &&
+                m.startDate <= businessToday() &&
+                m.endDate >= businessToday() &&
+                data.projects.some(
+                  (p) => p.id === m.projectId && p.status === "ACTIVE" && !p.deletedAt,
+                ),
+            )
+            .map((m) => m.projectId),
+        )
+        assertBusinessAccess(
+          active.size === 1 && active.has(project.id),
+          "请使用当前唯一负责的合同包项目填报",
+        )
+      }
       decimalUnits(input.actualValue)
-      const slot = data.reports.find(
-        (r) =>
-          r.indicatorId === input.indicatorId &&
-          r.teamId === input.teamId &&
-          r.month === input.month,
-      )
-      if (id && slot?.id !== id) throw AppError.conflict("指标、团队和月份不能修改")
-      if (slot) {
-        if (!id && slot.status === "VOID" && !slot.submittedAt) {
-          id = slot.id
-          version = slot.version
-        }
-        if (!id) throw AppError.conflict(`该月份已有记录（ID ${slot.id}），请编辑或申请恢复`)
-        assertVersion(slot.version, version!)
-        if (slot.status === "SUBMITTED" || slot.submittedAt)
-          throw AppError.conflict("已提交记录须走更正或恢复审批")
-        await tx.monthlyReports.update(slot.id, {
-          actualValue: input.actualValue,
-          note: input.note,
+      const payload = {
+        indicatorId: input.indicatorId,
+        teamId: input.teamId,
+        serviceDate: input.serviceDate,
+        month: input.serviceDate.slice(0, 7),
+        actualValue: input.actualValue,
+        note: input.note,
+      }
+      const old = id ? data.reports.find((r) => r.id === id) : undefined
+      if (id) {
+        if (!old) throw AppError.notFound()
+        assertVersion(old.version, version!)
+        assertBusinessAccess(canReadReport(data, current, old))
+        if (!["DRAFT", "REJECTED"].includes(old.status) || old.submittedAt || old.legacyReportId)
+          throw AppError.conflict("仅可编辑未生效的逐次服务档案草稿")
+        if (old.indicatorId !== input.indicatorId || old.teamId !== input.teamId)
+          throw AppError.conflict("已保存的指标及团队不能修改")
+        await tx.monthlyReports.update(id, {
+          ...payload,
           status: "DRAFT",
-          version: slot.version + 1,
+          version: old.version + 1,
         })
-        id = slot.id
       } else {
-        const [result] = await tx.monthlyReports.insert({ ...input, createdBy: current.user.id })
+        const key = input.requestKey ?? crypto.randomUUID()
+        const existing = data.reports.find(
+          (r) => r.createdBy === current.user.id && r.requestKey === key,
+        )
+        if (existing) {
+          if (
+            existing.indicatorId !== payload.indicatorId ||
+            existing.teamId !== payload.teamId ||
+            existing.serviceDate !== payload.serviceDate ||
+            decimalUnits(existing.actualValue) !== decimalUnits(payload.actualValue) ||
+            (existing.note ?? "") !== (payload.note ?? "")
+          )
+            throw AppError.conflict("同一提交标识对应的填报内容已变化")
+          return { id: existing.id }
+        }
+        const [result] = await tx.monthlyReports.insert({
+          ...payload,
+          createdBy: current.user.id,
+          requestKey: key,
+        })
         id = result.insertId
       }
       await businessAudit(
         tx,
         current.user.id,
-        "save-monthly",
-        "monthly_report",
+        "save-service-record",
+        "service_record",
         id!,
-        slot ?? null,
-        input,
+        old ?? null,
+        payload,
       )
       return { id: id! }
     })
   }
-  /** 正式提交幂等；删除仅适用于从未提交的草稿，已提交记录需审批。 */
+  /** 首次提交生成直接主管单级任务，草稿和待审记录均不计累计。 */
   state(actor: Actor, id: number, version: number, operation: "submit" | "delete") {
     return this.repository.write(actor, async (tx, data, current) => {
       const r = data.reports.find((r) => r.id === id)
@@ -226,30 +344,116 @@ export class ServiceService {
         r.teamId,
         `service:monthly:${operation}`,
       )
-      if (operation === "submit" && r.status === "SUBMITTED") return { id }
+      assertBusinessAccess(canReadReport(data, current, r))
+      if (operation === "submit" && ["IN_REVIEW", "SUBMITTED"].includes(r.status)) return { id }
       assertVersion(r.version, version)
+      if (!["DRAFT", "REJECTED"].includes(r.status) || r.submittedAt)
+        throw AppError.conflict("当前状态不允许该操作")
       if (operation === "delete") {
-        if (r.submittedAt || r.status !== "DRAFT") throw AppError.conflict("已提交记录须申请撤销")
         await tx.monthlyReports.update(id, { status: "VOID", version: r.version + 1 })
       } else {
         if (
-          r.status !== "DRAFT" ||
+          !r.serviceDate ||
           project.status !== "ACTIVE" ||
           indicator.status !== "ACTIVE" ||
           !contract
         )
-          throw AppError.conflict("当前状态不能提交")
-        assertReportMonth(r.month, contract.startDate, contract.endDate)
-        await tx.monthlyReports.update(id, {
-          status: "SUBMITTED",
-          submittedAt: new Date(),
-          submittedBy: current.user.id,
-          version: r.version + 1,
+          throw AppError.conflict("请补齐服务日期并启用项目及指标")
+        assertServiceDate(r.serviceDate, contract.startDate, contract.endDate)
+        const supervisor = data.identity.users.find(
+          (u) => u.id === current.user.supervisorId && u.status === "ACTIVE",
+        )
+        if (!supervisor || supervisor.id === current.user.id)
+          throw AppError.conflict("请先配置启用的直接主管，且不得自审")
+        requirePermission(actorFrom(data.identity, supervisor), "service:monthly:approve")
+        const [instance] = await tx.approvalInstances.insert({
+          businessType: "SERVICE_SUBMISSION",
+          businessId: r.id,
+          round:
+            data.instances.filter(
+              (i) => i.businessType === "SERVICE_SUBMISSION" && i.businessId === r.id,
+            ).length + 1,
+          applicantId: current.user.id,
+          workflowSnapshot: {
+            schemaVersion: 1,
+            nodes: [{ nodeNo: 1, name: "直接主管确认", approverIds: [supervisor.id] }],
+          },
+          businessSnapshot: {
+            reportId: r.id,
+            projectId: project.id,
+            projectName: project.name,
+            indicatorId: indicator.id,
+            indicatorName: indicator.name,
+            teamId: r.teamId,
+            teamName: data.identity.orgs.find((o) => o.id === r.teamId)?.name,
+            serviceDate: r.serviceDate,
+            month: r.month,
+            operation: "SUBMIT",
+            beforeValue: "0.00",
+            proposedValue: r.actualValue,
+            note: r.note,
+            reportVersion: r.version + 1,
+          },
         })
+        await tx.approvalTasks.insert({ instanceId: instance.insertId, approverId: supervisor.id })
+        await tx.approvalRecords.insert({
+          instanceId: instance.insertId,
+          actorId: current.user.id,
+          action: "SUBMIT",
+        })
+        await tx.monthlyReports.update(id, { status: "IN_REVIEW", version: r.version + 1 })
       }
-      await businessAudit(tx, current.user.id, `${operation}-monthly`, "monthly_report", id, r, {
-        operation,
+      await businessAudit(
+        tx,
+        current.user.id,
+        `${operation}-service-record`,
+        "service_record",
+        id,
+        r,
+        { operation },
+      )
+      return { id }
+    })
+  }
+  /** 发起人可撤回首次在途提交，保留本轮记录并回到草稿。 */
+  withdrawSubmission(actor: Actor, id: number) {
+    return this.repository.write(actor, async (tx, data, current) => {
+      requirePermission(current, "service:monthly:submit")
+      const r = data.reports.find((r) => r.id === id),
+        instance = data.instances.find(
+          (i) =>
+            i.businessType === "SERVICE_SUBMISSION" &&
+            i.businessId === id &&
+            i.status === "IN_REVIEW",
+        )
+      if (!r || !instance) throw AppError.conflict("该记录没有待处理的首次提交")
+      assertBusinessAccess(
+        instance.applicantId === current.user.id && canReadReport(data, current, r),
+      )
+      await tx.monthlyReports.update(id, { status: "DRAFT", version: r.version + 1 })
+      await tx.approvalInstances.update(instance.id, {
+        status: "CANCELLED",
+        completedAt: new Date(),
+        version: instance.version + 1,
       })
+      for (const t of data.tasks.filter(
+        (t) => t.instanceId === instance.id && t.status === "PENDING",
+      ))
+        await tx.approvalTasks.update(t.id, { status: "CANCELLED", version: t.version + 1 })
+      await tx.approvalRecords.insert({
+        instanceId: instance.id,
+        actorId: current.user.id,
+        action: "WITHDRAW",
+      })
+      await businessAudit(
+        tx,
+        current.user.id,
+        "withdraw-service-submission",
+        "service_record",
+        id,
+        null,
+        { instanceId: instance.id },
+      )
       return { id }
     })
   }
@@ -273,7 +477,7 @@ export class ServiceService {
         !c ||
         (q.projectId && p.id !== q.projectId) ||
         (q.serviceFieldCode && p.serviceFieldCode !== q.serviceFieldCode) ||
-        (q.serviceArea && !c.serviceArea.includes(q.serviceArea)) ||
+        (q.serviceArea && c.serviceArea !== q.serviceArea) ||
         (q.keyword && !`${p.name} ${indicator.name}`.includes(q.keyword))
       )
         continue
@@ -303,6 +507,7 @@ export class ServiceService {
                 (!teamId || r.teamId === teamId) &&
                 canReadReport(data, actor, r) &&
                 r.status === "SUBMITTED" &&
+                (!r.serviceDate || r.serviceDate <= asOfDate) &&
                 (monthOnly ? r.month === asOfDate.slice(0, 7) : r.month <= asOfDate.slice(0, 7)),
             )
             .map((r) => r.actualValue),
@@ -331,8 +536,15 @@ export class ServiceService {
           ...base,
           statisticsScope: complete ? "TEAM" : "SELF",
           canReport:
-            (actor.profile.roles.includes("admin") || team.reporterId === actor.user.id) &&
-            (complete || actor.profile.dataScope === "SELF"),
+            canMaintainProject(actor, p) ||
+            data.members.some(
+              (m) =>
+                m.projectId === p.id &&
+                m.teamId === team.teamId &&
+                m.userId === actor.user.id &&
+                m.startDate <= businessToday() &&
+                m.endDate >= businessToday(),
+            ),
           teamId: team.teamId,
           teamName: data.identity.orgs.find((o) => o.id === team.teamId)?.name ?? "",
           targetValue: target.targetValue,

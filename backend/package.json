@@ -16,6 +16,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun src/db/seed.ts",
     "db:seed:demo": "bun src/db/seed.ts --demo",
+    "db:seed:demo:reset": "bun src/db/seed-demo.ts",
+    "test:demo-data": "bun test src/db/demo-data.integration.test.ts",
     "test:integration": "bun test src/modules/identity/identity.integration.test.ts",
     "db:seed:projects": "bun src/db/seed.ts --demo --projects",
     "db:seed:business-permissions": "bun src/db/seed.ts --business-permissions"

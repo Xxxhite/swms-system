@@ -40,7 +40,7 @@ export function projectScope(actor: Actor) {
   const teamId = actor.profile.teamId
   if (!teamId) return sql`false`
   return exists(
-    sql`(select 1 from ${s.projectMemberships} where ${and(eq(s.projectMemberships.projectId, s.projects.id), eq(s.projectMemberships.userId, actor.user.id), eq(s.projectMemberships.teamId, teamId))})`,
+    sql`(select 1 from ${s.projectTeams} where ${and(eq(s.projectTeams.projectId, s.projects.id), eq(s.projectTeams.teamId, teamId))})`,
   )
 }
 /** 团队成员始终仅本团队；管理人员的具体项目关系由项目上下文再验证。 */

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from "bun:test"
-import { eq, sql } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 import ExcelJS from "exceljs"
 import * as s from "@/db/schema"
 import type { Database } from "@/modules/identity/identity.repository"
@@ -934,6 +934,143 @@ export function registerProjectTests(
             .where(eq(s.approvalInstances.id, changed.data.instanceId))
         )[0].status,
       ).toBe("CANCELLED")
+    })
+    test("成员归属过期后不能提交服务档案", async () => {
+      const db = context().database
+      const draft = await request("/service/records", "POST", social, {
+        indicatorId,
+        teamId: teamA,
+        serviceDate: today,
+        actualValue: "1.00",
+        requestKey: "expired-membership-submit",
+      })
+      expect(draft.code).toBe(0)
+      const current = await record(draft.data.id)
+      expect(current.canSubmit).toBe(true)
+      expect(current.canChange).toBe(true)
+      const [membership] = await db
+        .select()
+        .from(s.projectMemberships)
+        .where(
+          and(
+            eq(s.projectMemberships.projectId, projectId),
+            eq(s.projectMemberships.teamId, teamA),
+            eq(s.projectMemberships.userId, socialId),
+          ),
+        )
+      expect(membership).toBeDefined()
+      const originalEndDate = membership!.endDate
+      try {
+        await db
+          .update(s.projectMemberships)
+          .set({ endDate: subtractMonths(today, 1) })
+          .where(eq(s.projectMemberships.id, membership!.id))
+        const blocked = await request(`/service/records/${draft.data.id}/submit`, "POST", social, {
+          version: 1,
+        })
+        expect(blocked.code).toBe(2003)
+        expect(blocked.message).toContain("成员归属已过期")
+        const expired = await record(draft.data.id)
+        expect(expired.canSubmit).toBe(false)
+        expect(expired.canChange).toBe(false)
+        expect(expired.canMaintain).toBe(true)
+        const submitted = await record(secondRecord)
+        expect(submitted.status).toBe("SUBMITTED")
+        const change = await request(
+          `/service/records/${secondRecord}/change-requests`,
+          "POST",
+          social,
+          {
+            version: submitted.version,
+            operation: "CORRECT",
+            actualValue: "9.99",
+            reason: "过期成员变更校验",
+          },
+        )
+        expect(change.code).toBe(2003)
+        expect(change.message).toContain("成员归属已过期")
+        const removed = await request(
+          `/service/records/${draft.data.id}?version=1`,
+          "DELETE",
+          social,
+        )
+        expect(removed.code).toBe(0)
+      } finally {
+        await db
+          .update(s.projectMemberships)
+          .set({ endDate: originalEndDate })
+          .where(eq(s.projectMemberships.id, membership!.id))
+      }
+    })
+    test("候选与归属组织按管理岗授权范围裁剪", async () => {
+      const db = context().database
+      const orgs = await db.select().from(s.organizations)
+      const outsideOrg = orgs.find((org) => org.code === "demo-other")!
+      const candidates = await request(`${base}/candidates`, "GET", manager)
+      expect(candidates.code).toBe(0)
+      expect(
+        candidates.data.organizations.some((org: { id: number }) => org.id === outsideOrg.id),
+      ).toBe(false)
+      const payload = {
+        code: "outside-owner-org",
+        name: "范围外归属组织",
+        category: "CONTRACT_PACKAGE",
+        ownerOrgId: outsideOrg.id,
+        directorId: managerId,
+        seniorDirectorId: supervisorId,
+        supervisorId: null,
+        serviceFieldCode: "社区建设",
+      }
+      const created = await request(base, "POST", manager, payload)
+      expect(created.code).toBe(2003)
+      expect(created.message).toContain("归属组织")
+    })
+    test("团队成员无逐人归属仍能查看本团队项目与档案", async () => {
+      const db = context().database
+      const [membership] = await db
+        .select()
+        .from(s.projectMemberships)
+        .where(
+          and(
+            eq(s.projectMemberships.projectId, projectId),
+            eq(s.projectMemberships.teamId, teamA),
+            eq(s.projectMemberships.userId, socialId),
+          ),
+        )
+      expect(membership).toBeDefined()
+      await db.delete(s.projectMemberships).where(eq(s.projectMemberships.id, membership!.id))
+      try {
+        const projects = await request(`${base}?pageSize=100`, "GET", social)
+        expect(projects.data.list.some((project: { id: number }) => project.id === projectId)).toBe(
+          true,
+        )
+        const records = await request("/service/records?pageSize=100", "GET", social)
+        expect(records.data.list.length).toBeGreaterThan(0)
+        expect(records.data.list.every((row: { teamId: number }) => row.teamId === teamA)).toBe(
+          true,
+        )
+        const detail = await request(`${base}/${projectId}`, "GET", social)
+        expect(detail.data.statisticsScope).toBe("TEAM")
+        const progress = await request(
+          `/service/indicator-progress?projectId=${projectId}&indicatorId=${indicatorId}`,
+          "GET",
+          social,
+        )
+        expect(progress.data.list.every((row: { teamId: number }) => row.teamId === teamA)).toBe(
+          true,
+        )
+      } finally {
+        await db.insert(s.projectMemberships).values({
+          projectId: membership!.projectId,
+          teamId: membership!.teamId,
+          userId: membership!.userId,
+          startDate: membership!.startDate,
+          endDate: membership!.endDate,
+          version: membership!.version,
+          createdAt: membership!.createdAt,
+          updatedAt: membership!.updatedAt,
+        })
+      }
     })
   })
 }

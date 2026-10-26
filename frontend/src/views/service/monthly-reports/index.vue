@@ -392,15 +392,31 @@ onMounted(async () => {
                             >
                                 编辑
                             </el-button>
-                            <el-button
-                                v-if="store.hasPermission('service:monthly:submit')"
-                                link
-                                type="primary"
-                                :disabled="busy"
-                                @click="submitMonthly(row)"
+                            <el-tooltip
+                                :disabled="row.canSubmit"
+                                content="当前成员归属已过期或未生效，不能提交"
+                                placement="top"
                             >
-                                提交
-                            </el-button>
+                                <span>
+                                    <el-button
+                                        v-if="store.hasPermission('service:monthly:submit')"
+                                        link
+                                        type="primary"
+                                        :disabled="busy || !row.canSubmit"
+                                        @click="submitMonthly(row)"
+                                    >
+                                        提交
+                                    </el-button>
+                                </span>
+                            </el-tooltip>
+                            <span
+                                v-if="
+                                    !row.canSubmit && store.hasPermission('service:monthly:submit')
+                                "
+                                class="membership-hint"
+                            >
+                                当前成员归属已过期或未生效，不能提交
+                            </span>
                             <el-button
                                 v-if="store.hasPermission('service:monthly:delete')"
                                 link
@@ -430,39 +446,56 @@ onMounted(async () => {
                                 row.canMaintain && !row.changes.some((c) => c.pendingReportId)
                             "
                         >
-                            <el-button
-                                v-if="
-                                    row.status === 'SUBMITTED' &&
-                                    store.hasPermission('service:monthly:update')
-                                "
-                                link
-                                type="primary"
-                                @click="openChange(row, 'CORRECT')"
+                            <el-tooltip
+                                :disabled="row.canChange"
+                                content="当前成员归属已过期，不能申请变更"
+                                placement="top"
                             >
-                                申请更正
-                            </el-button>
-                            <el-button
-                                v-if="
-                                    row.status === 'SUBMITTED' &&
-                                    store.hasPermission('service:monthly:delete')
-                                "
-                                link
-                                type="danger"
-                                @click="openChange(row, 'DELETE')"
+                                <span>
+                                    <el-button
+                                        v-if="
+                                            row.status === 'SUBMITTED' &&
+                                            store.hasPermission('service:monthly:update')
+                                        "
+                                        link
+                                        type="primary"
+                                        :disabled="busy || !row.canChange"
+                                        @click="openChange(row, 'CORRECT')"
+                                    >
+                                        申请更正
+                                    </el-button>
+                                    <el-button
+                                        v-if="
+                                            row.status === 'SUBMITTED' &&
+                                            store.hasPermission('service:monthly:delete')
+                                        "
+                                        link
+                                        type="danger"
+                                        :disabled="busy || !row.canChange"
+                                        @click="openChange(row, 'DELETE')"
+                                    >
+                                        申请撤销
+                                    </el-button>
+                                    <el-button
+                                        v-if="
+                                            row.status === 'VOID' &&
+                                            store.hasPermission('service:monthly:update')
+                                        "
+                                        link
+                                        type="primary"
+                                        :disabled="busy || !row.canChange"
+                                        @click="openChange(row, 'RESTORE')"
+                                    >
+                                        申请恢复
+                                    </el-button>
+                                </span>
+                            </el-tooltip>
+                            <span
+                                v-if="!row.canChange && ['SUBMITTED', 'VOID'].includes(row.status)"
+                                class="membership-hint"
                             >
-                                申请撤销
-                            </el-button>
-                            <el-button
-                                v-if="
-                                    row.status === 'VOID' &&
-                                    store.hasPermission('service:monthly:update')
-                                "
-                                link
-                                type="primary"
-                                @click="openChange(row, 'RESTORE')"
-                            >
-                                申请恢复
-                            </el-button>
+                                当前成员归属已过期，不能申请变更
+                            </span>
                         </template>
                     </template>
                 </el-table-column>
@@ -635,5 +668,12 @@ onMounted(async () => {
 <style scoped>
 .notice {
     margin-bottom: 20px;
+}
+
+.membership-hint {
+    display: block;
+    margin-top: 4px;
+    color: var(--el-color-warning);
+    font-size: 12px;
 }
 </style>

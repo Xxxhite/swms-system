@@ -15,24 +15,44 @@ import {
   type ProjectRepository,
   type BusinessState,
 } from "@/modules/project/project.repository"
-import { findProject, visibleTeams, fullProject } from "@/modules/project/project.service"
+import {
+  findProject,
+  visibleTeams,
+  fullProject,
+  type Project,
+} from "@/modules/project/project.service"
 import { sortRows, sortDecimal } from "@/utils/list-sort"
 import { pageResult, type BusinessQuery } from "@/modules/project/project.validation"
 import { businessToday, sumValues, indicatorWarning } from "./indicator-calculation"
 import { actorFrom } from "@/modules/identity/identity.service"
 import type { MonthlyInput } from "./service.validation"
 export type Monthly = typeof s.monthlyReports.$inferSelect
-/** 服务档案按项目负责信息或本人服务团队及成员关系裁剪读取。 */
+/** 服务档案按项目负责信息或本人服务团队裁剪读取；成员有效期只限制写入。 */
 export function canReadReport(data: BusinessState, actor: Actor, r: Monthly) {
   const indicator = data.indicators.find((i) => i.id === r.indicatorId)
   const p = data.projects.find((p) => p.id === indicator?.projectId && !p.deletedAt)
-  return (
-    !!p &&
-    (canMaintainProject(actor, p) ||
-      (r.teamId === actor.profile.teamId &&
-        data.members.some(
-          (m) => m.projectId === p.id && m.userId === actor.user.id && m.teamId === r.teamId,
-        )))
+  return !!p && (canMaintainProject(actor, p) || r.teamId === actor.profile.teamId)
+}
+/** 低岗位提交或申请变更时要求当前成员有效；管理岗按项目负责关系豁免。 */
+export function assertCurrentMembership(
+  data: BusinessState,
+  actor: Actor,
+  project: Project,
+  teamId: number,
+  message: string,
+) {
+  if (canMaintainProject(actor, project)) return
+  const today = businessToday()
+  assertBusinessAccess(
+    data.members.some(
+      (m) =>
+        m.projectId === project.id &&
+        m.teamId === teamId &&
+        m.userId === actor.user.id &&
+        m.startDate <= today &&
+        m.endDate >= today,
+    ),
+    message,
   )
 }
 /** 填报校验动作和项目维护能力或团队成员关系，团队目标及日期规则始终适用。 */
@@ -85,6 +105,19 @@ function assertServiceDate(value: string, start: string, end: string) {
 export function reportDto(data: BusinessState, r: Monthly, actor: Actor) {
   const indicator = data.indicators.find((i) => i.id === r.indicatorId),
     project = data.projects.find((p) => p.id === indicator?.projectId)
+  const today = businessToday(),
+    canWrite =
+      !!project &&
+      (canMaintainProject(actor, project) ||
+        (r.teamId === actor.profile.teamId &&
+          data.members.some(
+            (m) =>
+              m.projectId === project.id &&
+              m.userId === actor.user.id &&
+              m.teamId === r.teamId &&
+              m.startDate <= today &&
+              m.endDate >= today,
+          )))
   return {
     ...r,
     canMaintain:
@@ -95,6 +128,8 @@ export function reportDto(data: BusinessState, r: Monthly, actor: Actor) {
             (m) =>
               m.projectId === project.id && m.userId === actor.user.id && m.teamId === r.teamId,
           ))),
+    canSubmit: canWrite,
+    canChange: canWrite,
     submissions: data.instances
       .filter((i) => i.businessType === "SERVICE_SUBMISSION" && i.businessId === r.id)
       .map((i) => ({
@@ -346,6 +381,15 @@ export class ServiceService {
       )
       assertBusinessAccess(canReadReport(data, current, r))
       if (operation === "submit" && ["IN_REVIEW", "SUBMITTED"].includes(r.status)) return { id }
+      // 最新需求要求低岗位从当前有效项目提交；管理岗仍按项目负责关系判断。
+      if (operation === "submit")
+        assertCurrentMembership(
+          data,
+          current,
+          project,
+          r.teamId,
+          "当前成员归属已过期，不能提交服务档案",
+        )
       assertVersion(r.version, version)
       if (!["DRAFT", "REJECTED"].includes(r.status) || r.submittedAt)
         throw AppError.conflict("当前状态不允许该操作")

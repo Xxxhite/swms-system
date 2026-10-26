@@ -6,7 +6,7 @@ import { businessAudit } from "@/utils/business-audit"
 import { decimalUnits, decimalText } from "@/utils/decimal"
 import { AppError } from "@/utils/errors"
 import { projectRepository, type ProjectRepository } from "@/modules/project/project.repository"
-import { maintainReport } from "./service.service"
+import { assertCurrentMembership, maintainReport } from "./service.service"
 import type { MonthlyChangeInput } from "./service.validation"
 /** 服务档案变更审批：旧值保持有效直到指定主管批准，完整变更同事务提交。 */
 export class MonthlyChangeService {
@@ -16,13 +16,14 @@ export class MonthlyChangeService {
     return this.repository.write(actor, async (tx, data, current) => {
       const r = data.reports.find((r) => r.id === id)
       if (!r) throw AppError.notFound()
-      maintainReport(
+      const { project } = maintainReport(
         data,
         current,
         r.indicatorId,
         r.teamId,
         input.operation === "DELETE" ? "service:monthly:delete" : "service:monthly:update",
       )
+      assertCurrentMembership(data, current, project, r.teamId, "当前成员归属已过期，不能申请变更")
       assertVersion(r.version, input.version)
       if (!input.reason.trim()) throw AppError.badRequest("请填写变更原因")
       if (

@@ -1,6 +1,12 @@
 import * as s from "@/db/schema"
 import { sortRows } from "@/utils/list-sort"
-import { assertVersion, requirePermission, teamFor, type Actor } from "@/utils/authorization"
+import {
+  assertVersion,
+  descendants,
+  requirePermission,
+  teamFor,
+  type Actor,
+} from "@/utils/authorization"
 import {
   assertBusinessAccess,
   canConfigureProjects,
@@ -36,23 +42,31 @@ export function findProject(data: BusinessState, id: number): Project {
   if (!p) throw AppError.notFound()
   return p
 }
-/** 当前账号能访问的承担团队，SELF 仅保留自己负责的团队上下文。 */
+/** 团队成员查看本团队承担的项目；管理岗按负责关系取得完整项目团队。 */
 export function visibleTeams(data: BusinessState, actor: Actor, projectId: number) {
   const project = data.projects.find((p) => p.id === projectId)
   const full = !!project && canMaintainProject(actor, project)
   return data.teams.filter(
-    (t) =>
-      t.projectId === projectId &&
-      (full ||
-        (t.teamId === actor.profile.teamId &&
-          data.members.some(
-            (m) => m.projectId === projectId && m.teamId === t.teamId && m.userId === actor.user.id,
-          ))),
+    (t) => t.projectId === projectId && (full || t.teamId === actor.profile.teamId),
   )
 }
 /** 只有开发全局查看或明确负责本项目的管理人员取得完整项目范围。 */
 export function fullProject(_data: BusinessState, actor: Actor, p: Project) {
   return canMaintainProject(actor, p)
+}
+/** 普通管理岗可选择的归属组织：新建为本人组织子树，编辑再加入项目现有团队和原归属组织。 */
+export function allowedOwnerOrgIds(data: BusinessState, actor: Actor, project?: Project) {
+  const ids = new Set(
+    actor.profile.isDevSuperadmin
+      ? data.identity.orgs.filter((org) => org.status === "ACTIVE").map((org) => org.id)
+      : descendants(data.identity.orgs, actor.user.orgId === null ? [] : [actor.user.orgId]),
+  )
+  if (project) {
+    ids.add(project.ownerOrgId)
+    for (const team of data.teams.filter((team) => team.projectId === project.id))
+      ids.add(team.teamId)
+  }
+  return ids
 }
 /** 项目写操作统一检查管理岗位、动作权限及项目负责关系。 */
 export function manageProject(
@@ -204,12 +218,15 @@ export class ProjectService {
           projects: data.projects.map((p) => ({ id: p.id, name: p.name })),
         }
       }
-      if (projectId) manageProject(data, current, projectId, "project:record:update")
-      else {
+      const project = projectId
+        ? manageProject(data, current, projectId, "project:record:update")
+        : undefined
+      if (!project) {
         requirePermission(current, "project:record:create")
         assertBusinessAccess(canConfigureProjects(current), "仅高级主任及以上可登记项目")
       }
-      const allowedOrg = (_id: number) => canConfigureProjects(current)
+      const allowedOrgIds = allowedOwnerOrgIds(data, current, project)
+      const allowedOrg = (id: number) => allowedOrgIds.has(id)
       const orgs = data.identity.orgs.filter((o) => o.status === "ACTIVE" && allowedOrg(o.id))
       return {
         organizations: (kind === "users"
@@ -271,7 +288,7 @@ export class ProjectService {
     return this.repository.write(actor, async (tx, data, current) => {
       const p = manageProject(data, current, id, "project:record:update")
       assertVersion(p.version, version)
-      this.validatePeople(data, current, input)
+      this.validatePeople(data, current, input, p)
       if (
         data.projects.some(
           (other) => other.id !== id && other.code.toLowerCase() === input.code.toLowerCase(),
@@ -569,9 +586,16 @@ export class ProjectService {
     })
   }
   /** 校验负责人及组织资格，防止任意关联跨范围人员。 */
-  private validatePeople(data: BusinessState, _actor: Actor, input: ProjectInput) {
+  private validatePeople(
+    data: BusinessState,
+    actor: Actor,
+    input: ProjectInput,
+    project?: Project,
+  ) {
     if (!data.identity.orgs.some((o) => o.id === input.ownerOrgId && o.status === "ACTIVE"))
       throw AppError.badRequest("请选择启用组织")
+    if (!allowedOwnerOrgIds(data, actor, project).has(input.ownerOrgId))
+      throw AppError.forbidden("只能选择授权范围内的归属组织")
     for (const id of [input.directorId, input.seniorDirectorId]) {
       const u = data.identity.users.find((u) => u.id === id && u.status === "ACTIVE")
       if (!u || !canSupervise(u.positionCode))

@@ -142,6 +142,10 @@ export interface Monthly extends Omit<MonthlyInput, 'serviceDate'> {
     legacyReportId?: number | null
     submissions?: ApprovalInstance[]
     canMaintain: boolean
+    /** 当前成员归属有效或具备项目管理关系，可提交 */
+    canSubmit: boolean
+    /** 当前成员归属有效或具备项目管理关系，可申请变更 */
+    canChange: boolean
     id: number
     status: 'DRAFT' | 'IN_REVIEW' | 'REJECTED' | 'SUBMITTED' | 'VOID'
     version: number

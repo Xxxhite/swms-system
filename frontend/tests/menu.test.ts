@@ -27,3 +27,11 @@ describe('菜单权限', () => {
         expect(menuTree).toEqual(original)
     })
 })
+
+test('资源详情只随资源入口注册，联系人动作不单独开放菜单', () => {
+    const allowed = menuToRoutes(filterMenuTree(menuTree, [PERM.RESOURCE]))
+    expect(allowed.map((r) => r.path)).toContain('/resource/:id')
+    expect(
+        menuToRoutes(filterMenuTree(menuTree, [PERM.RESOURCE_CONTACT_VIEW])).map((r) => r.path),
+    ).not.toContain('/resource/:id')
+})

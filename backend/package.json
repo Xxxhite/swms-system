@@ -20,7 +20,8 @@
     "test:demo-data": "bun test src/db/demo-data.integration.test.ts",
     "test:integration": "bun test src/modules/identity/identity.integration.test.ts",
     "db:seed:projects": "bun src/db/seed.ts --demo --projects",
-    "db:seed:business-permissions": "bun src/db/seed.ts --business-permissions"
+    "db:seed:business-permissions": "bun src/db/seed.ts --business-permissions",
+    "db:seed:resource-permissions": "bun src/db/seed.ts --resource-permissions"
   },
   "dependencies": {
     "@elysiajs/cookie": "^0.8.0",

@@ -1,0 +1,1 @@
+ALTER TABLE `resource_cooperations` ADD `was_effective` int DEFAULT 0 NOT NULL;

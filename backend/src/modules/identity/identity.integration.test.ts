@@ -1,3 +1,6 @@
+import { registerResourceTests } from "@/modules/resource/resource.integration"
+import { ResourceRepository } from "@/modules/resource/resource.repository"
+import { createResourceRoutes } from "@/modules/resource/resource.route"
 import { createFileRoutes } from "@/modules/file/file.route"
 import { registerProjectTests } from "@/modules/project/project.integration"
 import { ProjectRepository } from "@/modules/project/project.repository"
@@ -76,6 +79,11 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "resource_followups",
+        "resource_merge_records",
+        "resource_cooperations",
+        "resource_contacts",
+        "resources",
         "contract_files",
         "contract_memberships",
         "service_record_changes",
@@ -138,6 +146,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
           createAuthRoutes(auth),
           createIdentityRoutes(identities),
           createSystemRoutes(identities),
+          createResourceRoutes(new ResourceRepository(database), identities),
           createProjectRoutes(new ProjectRepository(database), identities),
           createProjectRoutes(
             new ProjectRepository(database),
@@ -747,4 +756,5 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     if (firstNull !== -1) expect(logs.slice(firstNull).every((r) => r.actorName == null)).toBe(true)
   })
   registerProjectTests(() => ({ database, handle }))
+  registerResourceTests(() => ({ database, handle }))
 })

@@ -43,6 +43,11 @@ export interface ContractFile {
     createdAt: string
 }
 export interface ContractInput {
+    resourceId?: number | null
+    quickResource?: import('@/api/resource-types').ResourceInput
+    contactId?: number | null
+    snapshotReason?: string
+    partnerContactSnapshot?: { name: string; position: string } | null
     contractNo?: string
     partnerName: string
     startDate: string

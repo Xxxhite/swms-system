@@ -24,6 +24,7 @@ import {
     type Indicator,
 } from '@/api/business-types'
 import ProjectForm from './components/ProjectForm.vue'
+import ContractResourcePicker from '@/views/resource/components/ContractResourcePicker.vue'
 defineOptions({ name: 'ProjectDetail' })
 const route = useRoute(),
     router = useRouter(),
@@ -145,6 +146,10 @@ async function load() {
             Object.assign(contract, {
                 contractNo: p.contract.contractNo ?? '',
                 partnerName: p.contract.partnerName,
+                resourceId: p.contract.resourceId,
+                quickResource: undefined,
+                contactId: undefined,
+                snapshotReason: undefined,
                 startDate: p.contract.startDate,
                 endDate: p.contract.endDate,
                 amount: p.contract.amount,
@@ -387,7 +392,10 @@ onMounted(load)
                     <el-form-item label="合同编号">
                         <el-input v-model="contract.contractNo" maxlength="100" />
                     </el-form-item>
-                    <el-form-item label="合作方" prop="partnerName" required>
+                    <el-form-item label="单位资源">
+                        <ContractResourcePicker v-model="contract" />
+                    </el-form-item>
+                    <el-form-item label="签约名称" prop="partnerName" required>
                         <el-input v-model="contract.partnerName" maxlength="150" />
                     </el-form-item>
                     <el-form-item label="开始日期" prop="startDate" required>

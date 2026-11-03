@@ -14,6 +14,7 @@ interface MockAccount {
 
 const allPermissions = Object.values(PERM)
 const readBusiness = [
+    PERM.RESOURCE,
     PERM.PROJECT,
     PERM.PROJECT_RECORD_VIEW,
     PERM.SERVICE_MONITOR,

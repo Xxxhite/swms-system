@@ -12,6 +12,7 @@ import {
   json,
 } from "drizzle-orm/mysql-core"
 import { organizations, users } from "./identity"
+import { resources } from "./resource"
 
 /** 业务表通用创建、更新时间及乐观版本。每次调用生成独立列对象。 */
 export const businessTimestamps = () => ({
@@ -68,6 +69,13 @@ export const projectContracts = mysqlTable("contract_contracts", {
     .unique()
     .references(() => projects.id),
   contractNo: varchar("contract_no", { length: 100 }),
+  resourceId: int("resource_id", { unsigned: true }).references(() => resources.id),
+  partnerContactSnapshot: json("partner_contact_snapshot").$type<{
+    name: string
+    position: string
+    phone: string
+    email: string
+  } | null>(),
   partnerName: varchar("partner_name", { length: 150 }).notNull(),
   startDate: date("start_date", { mode: "string" }).notNull(),
   endDate: date("end_date", { mode: "string" }).notNull(),

@@ -1,3 +1,4 @@
+import { resourceRoleDefaults } from "@/modules/resource/resource-permissions"
 import { businessRoleDefaults } from "@/modules/project/business-permissions"
 import { eq } from "drizzle-orm"
 import type { Database } from "./identity.repository"
@@ -106,6 +107,7 @@ export async function seedIdentity(
               ...new Set([
                 ...definition.permissions,
                 ...(businessRoleDefaults[definition.code] ?? []),
+                ...(resourceRoleDefaults[definition.code] ?? []),
               ]),
             ].map((permissionCode) => ({ roleId: role.id, permissionCode })),
           )

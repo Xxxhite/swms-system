@@ -91,6 +91,7 @@ function flattenMenu(
 /** 为每个可见菜单节点生成路由；业务页面接入时在此替换对应占位组件。 */
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
     const pages: Record<string, RouteRecordRaw['component']> = {
+        '/resource': () => import('@/views/resource/index.vue'),
         '/project': () => import('@/views/project/headquarters.vue'),
         '/service/contract-package-projects': () => import('@/views/project/index.vue'),
         '/service/monitor': () => import('@/views/service/monitor/index.vue'),
@@ -115,6 +116,13 @@ export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
             name: 'ProjectDetail',
             component: () => import('@/views/project/detail.vue'),
             meta: { title: '项目详情', parents: ['服务管理', '合同包项目管理'] },
+        })
+    if (routes.some((r) => r.path === '/resource'))
+        routes.push({
+            path: '/resource/:id',
+            name: 'ResourceDetail',
+            component: () => import('@/views/resource/detail.vue'),
+            meta: { title: '资源详情', parents: ['资源管理'] },
         })
     const aliases: Array<[string, string]> = [
         ['/service/monthly-reports', '/service/records'],

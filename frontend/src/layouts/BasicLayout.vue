@@ -13,7 +13,11 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const activeMenu = computed(() =>
-    route.name === 'ProjectDetail' ? '/service/contract-package-projects' : route.path,
+    route.name === 'ResourceDetail'
+        ? '/resource'
+        : route.name === 'ProjectDetail'
+          ? '/service/contract-package-projects'
+          : route.path,
 )
 const breadcrumb = computed(() =>
     route.path === '/dashboard' ? [] : [...(route.meta.parents ?? []), route.meta.title ?? ''],

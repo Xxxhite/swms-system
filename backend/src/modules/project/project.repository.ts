@@ -1,3 +1,4 @@
+import { resourceWriter } from "@/modules/resource/resource.repository"
 import { and, asc, eq, inArray, isNull } from "drizzle-orm"
 import { db } from "@/db"
 import * as s from "@/db/schema"
@@ -10,6 +11,7 @@ type RawConnection = Parameters<Parameters<Database["transaction"]>[0]>[0]
 /** 事务写入接口：服务层传递业务字段，所有 SQL 构造集中在仓储内。 */
 function writer(connection: RawConnection) {
   return {
+    resources: resourceWriter(connection),
     projects: {
       insert(values: typeof s.projects.$inferInsert) {
         return connection.insert(s.projects).values(values)

@@ -174,6 +174,16 @@ export function registerProjectTests(
           await request(`${base}/${projectId}/contract`, "PUT", manager, {
             version: (await project()).version,
             partnerName: "验收单位",
+            quickResource: {
+              name: "验收单位",
+              unitType: "测试单位",
+              region: "福田区",
+              ownerOrgId: (await context().database.select().from(s.users)).find(
+                (u) => u.id === managerId,
+              )!.orgId!,
+              maintainerId: managerId,
+              requestKey: "project-test-resource",
+            },
             startDate: start,
             endDate: end,
             amount: "100.10",
@@ -258,7 +268,9 @@ export function registerProjectTests(
       expect(
         (await request(`${base}/${projectId}`, "GET", social)).data.contract.amount,
       ).toBeUndefined()
-      expect((await request(`${base}/${projectId}`, "GET", other)).code).toBe(3000)
+      expect((await request(`${base}/${projectId}`, "GET", other)).data.visibleTeamIds).toEqual([
+        teamB,
+      ])
       expect((await request(`${base}?pageSize=10`, "GET", admin)).data.total).toBe(0)
       expect(
         (await request(`${base}/candidates?kind=filters`, "GET", social)).data.serviceAreas,
@@ -285,6 +297,14 @@ export function registerProjectTests(
           await request(`${base}/${otherProjectId}/contract`, "PUT", department, {
             version: p.version,
             partnerName: "另一单位",
+            quickResource: {
+              name: "另一单位",
+              unitType: "测试单位",
+              region: "测试区",
+              ownerOrgId: d.orgId!,
+              maintainerId: d.id,
+              requestKey: "project-other-resource",
+            },
             startDate: start,
             endDate: end,
             amount: "20.00",
@@ -360,7 +380,10 @@ export function registerProjectTests(
         (await request(`${base}/${projectId}/contract/files`, "POST", social, form())).code,
       ).toBe(2003)
       const forbidden = await raw(`/files/${fileId}/download`, "GET", other)
-      expect(forbidden.status).toBe(403)
+      expect(forbidden.status).toBe(200)
+      expect((await raw(`/files/${fileId}/download`, "GET", await login("intern"))).status).toBe(
+        403,
+      )
       const download = await raw(`/files/${fileId}/download`, "GET", social)
       expect(download.headers.get("content-type")).toBe("application/pdf")
       expect(await download.text()).toContain("%PDF")
@@ -595,7 +618,11 @@ export function registerProjectTests(
         .set({ dataScope: "ALL" })
         .where(eq(s.users.id, socialId))
       expect((await request("/auth/profile", "GET", social)).data.dataScope).toBe("TEAM")
-      expect((await request(base, "GET", social)).data.total).toBe(1)
+      expect(
+        (await request(base, "GET", social)).data.list.every((p: { visibleTeamIds: number[] }) =>
+          p.visibleTeamIds.every((id) => id === teamA),
+        ),
+      ).toBe(true)
       await context()
         .database.update(s.users)
         .set({ dataScope: "TEAM" })
@@ -779,7 +806,12 @@ export function registerProjectTests(
         pendingReportId: 4000,
       })
       const migration = await Bun.file("drizzle/0003_contract-service-records.sql").text()
-      const copy = migration.slice(migration.indexOf("INSERT INTO `contract_projects`"))
+      const copy = migration
+        .slice(migration.indexOf("INSERT INTO `contract_projects`"))
+        .replace(
+          "INSERT INTO `contract_contracts` SELECT c.*",
+          "INSERT INTO `contract_contracts` (`id`,`project_id`,`contract_no`,`partner_name`,`start_date`,`end_date`,`amount`,`service_area`,`note`,`created_at`,`updated_at`,`version`) SELECT c.*",
+        )
       for (const statement of copy
         .split("--> statement-breakpoint")
         .map((x) => x.trim())
@@ -1006,7 +1038,10 @@ export function registerProjectTests(
       const db = context().database
       const orgs = await db.select().from(s.organizations)
       const outsideOrg = orgs.find((org) => org.code === "demo-other")!
-      const candidates = await request(`${base}/candidates`, "GET", manager)
+      const departmentUser = (await db.select().from(s.users)).find(
+        (u) => u.username === "department",
+      )!
+      const candidates = await request(`${base}/candidates`, "GET", department)
       expect(candidates.code).toBe(0)
       expect(
         candidates.data.organizations.some((org: { id: number }) => org.id === outsideOrg.id),
@@ -1016,12 +1051,12 @@ export function registerProjectTests(
         name: "范围外归属组织",
         category: "CONTRACT_PACKAGE",
         ownerOrgId: outsideOrg.id,
-        directorId: managerId,
-        seniorDirectorId: supervisorId,
+        directorId: departmentUser.id,
+        seniorDirectorId: departmentUser.id,
         supervisorId: null,
         serviceFieldCode: "社区建设",
       }
-      const created = await request(base, "POST", manager, payload)
+      const created = await request(base, "POST", department, payload)
       expect(created.code).toBe(2003)
       expect(created.message).toContain("归属组织")
     })

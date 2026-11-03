@@ -16,6 +16,14 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
     'update-project': '修改项目',
     'activate-project': '启用项目',
     'delete-project': '删除草稿项目',
+    'create-resource': '新增资源',
+    'update-resource': '维护资源',
+    'archive-resource': '归档资源',
+    'merge-resource': '合并资源',
+    'save-resource-contact': '维护资源联系人',
+    'save-resource-cooperation': '维护合作事项',
+    'save-resource-followup': '记录资源跟进',
+    'link-resource-contract': '关联合同资源',
     'save-contract': '保存合同',
     'save-project-teams': '维护服务团队',
     'save-service-points': '维护服务点',
@@ -49,6 +57,7 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
 
 /** 被操作的数据类别，与人员角色或账号状态分别管理。 */
 export const AUDIT_ENTITY_TYPE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    resource: '单位资源',
     project: '项目',
     indicator: '指标',
     service_record: '服务档案',

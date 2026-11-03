@@ -1,3 +1,4 @@
+import { contractResource, syncContractCooperation } from "@/modules/resource/resource.service"
 import * as s from "@/db/schema"
 import { sortRows } from "@/utils/list-sort"
 import {
@@ -108,7 +109,13 @@ export function projectDto(data: BusinessState, actor: Actor, p: Project) {
     contract: (() => {
       const c = data.contracts.find((c) => c.projectId === p.id)
       if (!c) return null
-      return full ? c : { ...c, amount: undefined, note: undefined }
+      return {
+        ...c,
+        partnerContactSnapshot: c.partnerContactSnapshot
+          ? { name: c.partnerContactSnapshot.name, position: c.partnerContactSnapshot.position }
+          : null,
+        ...(!full ? { amount: undefined, note: undefined } : {}),
+      }
     })(),
     teams: teams.map((t) => ({
       ...t,
@@ -362,10 +369,30 @@ export class ProjectService {
         )
       )
         throw AppError.conflict("请先将成员有效期间调整至新的合同周期内")
-      if (old) await tx.projectContracts.update(old.id, { ...input, version: old.version + 1 })
-      else await tx.projectContracts.insert({ ...input, projectId: id })
+      const link = await contractResource(tx.resources, current, data.identity, input, old)
+      const { quickResource, contactId, snapshotReason, resourceId, ...fields } = input
+      void quickResource
+      void contactId
+      void resourceId
+      if (old)
+        await tx.projectContracts.update(old.id, { ...fields, ...link, version: old.version + 1 })
+      else await tx.projectContracts.insert({ ...fields, ...link, projectId: id })
+      const saved = (await tx.resources.contracts()).find((c) => c.projectId === id)!
+      await syncContractCooperation(tx.resources, current, saved)
+      await tx.resources.audit(current.user.id, "link-resource-contract", link.resourceId ?? 0, {
+        projectId: id,
+        reason: snapshotReason,
+      })
       await bumpProject(tx, p)
-      await businessAudit(tx, current.user.id, "save-contract", "project", id, old ?? null, input)
+      await businessAudit(
+        tx,
+        current.user.id,
+        "save-contract",
+        "project",
+        id,
+        old ? { ...old, partnerContactSnapshot: undefined } : null,
+        { ...saved, partnerContactSnapshot: undefined },
+      )
       return { id }
     })
   }

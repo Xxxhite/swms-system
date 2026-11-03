@@ -5,3 +5,5 @@ export * from "./indicator"
 export * from "./approval"
 export * from "./legacy"
 export * from "./file"
+
+export * from "./resource"

@@ -61,6 +61,14 @@ export async function seedProjects(database: Database, _adminUsername = "admin")
     id,
     {
       partnerName: "虚构合作单位",
+      quickResource: {
+        name: "虚构合作单位",
+        unitType: "测试单位",
+        region: "演示区域",
+        ownerOrgId: actor.user.orgId!,
+        maintainerId: actor.user.id,
+        requestKey: "legacy-demo-resource",
+      },
       startDate,
       endDate,
       amount: "100000.00",

@@ -1,3 +1,4 @@
+import { resourcePermissionEntries } from "@/modules/resource/resource-permissions"
 import { businessPermissionEntries } from "@/modules/project/business-permissions"
 export const positions = [
   {
@@ -108,6 +109,7 @@ export const dictionaries = {
 
 export const permissionCatalog = [
   ...businessPermissionEntries,
+  ...resourcePermissionEntries,
   ["system:view", "系统管理"],
   ["system:org:manage", "管理组织"],
   ["system:user:view", "查询人员"],

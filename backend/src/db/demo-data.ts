@@ -31,6 +31,11 @@ export const demoResetTables = [
   s.projectTeams,
   s.projectServicePoints,
   s.projectContracts,
+  s.resourceFollowups,
+  s.resourceMergeRecords,
+  s.resourceCooperations,
+  s.resourceContacts,
+  s.resources,
   s.projects,
   s.headquartersProjects,
   s.legacyMonthlyReportChanges,
@@ -78,7 +83,7 @@ export function assertDemoTarget(input: {
     "__drizzle_migrations",
   ])
   if (input.tables.some((name) => !known.has(name)) || input.tables.length !== known.size)
-    throw new Error("数据表与当前31表结构不一致，请先核对正式迁移")
+    throw new Error("数据表与当前36表结构不一致，请先核对正式迁移")
 }
 
 type PersonDefinition = {
@@ -582,6 +587,14 @@ export async function rebuildDemoData(database: Database, input: DemoDataInput) 
           {
             contractNo: `TEST-CONTRACT-${projectIndex + 1}`,
             partnerName: `虚构合作单位${projectIndex + 1}（测试）`,
+            quickResource: {
+              name: `虚构合作单位${projectIndex + 1}（测试）`,
+              unitType: "测试单位",
+              region: definition.area,
+              ownerOrgId: actor.user.orgId!,
+              maintainerId: actor.user.id,
+              requestKey: `demo-resource-${projectIndex}`,
+            },
             startDate,
             endDate,
             amount: `${(projectIndex + 1) * 150000}.00`,

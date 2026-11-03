@@ -1,3 +1,4 @@
+import { resourceBody } from "@/modules/resource/resource.validation"
 import { t, type Static } from "elysia"
 import { sortFields } from "@/utils/list-sort"
 export const idParam = t.Object({ id: t.Numeric({ minimum: 1, multipleOf: 1 }) })
@@ -31,6 +32,10 @@ export const projectBody = t.Object({
   serviceFieldCode: shortText(100, "主服务领域"),
 })
 export const contractBody = t.Object({
+  resourceId: t.Optional(t.Union([t.Integer({ minimum: 1 }), t.Null()])),
+  quickResource: t.Optional(resourceBody),
+  contactId: t.Optional(t.Union([t.Integer({ minimum: 1 }), t.Null()])),
+  snapshotReason: t.Optional(t.String({ maxLength: 1000 })),
   contractNo: t.Optional(t.String({ maxLength: 100 })),
   partnerName: shortText(150, "合作方"),
   startDate: t.String({ format: "date", error: "请选择有效的合同开始日期" }),

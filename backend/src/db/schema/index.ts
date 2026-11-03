@@ -7,3 +7,5 @@ export * from "./legacy"
 export * from "./file"
 
 export * from "./resource"
+
+export * from "./task"

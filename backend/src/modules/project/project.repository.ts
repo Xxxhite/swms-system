@@ -1,3 +1,4 @@
+import { taskWriter, loadTaskState } from "@/modules/task/task.repository"
 import { resourceWriter } from "@/modules/resource/resource.repository"
 import { and, asc, eq, inArray, isNull } from "drizzle-orm"
 import { db } from "@/db"
@@ -12,6 +13,7 @@ type RawConnection = Parameters<Parameters<Database["transaction"]>[0]>[0]
 function writer(connection: RawConnection) {
   return {
     resources: resourceWriter(connection),
+    scheduling: taskWriter(connection),
     projects: {
       insert(values: typeof s.projects.$inferInsert) {
         return connection.insert(s.projects).values(values)
@@ -214,6 +216,7 @@ async function state(tx: RawConnection, actor?: Actor, lock = false) {
   const indicatorIds = indicators.map((i) => i.id)
   return {
     identity,
+    scheduling: await loadTaskState(tx),
     actor: current,
     projects,
     contracts: await tx

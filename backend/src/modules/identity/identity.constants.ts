@@ -1,3 +1,4 @@
+import { taskPermissionEntries } from "@/modules/task/task-permissions"
 import { resourcePermissionEntries } from "@/modules/resource/resource-permissions"
 import { businessPermissionEntries } from "@/modules/project/business-permissions"
 export const positions = [
@@ -110,6 +111,7 @@ export const dictionaries = {
 export const permissionCatalog = [
   ...businessPermissionEntries,
   ...resourcePermissionEntries,
+  ...taskPermissionEntries,
   ["system:view", "系统管理"],
   ["system:org:manage", "管理组织"],
   ["system:user:view", "查询人员"],
@@ -123,7 +125,7 @@ export const permissionCatalog = [
   ["service:archive:view", "查询服务档案"],
   ["service:archive:approve", "审批档案"],
   ["project:view", "查询项目"],
-  ["activity:view", "查询活动"],
+  ["activity:view", "查看服务任务"],
   ["resource:view", "查询资源"],
   ["analysis:view", "数据分析"],
   ["knowledge:view", "查询知识"],

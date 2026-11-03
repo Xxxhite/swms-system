@@ -1,5 +1,10 @@
 /** 审计动作编码沿用后端记录，中文字典同时用于表格显示和筛选选项。 */
 export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    'save-service-plan': '保存阶段计划',
+    'publish-service-plan': '发布阶段计划',
+    'create-service-task': '新增服务任务',
+    'update-service-task': '修改任务安排',
+    'cancel-service-task': '取消服务任务',
     'save-service-record': '保存服务档案草稿',
     'submit-service-record': '提交服务档案审批',
     'delete-service-record': '删除服务档案草稿',
@@ -58,6 +63,8 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
 /** 被操作的数据类别，与人员角色或账号状态分别管理。 */
 export const AUDIT_ENTITY_TYPE_LABELS: Readonly<Record<string, string>> = Object.freeze({
     resource: '单位资源',
+    'service-plan': '阶段计划',
+    'service-task': '服务任务',
     project: '项目',
     indicator: '指标',
     service_record: '服务档案',

@@ -1,3 +1,6 @@
+import { registerTaskTests } from "@/modules/task/task.integration"
+import { createTaskRoutes } from "@/modules/task/task.route"
+import { createPlanRoutes } from "@/modules/task/plan.route"
 import { registerResourceTests } from "@/modules/resource/resource.integration"
 import { ResourceRepository } from "@/modules/resource/resource.repository"
 import { createResourceRoutes } from "@/modules/resource/resource.route"
@@ -79,6 +82,14 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "service_task_events",
+        "service_task_resources",
+        "service_task_indicators",
+        "service_task_staff",
+        "service_tasks",
+        "service_plan_periods",
+        "service_plan_versions",
+
         "resource_followups",
         "resource_merge_records",
         "resource_cooperations",
@@ -146,6 +157,8 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
           createAuthRoutes(auth),
           createIdentityRoutes(identities),
           createSystemRoutes(identities),
+          createTaskRoutes(new ProjectRepository(database), identities),
+          createPlanRoutes(new ProjectRepository(database), identities),
           createResourceRoutes(new ResourceRepository(database), identities),
           createProjectRoutes(new ProjectRepository(database), identities),
           createProjectRoutes(
@@ -757,4 +770,5 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
   })
   registerProjectTests(() => ({ database, handle }))
   registerResourceTests(() => ({ database, handle }))
+  registerTaskTests(() => ({ database, handle }))
 })

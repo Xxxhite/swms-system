@@ -26,12 +26,13 @@ export const menuTree: MenuNode[] = [
                 title: '合同包项目管理',
                 permission: PERM.PROJECT_RECORD_VIEW,
             },
+            { path: '/service/plans', title: '阶段计划', permission: PERM.PLAN_VIEW },
             { path: '/service/records', title: '服务档案填报', permission: PERM.MONTHLY_VIEW },
             { path: '/service/approvals', title: '服务档案审批', permission: PERM.MONTHLY_APPROVE },
         ],
     },
     { path: '/project', title: '总部项目管理', permission: PERM.PROJECT },
-    { path: '/activity', title: '活动管理', permission: PERM.ACTIVITY },
+    { path: '/activity', title: '服务任务', permission: PERM.ACTIVITY },
     { path: '/resource', title: '资源管理', permission: PERM.RESOURCE },
     { path: '/analysis', title: '数据分析', permission: PERM.ANALYSIS },
     { path: '/knowledge', title: '知识管理', permission: PERM.KNOWLEDGE },
@@ -91,6 +92,8 @@ function flattenMenu(
 /** 为每个可见菜单节点生成路由；业务页面接入时在此替换对应占位组件。 */
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
     const pages: Record<string, RouteRecordRaw['component']> = {
+        '/activity': () => import('@/views/activity/index.vue'),
+        '/service/plans': () => import('@/views/service/plans/index.vue'),
         '/resource': () => import('@/views/resource/index.vue'),
         '/project': () => import('@/views/project/headquarters.vue'),
         '/service/contract-package-projects': () => import('@/views/project/index.vue'),
@@ -123,6 +126,20 @@ export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
             name: 'ResourceDetail',
             component: () => import('@/views/resource/detail.vue'),
             meta: { title: '资源详情', parents: ['资源管理'] },
+        })
+    if (routes.some((r) => r.path === '/activity'))
+        routes.push({
+            path: '/activity/:id',
+            name: 'TaskDetail',
+            component: () => import('@/views/activity/detail.vue'),
+            meta: { title: '任务详情', parents: ['服务任务'] },
+        })
+    if (routes.some((r) => r.path === '/service/plans'))
+        routes.push({
+            path: '/service/plans/:id',
+            name: 'PlanDetail',
+            component: () => import('@/views/service/plans/detail.vue'),
+            meta: { title: '计划详情', parents: ['服务管理', '阶段计划'] },
         })
     const aliases: Array<[string, string]> = [
         ['/service/monthly-reports', '/service/records'],

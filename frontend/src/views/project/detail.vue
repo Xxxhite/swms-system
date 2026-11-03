@@ -324,6 +324,14 @@ onMounted(load)
                     <el-button @click="router.push('/service/contract-package-projects')">
                         返回项目
                     </el-button>
+                    <el-button
+                        v-if="store.hasPermission('activity:view')"
+                        @click="
+                            router.push({ path: '/activity', query: { projectId: project?.id } })
+                        "
+                    >
+                        服务任务
+                    </el-button>
                     <el-button @click="load">刷新</el-button>
                     <el-button
                         v-if="project.status === 'DRAFT' && has('project:record:update')"

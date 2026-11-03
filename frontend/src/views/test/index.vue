@@ -1,7 +1,3 @@
-<script setup lang="ts"></script>
+<script lang="ts" setup></script>
 
-<template>
-    <div class="test-page">test page</div>
-</template>
-
-<style scoped></style>
+<template></template>

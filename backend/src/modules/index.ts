@@ -1,3 +1,5 @@
+import { createTaskRoutes } from "./task/task.route"
+import { createPlanRoutes } from "./task/plan.route"
 import { createResourceRoutes } from "./resource/resource.route"
 import { createFileRoutes } from "./file/file.route"
 import { createProjectRoutes } from "./project/project.route"
@@ -24,6 +26,8 @@ import { createSystemRoutes } from "./system/system.route"
  */
 export const modules: AnyElysia[] = [
   createAuthRoutes(),
+  createTaskRoutes(),
+  createPlanRoutes(),
   createIdentityRoutes(),
   createSystemRoutes(),
   createResourceRoutes(),

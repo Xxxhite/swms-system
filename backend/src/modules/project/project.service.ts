@@ -320,6 +320,8 @@ export class ProjectService {
       const indicators = data.indicators.filter((i) => i.projectId === id),
         reports = data.reports.filter((r) => indicators.some((i) => i.id === r.indicatorId))
       if (operation === "delete") {
+        if (data.scheduling.tasks.some((t) => t.projectId === id && t.status !== "CANCELED"))
+          throw AppError.conflict("项目存在未取消的服务任务")
         if (
           p.status !== "DRAFT" ||
           reports.some(
@@ -355,6 +357,13 @@ export class ProjectService {
       if (input.endDate < input.startDate) throw AppError.badRequest("合同结束日期不得早于开始日期")
       decimalUnits(input.amount, false, 12)
       const old = data.contracts.find((c) => c.projectId === id)
+      if (
+        old &&
+        (old.startDate !== input.startDate || old.endDate !== input.endDate) &&
+        (data.scheduling.plans.some((p) => p.projectId === id && p.status === "PUBLISHED") ||
+          data.scheduling.tasks.some((t) => t.projectId === id))
+      )
+        throw AppError.conflict("已有发布计划或任务，合同期间已锁定")
       if (
         old &&
         (old.startDate !== input.startDate || old.endDate !== input.endDate) &&
@@ -421,6 +430,8 @@ export class ProjectService {
           )
         )
           throw AppError.conflict("团队已有指标目标，不能移除")
+        if (data.scheduling.tasks.some((t) => t.projectId === id && t.teamId === row.teamId))
+          throw AppError.conflict("团队已有任务历史，不能移除")
         await tx.projectTeams.remove(row.id)
       }
       for (const t of teams) {
@@ -453,11 +464,14 @@ export class ProjectService {
         points.filter((p) => p.id).length
       )
         throw AppError.badRequest("服务点重复")
-      for (const row of old.filter((o) => !points.some((p) => p.id === o.id)))
+      for (const row of old.filter((o) => !points.some((p) => p.id === o.id))) {
+        if (data.scheduling.tasks.some((t) => t.pointId === row.id))
+          throw AppError.conflict("服务点已有任务引用，不能移除")
         await tx.projectServicePoints.update(row.id, {
           deletedAt: new Date(),
           version: row.version + 1,
         })
+      }
       for (const point of points) {
         if (point.id) {
           const row = old.find((o) => o.id === point.id)
@@ -546,6 +560,11 @@ export class ProjectService {
       for (const row of old.filter((o) => !targets.some((t) => t.teamId === o.teamId))) {
         if (data.reports.some((r) => r.indicatorId === id && r.teamId === row.teamId))
           throw AppError.conflict("已有月报的团队目标不可移除")
+        if (
+          data.scheduling.plans.some((p) => p.targetId === row.id) ||
+          data.scheduling.indicators.some((i) => i.targetId === row.id)
+        )
+          throw AppError.conflict("团队目标已被计划或任务引用，不能移除")
         await tx.teamIndicatorTargets.remove(row.id)
       }
       for (const t of targets) {
@@ -585,6 +604,11 @@ export class ProjectService {
       assertVersion(i.version, version)
       const targets = data.targets.filter((t) => t.indicatorId === id)
       if (operation === "delete") {
+        if (
+          data.scheduling.indicators.some((t) => t.indicatorId === id) ||
+          data.scheduling.plans.some((p) => targets.some((t) => t.id === p.targetId))
+        )
+          throw AppError.conflict("指标已有计划或任务引用")
         if (i.status !== "DRAFT" || data.reports.some((r) => r.indicatorId === id))
           throw AppError.conflict("只能删除无月报的草稿指标")
         await tx.projectIndicators.update(id, { deletedAt: new Date(), version: i.version + 1 })

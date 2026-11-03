@@ -1,3 +1,4 @@
+import { taskRoleDefaults } from "@/modules/task/task-permissions"
 import { resourceRoleDefaults } from "@/modules/resource/resource-permissions"
 import { businessRoleDefaults } from "@/modules/project/business-permissions"
 import { eq } from "drizzle-orm"
@@ -108,6 +109,7 @@ export async function seedIdentity(
                 ...definition.permissions,
                 ...(businessRoleDefaults[definition.code] ?? []),
                 ...(resourceRoleDefaults[definition.code] ?? []),
+                ...(taskRoleDefaults[definition.code] ?? []),
               ]),
             ].map((permissionCode) => ({ roleId: role.id, permissionCode })),
           )

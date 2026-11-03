@@ -326,7 +326,7 @@ watch(
                     prop="username"
                     sortable="custom"
                     label="账号"
-                    min-width="180"
+                    min-width="160"
                     show-overflow-tooltip
                 />
                 <!-- @vue-generic {UserSummary} -->
@@ -341,11 +341,11 @@ watch(
                 <el-table-column
                     prop="proposedPosition"
                     label="申请岗位"
-                    min-width="180"
+                    min-width="160"
                     show-overflow-tooltip
                 />
                 <!-- @vue-generic {UserSummary} -->
-                <el-table-column prop="dataScope" label="范围" min-width="160">
+                <el-table-column prop="dataScope" label="范围" min-width="140">
                     <template #default="{ row }">
                         {{
                             scopeOptions.find((scope) => scope.value === row.dataScope)?.label ??

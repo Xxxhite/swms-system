@@ -13,11 +13,15 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const activeMenu = computed(() =>
-    route.name === 'ResourceDetail'
-        ? '/resource'
-        : route.name === 'ProjectDetail'
-          ? '/service/contract-package-projects'
-          : route.path,
+    route.name === 'TaskDetail'
+        ? '/activity'
+        : route.name === 'PlanDetail'
+          ? '/service/plans'
+          : route.name === 'ResourceDetail'
+            ? '/resource'
+            : route.name === 'ProjectDetail'
+              ? '/service/contract-package-projects'
+              : route.path,
 )
 const breadcrumb = computed(() =>
     route.path === '/dashboard' ? [] : [...(route.meta.parents ?? []), route.meta.title ?? ''],
@@ -72,9 +76,13 @@ async function handleCommand(command: string): Promise<void> {
                         v-for="(item, index) in breadcrumb"
                         :key="index"
                         :to="
-                            route.name === 'ProjectDetail' && item === '合同包项目管理'
-                                ? '/service/contract-package-projects'
-                                : undefined
+                            route.name === 'TaskDetail' && item === '服务任务'
+                                ? '/activity'
+                                : route.name === 'PlanDetail' && item === '阶段计划'
+                                  ? '/service/plans'
+                                  : route.name === 'ProjectDetail' && item === '合同包项目管理'
+                                    ? '/service/contract-package-projects'
+                                    : undefined
                         "
                     >
                         {{ item }}

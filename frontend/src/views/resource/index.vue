@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -156,7 +159,7 @@ onMounted(async () => {
             type="info"
             :closable="false"
         />
-        <el-form :model="query" inline class="filter-form" @submit.prevent="search">
+        <FilterPanel :model="query" inline class="filter-form" @submit.prevent="search">
             <el-form-item label="单位名称">
                 <el-input v-model="query.keyword" clearable />
             </el-form-item>
@@ -206,7 +209,7 @@ onMounted(async () => {
                 <el-button type="primary" native-type="submit">查询</el-button>
                 <el-button @click="reset">重置</el-button>
             </el-form-item>
-        </el-form>
+        </FilterPanel>
         <div class="resource-actions">
             <el-button
                 v-if="store.hasPermission('resource:record:create')"
@@ -224,7 +227,7 @@ onMounted(async () => {
                 历史合同核对
             </el-button>
         </div>
-        <el-table
+        <ResponsiveTable
             :ref="setTableRef"
             v-loading="loading"
             :data="rows"
@@ -251,8 +254,8 @@ onMounted(async () => {
                 <template #default="{ row }">{{ resourceStatus[row.status] }}</template>
             </el-table-column>
             <el-table-column prop="overdue" label="逾期跟进" width="115" sortable="custom" />
-        </el-table>
-        <el-pagination
+        </ResponsiveTable>
+        <ResponsivePagination
             v-model:current-page="query.page"
             v-model:page-size="query.pageSize"
             :total="total"
@@ -289,7 +292,7 @@ onMounted(async () => {
                 />
             </el-select>
             <!-- @vue-generic {LegacyContract} -->
-            <el-table :data="legacy">
+            <ResponsiveTable :data="legacy">
                 <el-table-column prop="projectName" label="合同包" />
                 <el-table-column prop="partnerName" label="原签约名称" />
                 <el-table-column label="操作" width="100">
@@ -299,7 +302,7 @@ onMounted(async () => {
                         </el-button>
                     </template>
                 </el-table-column>
-            </el-table>
+            </ResponsiveTable>
         </el-dialog>
     </div>
 </template>
@@ -317,5 +320,16 @@ onMounted(async () => {
 }
 .filter-form :deep(.el-select) {
     width: 170px;
+}
+@media (max-width: 767px) {
+    .resource-page {
+        padding: 0;
+    }
+    .resource-actions {
+        flex-wrap: wrap;
+    }
+    .filter-form :deep(.el-select) {
+        width: 100%;
+    }
 }
 </style>

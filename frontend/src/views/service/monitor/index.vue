@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
 import { useTableSort } from '@/utils/tableSort'
 import { projectApi } from '@/api/modules/project'
 import { onMounted, reactive, ref } from 'vue'
@@ -134,7 +137,7 @@ onMounted(async () => {
                 :closable="false"
                 class="notice"
             />
-            <el-form class="filter-form" @submit.prevent="search(analysis)">
+            <FilterPanel class="filter-form" @submit.prevent="search(analysis)">
                 <el-form-item label="项目／指标">
                     <el-input v-model="query.keyword" clearable />
                 </el-form-item>
@@ -185,8 +188,8 @@ onMounted(async () => {
                     <el-button type="primary" native-type="submit">查询</el-button>
                     <el-button @click="reset(analysis)">重置</el-button>
                 </el-form-item>
-            </el-form>
-            <el-table
+            </FilterPanel>
+            <ResponsiveTable
                 :ref="setTableRef"
                 v-loading="loading"
                 :data="rows"
@@ -271,8 +274,8 @@ onMounted(async () => {
                         </div>
                     </template>
                 </el-table-column>
-            </el-table>
-            <el-pagination
+            </ResponsiveTable>
+            <ResponsivePagination
                 v-model:current-page="query.page"
                 class="table-pagination"
                 :total="total"

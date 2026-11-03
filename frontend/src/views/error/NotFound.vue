@@ -44,4 +44,12 @@
     outline: 2px solid var(--swms-sidebar-bg);
     outline-offset: 3px;
 }
+@media (max-width: 767px) {
+    .not-found {
+        padding: 32px 16px;
+    }
+    .not-found h1 {
+        font-size: 18px;
+    }
+}
 </style>

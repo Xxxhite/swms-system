@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
 import { useTableSort } from '@/utils/tableSort'
 import { onMounted, reactive, ref } from 'vue'
 import { useMock } from '@/api/config'
@@ -90,7 +93,7 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <el-form class="filter-form" @submit.prevent="search">
+            <FilterPanel class="filter-form" @submit.prevent="search">
                 <el-form-item label="操作人姓名">
                     <el-input
                         v-model="query.actorName"
@@ -133,8 +136,8 @@ onMounted(load)
                     <el-button type="primary" native-type="submit">查询</el-button>
                     <el-button @click="resetSearch">重置</el-button>
                 </el-form-item>
-            </el-form>
-            <el-table
+            </FilterPanel>
+            <ResponsiveTable
                 :ref="setTableRef"
                 v-loading="loading"
                 :data="rows"
@@ -195,8 +198,8 @@ onMounted(load)
                         <el-button link type="primary" @click="showDetail(row)">查看变更</el-button>
                     </template>
                 </el-table-column>
-            </el-table>
-            <el-pagination
+            </ResponsiveTable>
+            <ResponsivePagination
                 v-model:current-page="query.page"
                 v-model:page-size="query.pageSize"
                 :page-sizes="[10, 20, 50, 100]"

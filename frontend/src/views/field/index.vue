@@ -92,4 +92,12 @@ onMounted(() => load(true))
     width: 100%;
     min-height: 44px;
 }
+@media (max-width: 767px) {
+    .field-tasks__heading {
+        flex-wrap: wrap;
+    }
+    .field-tasks__card h3 {
+        overflow-wrap: anywhere;
+    }
+}
 </style>

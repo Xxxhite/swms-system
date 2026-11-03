@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useViewport } from '@/composables/useViewport'
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
@@ -8,6 +12,7 @@ import { taskApi } from '@/api/modules/task'
 import { taskForms, taskStatuses, emptyCandidates, businessDay, type Task } from '@/api/task-types'
 import { formatDateTime } from '@/utils/dateTime'
 import TaskDialog from './components/TaskDialog.vue'
+const { isMobile } = useViewport()
 const store = useUserStore(),
     route = useRoute(),
     router = useRouter()
@@ -135,7 +140,7 @@ onMounted(async () => {
             type="info"
             :closable="false"
         />
-        <el-form :inline="true" class="filter-form" @submit.prevent="search">
+        <FilterPanel :inline="true" class="filter-form" @submit.prevent="search">
             <el-form-item label="任务标题">
                 <el-input v-model="query.keyword" clearable />
             </el-form-item>
@@ -200,13 +205,13 @@ onMounted(async () => {
                 <el-button type="primary" native-type="submit">查询</el-button>
                 <el-button @click="reset">重置</el-button>
             </el-form-item>
-        </el-form>
+        </FilterPanel>
         <el-radio-group v-model="view">
             <el-radio-button value="list">列表</el-radio-button>
             <el-radio-button value="calendar">月历</el-radio-button>
         </el-radio-group>
         <div v-loading="loading">
-            <el-table v-if="view === 'list'" :data="rows" stripe>
+            <ResponsiveTable v-if="view === 'list'" :data="rows" stripe>
                 <el-table-column label="任务标题" min-width="210">
                     <template #default="{ row }">
                         <el-link type="primary" @click="router.push(`/activity/${row.id}`)">
@@ -233,25 +238,45 @@ onMounted(async () => {
                 <el-table-column label="状态" width="100">
                     <template #default="{ row }">{{ taskStatuses[row.state] }}</template>
                 </el-table-column>
-            </el-table>
-            <el-calendar v-else v-model="month">
-                <template #date-cell="{ data }">
-                    <div v-if="data.type === 'current-month'" class="task-page__day">
-                        <span>{{ data.day.slice(-2) }}</span>
-                        <button
-                            v-for="t in daily(data.day)"
-                            :key="t.id"
-                            class="task-page__calendar-task"
-                            :class="{ 'is-canceled': t.status === 'CANCELED' }"
-                            @click.stop="router.push(`/activity/${t.id}`)"
-                        >
-                            {{ t.title }} · {{ taskStatuses[t.state] }}
-                        </button>
-                    </div>
-                    <span v-else>{{ data.day.slice(-2) }}</span>
-                </template>
-            </el-calendar>
-            <el-pagination
+            </ResponsiveTable>
+            <template v-else>
+                <div v-if="isMobile" class="task-page__mobile-calendar">
+                    <label>
+                        任务日期
+                        <el-date-picker v-model="month" :clearable="false" aria-label="任务日期" />
+                    </label>
+                    <p>{{ businessDay(month) }} · {{ daily(businessDay(month)).length }}项任务</p>
+                    <el-card v-for="t in daily(businessDay(month))" :key="t.id" shadow="never">
+                        <h3>
+                            <el-link type="primary" @click="router.push(`/activity/${t.id}`)">
+                                {{ t.title }}
+                            </el-link>
+                        </h3>
+                        <p>{{ formatDateTime(t.startAt) }} 至 {{ formatDateTime(t.endAt) }}</p>
+                        <p>{{ t.projectName }} · {{ t.location }}</p>
+                        <el-tag>{{ taskStatuses[t.state] }}</el-tag>
+                    </el-card>
+                    <el-empty v-if="!daily(businessDay(month)).length" description="当天暂无任务" />
+                </div>
+                <el-calendar v-else v-model="month">
+                    <template #date-cell="{ data }">
+                        <div v-if="data.type === 'current-month'" class="task-page__day">
+                            <span>{{ data.day.slice(-2) }}</span>
+                            <button
+                                v-for="t in daily(data.day)"
+                                :key="t.id"
+                                class="task-page__calendar-task"
+                                :class="{ 'is-canceled': t.status === 'CANCELED' }"
+                                @click.stop="router.push(`/activity/${t.id}`)"
+                            >
+                                {{ t.title }} · {{ taskStatuses[t.state] }}
+                            </button>
+                        </div>
+                        <span v-else>{{ data.day.slice(-2) }}</span>
+                    </template>
+                </el-calendar>
+            </template>
+            <ResponsivePagination
                 v-if="view === 'list'"
                 v-model:current-page="query.page"
                 v-model:page-size="query.pageSize"
@@ -295,5 +320,17 @@ onMounted(async () => {
 }
 .task-page :deep(.el-radio-group) {
     margin-bottom: 16px;
+}
+.task-page__mobile-calendar {
+    margin: 16px 0;
+}
+.task-page__mobile-calendar .el-card {
+    margin-bottom: 12px;
+}
+.task-page__mobile-calendar label {
+    display: block;
+}
+.task-page__mobile-calendar .el-date-editor {
+    width: 100%;
 }
 </style>

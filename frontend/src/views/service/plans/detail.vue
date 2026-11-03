@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import { useViewport } from '@/composables/useViewport'
 defineOptions({ name: 'ServicePlanDetail' })
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -67,6 +69,7 @@ async function copy() {
 }
 watch(() => route.params.id, load)
 onMounted(load)
+const { isMobile } = useViewport()
 </script>
 <template>
     <section v-loading="loading">
@@ -96,7 +99,7 @@ onMounted(load)
                 type="warning"
                 :closable="false"
             />
-            <el-descriptions :column="2" border>
+            <el-descriptions :column="isMobile ? 1 : 2" border>
                 <el-descriptions-item label="合同包">{{ plan.projectName }}</el-descriptions-item>
                 <el-descriptions-item label="团队">{{ plan.teamName }}</el-descriptions-item>
                 <el-descriptions-item label="目标">
@@ -115,17 +118,17 @@ onMounted(load)
                 <el-descriptions-item label="目标版本">
                     指标{{ plan.indicatorVersion }} / 团队{{ plan.targetVersion }}
                 </el-descriptions-item>
-                <el-descriptions-item label="计划原因" :span="2">
+                <el-descriptions-item label="计划原因" :span="isMobile ? 1 : 2">
                     {{ plan.reason }}
                 </el-descriptions-item>
             </el-descriptions>
             <h3>阶段目标</h3>
-            <el-table :data="plan.periods">
+            <ResponsiveTable :data="plan.periods">
                 <el-table-column type="index" width="65" />
                 <el-table-column prop="startDate" label="开始日期" />
                 <el-table-column prop="endDate" label="结束日期" />
                 <el-table-column prop="targetValue" label="计划量" />
-            </el-table>
+            </ResponsiveTable>
             <PlanDialog v-model="dialog" :plan="plan" @saved="load" />
         </template>
         <el-empty v-else-if="!loading" description="计划不存在或无权访问" />

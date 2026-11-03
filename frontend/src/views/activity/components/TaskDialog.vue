@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { taskApi } from '@/api/modules/task'
@@ -161,7 +162,7 @@ async function save() {
             </el-form>
             <template v-if="preview">
                 <el-divider>安排预览（{{ preview.instances.length }}项）</el-divider>
-                <el-table :data="preview.instances" max-height="240">
+                <ResponsiveTable :data="preview.instances" max-height="240">
                     <el-table-column type="index" width="55" />
                     <el-table-column label="开始时间">
                         <template #default="{ row }">{{ formatDateTime(row.startAt) }}</template>
@@ -169,7 +170,7 @@ async function save() {
                     <el-table-column label="结束时间">
                         <template #default="{ row }">{{ formatDateTime(row.endAt) }}</template>
                     </el-table-column>
-                </el-table>
+                </ResponsiveTable>
                 <el-alert
                     v-for="(c, index) in preview.conflicts"
                     :key="`c${index}`"

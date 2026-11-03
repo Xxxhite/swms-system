@@ -97,4 +97,9 @@ onMounted(load)
     overflow-wrap: anywhere;
     line-height: 1.7;
 }
+@media (max-width: 767px) {
+    .field-exceptions__header {
+        flex-wrap: wrap;
+    }
+}
 </style>

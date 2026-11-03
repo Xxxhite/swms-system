@@ -132,4 +132,16 @@ async function submit(): Promise<void> {
 .login__register a {
     color: var(--el-color-primary);
 }
+@media (max-width: 767px) {
+    .login {
+        padding: 16px;
+        align-items: flex-start;
+    }
+    .login__card {
+        margin: auto 0;
+    }
+    .login__title {
+        margin: 8px 0 20px;
+    }
+}
 </style>

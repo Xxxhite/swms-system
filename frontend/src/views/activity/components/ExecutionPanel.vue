@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import QRCode from 'qrcode'
 import { executionApi } from '@/api/modules/execution'
 import { useMock } from '@/api/config'
+import { useViewport } from '@/composables/useViewport'
 import { useUserStore } from '@/stores/user'
 import { taskStatuses } from '@/api/task-types'
 import { formatDateTime } from '@/utils/dateTime'
@@ -22,6 +24,7 @@ import EvidencePicker from './EvidencePicker.vue'
 const props = defineProps<{ taskId: number; mobile?: boolean }>(),
     emit = defineEmits<{ changed: [] }>(),
     store = useUserStore()
+const { isMobile } = useViewport()
 const data = ref<ExecutionDetail>(),
     loading = ref(false),
     busy = ref(false),
@@ -80,7 +83,7 @@ async function load() {
         const result = await executionApi.detail(props.taskId)
         if (seq !== generation) return
         data.value = result
-        if (store.hasPermission('service:evidence:view')) {
+        if (tab.value === 'evidence' && store.hasPermission('service:evidence:view')) {
             try {
                 const evidence = await executionApi.evidence(props.taskId)
                 if (seq === generation) files.value = evidence
@@ -348,6 +351,9 @@ async function savePerson(archive = false) {
         busy.value = false
     }
 }
+watch(tab, (value) => {
+    if (value === 'evidence') void load()
+})
 watch(
     () => props.taskId,
     () => {
@@ -426,7 +432,7 @@ onMounted(load)
             />
             <el-tabs v-model="tab">
                 <el-tab-pane label="执行概览" name="overview">
-                    <el-descriptions :column="mobile ? 1 : 2" border>
+                    <el-descriptions :column="mobile || isMobile ? 1 : 2" border>
                         <el-descriptions-item label="开始时间">
                             {{ formatDateTime(data.session?.startedAt) }}
                         </el-descriptions-item>
@@ -445,7 +451,7 @@ onMounted(load)
                     <p class="execution-panel__hint">
                         现场登记、待核验和正式档案数量分别记录，正式指标量沿用档案审批结果。
                     </p>
-                    <el-table :data="data.attendance" stripe>
+                    <ResponsiveTable :data="data.attendance" stripe>
                         <el-table-column prop="userName" label="工作人员" min-width="110" />
                         <el-table-column label="类型" width="90">
                             <template #default="{ row }">
@@ -487,7 +493,7 @@ onMounted(load)
                             </template>
                         </el-table-column>
                         <el-table-column prop="reason" label="说明" min-width="150" />
-                    </el-table>
+                    </ResponsiveTable>
                 </el-tab-pane>
                 <el-tab-pane label="参与名单" name="participants">
                     <el-button v-if="data.canManageParticipants" type="primary" @click="openRoster">
@@ -557,7 +563,7 @@ onMounted(load)
                         </el-card>
                         <el-empty v-if="!data.rosters.length" description="尚未加入服务对象" />
                     </div>
-                    <el-table v-else :data="data.rosters" stripe>
+                    <ResponsiveTable v-else :data="data.rosters" stripe>
                         <el-table-column prop="person.name" label="姓名／称呼" min-width="120" />
                         <el-table-column label="内部编号" min-width="150">
                             <template #default="{ row }">{{ row.person.code }}</template>
@@ -633,9 +639,9 @@ onMounted(load)
                                 </el-button>
                             </template>
                         </el-table-column>
-                    </el-table>
+                    </ResponsiveTable>
                     <h4>参与来源历史</h4>
-                    <el-table :data="data.participationEvents">
+                    <ResponsiveTable :data="data.participationEvents">
                         <el-table-column label="对象" min-width="120">
                             <template #default="{ row }">
                                 {{ data.rosters.find((r) => r.id === row.rosterId)?.person.name }}
@@ -651,10 +657,10 @@ onMounted(load)
                         </el-table-column>
                         <el-table-column prop="relation" label="关系说明" min-width="130" />
                         <el-table-column prop="reason" label="记录原因" min-width="160" />
-                    </el-table>
+                    </ResponsiveTable>
                 </el-tab-pane>
                 <el-tab-pane label="现场凭证" name="evidence">
-                    <el-table :data="files">
+                    <ResponsiveTable :data="files">
                         <el-table-column prop="name" label="文件" min-width="190" />
                         <el-table-column label="归属" min-width="120">
                             <template #default="{ row }">
@@ -681,10 +687,10 @@ onMounted(load)
                                 </el-button>
                             </template>
                         </el-table-column>
-                    </el-table>
+                    </ResponsiveTable>
                 </el-tab-pane>
                 <el-tab-pane label="异常与说明" name="exceptions">
-                    <el-table :data="data.exceptions">
+                    <ResponsiveTable :data="data.exceptions">
                         <el-table-column prop="label" label="异常" min-width="160" />
                         <el-table-column label="状态" min-width="130">
                             <template #default="{ row }">
@@ -721,7 +727,7 @@ onMounted(load)
                                 <p v-if="!row.notes.length">尚未补充说明</p>
                             </template>
                         </el-table-column>
-                    </el-table>
+                    </ResponsiveTable>
                 </el-tab-pane>
             </el-tabs>
             <AttendanceDialog

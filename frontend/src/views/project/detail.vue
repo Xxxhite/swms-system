@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import { useViewport } from '@/composables/useViewport'
 import { useTableSort, sortTableRows, type SortQuery } from '@/utils/tableSort'
 import { formatDateTime } from '@/utils/dateTime'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -314,6 +317,7 @@ function removeContract(id: number) {
     void operate(() => projectApi.removeFile(id))
 }
 onMounted(load)
+const { isMobile } = useViewport()
 </script>
 <template>
     <el-card v-if="project">
@@ -358,7 +362,7 @@ onMounted(load)
                         保存基础信息
                     </el-button>
                 </template>
-                <el-descriptions v-else :column="2" border>
+                <el-descriptions v-else :column="isMobile ? 1 : 2" border>
                     <el-descriptions-item label="项目名称">{{ project.name }}</el-descriptions-item>
                     <el-descriptions-item label="项目分类">
                         {{ projectCategories[project.category] }}
@@ -664,7 +668,7 @@ onMounted(load)
                 >
                     新增指标
                 </el-button>
-                <el-table
+                <ResponsiveTable
                     :ref="setTableRef"
                     :data="
                         indicatorRows.slice(
@@ -744,8 +748,8 @@ onMounted(load)
                             </el-button>
                         </template>
                     </el-table-column>
-                </el-table>
-                <el-pagination
+                </ResponsiveTable>
+                <ResponsivePagination
                     v-model:current-page="indicatorPage"
                     v-model:page-size="indicatorPageSize"
                     :page-sizes="[10, 20, 50, 100]"
@@ -881,5 +885,19 @@ onMounted(load)
 }
 p {
     color: var(--el-text-color-regular);
+}
+@media (max-width: 767px) {
+    .edit-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .edit-row > * {
+        width: 100%;
+        flex: none;
+    }
+    .edit-row > .el-button {
+        align-self: flex-start;
+        width: auto;
+    }
 }
 </style>

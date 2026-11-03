@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import { useViewport } from '@/composables/useViewport'
 defineOptions({ name: 'ServiceTaskDetail' })
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -84,6 +86,7 @@ async function saved(id: number) {
 }
 watch(() => route.params.id, load)
 onMounted(load)
+const { isMobile } = useViewport()
 </script>
 <template>
     <section v-loading="loading">
@@ -113,7 +116,7 @@ onMounted(load)
                 type="warning"
                 :closable="false"
             />
-            <el-descriptions :column="2" border>
+            <el-descriptions :column="isMobile ? 1 : 2" border>
                 <el-descriptions-item label="合同包">{{ task.projectName }}</el-descriptions-item>
                 <el-descriptions-item label="团队">{{ task.teamName }}</el-descriptions-item>
                 <el-descriptions-item label="服务形式">
@@ -138,10 +141,10 @@ onMounted(load)
                 <el-descriptions-item label="工作人员">
                     {{ task.staff.map((s) => s.name).join('、') }}
                 </el-descriptions-item>
-                <el-descriptions-item label="服务说明" :span="2">
+                <el-descriptions-item label="服务说明" :span="isMobile ? 1 : 2">
                     {{ task.description || '—' }}
                 </el-descriptions-item>
-                <el-descriptions-item label="凭证要求" :span="2">
+                <el-descriptions-item label="凭证要求" :span="isMobile ? 1 : 2">
                     {{ task.evidence || '—' }}
                 </el-descriptions-item>
                 <el-descriptions-item v-if="task.sourceTaskId" label="复制来源">
@@ -160,7 +163,7 @@ onMounted(load)
                 @changed="load"
             />
             <h3>指标计划</h3>
-            <el-table :data="task.indicators">
+            <ResponsiveTable :data="task.indicators">
                 <el-table-column prop="indicatorName" label="指标" />
                 <el-table-column prop="plannedValue" label="计划量" />
                 <el-table-column prop="unit" label="单位" />
@@ -176,9 +179,9 @@ onMounted(load)
                         <span v-else>#{{ row.planId }}</span>
                     </template>
                 </el-table-column>
-            </el-table>
+            </ResponsiveTable>
             <h3>协作资源</h3>
-            <el-table :data="task.resources">
+            <ResponsiveTable :data="task.resources">
                 <el-table-column label="单位">
                     <template #default="{ row }">
                         <el-link
@@ -204,9 +207,9 @@ onMounted(load)
                         }}
                     </template>
                 </el-table-column>
-            </el-table>
+            </ResponsiveTable>
             <h3>安排变更记录</h3>
-            <el-table :data="task.events">
+            <ResponsiveTable :data="task.events">
                 <el-table-column label="时间" width="180">
                     <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                 </el-table-column>
@@ -227,7 +230,7 @@ onMounted(load)
 {{ snapshotText(row.afterData) }}</pre>
                     </template>
                 </el-table-column>
-            </el-table>
+            </ResponsiveTable>
             <TaskDialog v-model="dialog" :task="task" :copy="copy" @saved="saved" />
         </template>
         <el-empty v-else-if="!loading" description="任务不存在或无权访问" />
@@ -244,5 +247,12 @@ onMounted(load)
     padding: 16px;
     font: inherit;
     overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+    .task-detail__header > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 }
 </style>

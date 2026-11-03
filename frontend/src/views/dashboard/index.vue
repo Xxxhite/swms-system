@@ -186,4 +186,16 @@ onMounted(async () => {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 14px;
 }
+@media (max-width: 767px) {
+    .dashboard__identity {
+        gap: 12px;
+    }
+    .dashboard__shortcuts,
+    .dashboard__module-items {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .dashboard__welcome {
+        padding: 20px 16px;
+    }
+}
 </style>

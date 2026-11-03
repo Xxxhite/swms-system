@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import { useTableSort, sortTableRows, type SortQuery } from '@/utils/tableSort'
 import { formatDateTime } from '@/utils/dateTime'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -129,7 +131,7 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <el-table
+            <ResponsiveTable
                 :ref="setTableRef"
                 :data="sortedRows.slice((page - 1) * pageSize, page * pageSize)"
                 :default-sort="defaultSort"
@@ -168,8 +170,8 @@ onMounted(load)
                         </el-button>
                     </template>
                 </el-table-column>
-            </el-table>
-            <el-pagination
+            </ResponsiveTable>
+            <ResponsivePagination
                 v-model:current-page="page"
                 v-model:page-size="pageSize"
                 :page-sizes="[10, 20, 50, 100]"

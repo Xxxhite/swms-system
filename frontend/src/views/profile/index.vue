@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useViewport } from '@/composables/useViewport'
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -74,11 +75,12 @@ async function changePassword() {
     }
 }
 onMounted(load)
+const { isMobile } = useViewport()
 </script>
 <template>
     <el-card>
         <template #header>个人中心</template>
-        <el-descriptions :column="2" border>
+        <el-descriptions :column="isMobile ? 1 : 2" border>
             <el-descriptions-item label="姓名">{{ store.profile?.name }}</el-descriptions-item>
             <el-descriptions-item label="所属组织">
                 {{ store.profile?.orgName ?? '未分配' }}
@@ -164,5 +166,11 @@ h2 {
 }
 .notice {
     margin-top: 20px;
+}
+@media (max-width: 767px) {
+    .forms {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+    }
 }
 </style>

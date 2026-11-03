@@ -1,16 +1,28 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 
-import SidebarItem from '@/layouts/components/SidebarItem.vue'
+import NavigationMenu from '@/layouts/components/NavigationMenu.vue'
+import { useViewport } from '@/composables/useViewport'
 import { useUserStore } from '@/stores/user'
 
+const { isMobile, isNarrow } = useViewport()
+const menuOpen = ref(false)
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+watch(
+    () => route.fullPath,
+    () => {
+        menuOpen.value = false
+    },
+)
+watch(isNarrow, () => {
+    menuOpen.value = false
+})
 
 const activeMenu = computed(() =>
     route.name === 'TaskDetail'
@@ -52,21 +64,37 @@ async function handleCommand(command: string): Promise<void> {
 
 <template>
     <el-container class="layout">
-        <el-aside width="220px" class="layout__aside">
-            <router-link to="/dashboard" class="layout__brand" title="返回工作台">
-                温馨社工服务管理系统
-            </router-link>
-            <el-scrollbar class="layout__sidebar-scrollbar">
-                <el-menu :default-active="activeMenu" router class="layout__menu">
-                    <el-menu-item index="/dashboard">工作台</el-menu-item>
-                    <sidebar-item v-for="item in userStore.menus" :key="item.path" :node="item" />
-                </el-menu>
-            </el-scrollbar>
+        <el-aside v-if="!isNarrow" width="220px" class="layout__aside">
+            <NavigationMenu :active="activeMenu" />
         </el-aside>
+        <el-drawer
+            v-if="isNarrow"
+            v-model="menuOpen"
+            direction="ltr"
+            size="min(320px, calc(100vw - 40px))"
+            :with-header="false"
+            title="导航菜单"
+            class="layout-drawer"
+            append-to-body
+        >
+            <NavigationMenu :active="activeMenu" closable @navigate="menuOpen = false" />
+        </el-drawer>
 
         <el-container class="layout__body">
             <el-header class="layout__header">
-                <el-breadcrumb separator="/">
+                <el-button
+                    v-if="isNarrow"
+                    class="layout__menu-button"
+                    aria-label="打开导航菜单"
+                    :aria-expanded="menuOpen"
+                    @click="menuOpen = true"
+                >
+                    菜单
+                </el-button>
+                <span v-if="isMobile" class="layout__mobile-title">
+                    {{ route.meta.title ?? '工作台' }}
+                </span>
+                <el-breadcrumb v-if="!isMobile" separator="/">
                     <el-breadcrumb-item
                         :to="route.path === '/dashboard' ? undefined : '/dashboard'"
                     >
@@ -91,7 +119,7 @@ async function handleCommand(command: string): Promise<void> {
 
                 <div class="layout__actions">
                     <!-- 展示当前用户的数据访问范围 -->
-                    <el-tag type="warning" effect="plain">
+                    <el-tag v-if="!isNarrow" type="warning" effect="plain">
                         {{
                             userStore.profile?.isDevSuperadmin
                                 ? '开发超级管理员'
@@ -99,8 +127,12 @@ async function handleCommand(command: string): Promise<void> {
                         }}
                     </el-tag>
 
-                    <el-dropdown @command="handleCommand">
-                        <span class="layout__user">{{ userName }}（{{ roleNames }}）▾</span>
+                    <el-dropdown :trigger="isNarrow ? 'click' : 'hover'" @command="handleCommand">
+                        <span class="layout__user" :title="`${userName}（${roleNames}）`">
+                            {{ userName }}
+                            <template v-if="!isNarrow">（{{ roleNames }}）</template>
+                            ▾
+                        </span>
                         <template #dropdown>
                             <el-dropdown-menu>
                                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
@@ -134,50 +166,13 @@ async function handleCommand(command: string): Promise<void> {
     background-color: var(--swms-sidebar-bg);
 }
 
-.layout__brand {
-    height: 60px;
-    flex: none;
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    color: var(--el-color-white);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-decoration: none;
-}
-
-.layout__brand:hover {
-    background-color: var(--swms-sidebar-hover);
-}
-
-.layout__brand:focus-visible {
-    outline: 2px solid var(--swms-sidebar-active);
-    outline-offset: -2px;
-}
-
-/* flex 子项允许缩小到剩余高度，滚动由 ElScrollbar 统一处理。 */
-.layout__sidebar-scrollbar {
-    flex: 1;
-    min-height: 0;
-}
-
 .layout__body {
     min-width: 0;
     min-height: 0;
 }
 
-.layout__menu {
-    --el-menu-bg-color: var(--swms-sidebar-bg);
-    --el-menu-text-color: var(--swms-sidebar-text);
-    --el-menu-hover-text-color: var(--swms-sidebar-active);
-    --el-menu-active-color: var(--swms-sidebar-active);
-    --el-menu-hover-bg-color: var(--swms-sidebar-hover);
-
-    border-right: none;
-}
-
 .layout__header {
+    gap: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -189,9 +184,14 @@ async function handleCommand(command: string): Promise<void> {
     display: flex;
     align-items: center;
     gap: 16px;
+    min-width: 0;
 }
 
 .layout__user {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 40vw;
     display: inline-flex;
     align-items: center;
     min-height: 32px;
@@ -217,5 +217,40 @@ async function handleCommand(command: string): Promise<void> {
     min-height: 100%;
     padding: var(--el-main-padding);
     box-sizing: border-box;
+}
+.layout__mobile-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+.layout__menu-button {
+    min-height: 44px;
+}
+@media (max-width: 1023px) {
+    .layout__header {
+        padding: 0 12px;
+    }
+    .layout__actions {
+        flex-shrink: 0;
+    }
+    .layout__header :deep(.el-breadcrumb) {
+        flex: 1;
+        min-width: 0;
+    }
+}
+@media (max-width: 767px) {
+    .layout__user {
+        min-height: 44px;
+    }
+    .layout {
+        height: 100dvh;
+    }
+    :deep(.layout__content) {
+        padding: 12px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
 }
 </style>

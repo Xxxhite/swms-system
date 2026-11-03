@@ -151,4 +151,9 @@ watch([role, relation], () => {
     min-height: 48px;
     margin-top: 16px;
 }
+@media (max-width: 767px) {
+    .participation-page {
+        padding: 16px 12px;
+    }
+}
 </style>

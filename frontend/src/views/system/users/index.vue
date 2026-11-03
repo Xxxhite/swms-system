@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import { useViewport } from '@/composables/useViewport'
 import { canSupervise } from '@/constants/personnel'
 import { useTableSort } from '@/utils/tableSort'
 import { formatDateTime } from '@/utils/dateTime'
@@ -267,6 +271,7 @@ watch(
     },
     { immediate: true },
 )
+const { isMobile } = useViewport()
 </script>
 <template>
     <el-card>
@@ -283,7 +288,7 @@ watch(
             :closable="false"
         />
         <template v-else>
-            <el-form class="filter-form" @submit.prevent="search">
+            <FilterPanel class="filter-form" @submit.prevent="search">
                 <el-form-item label="姓名或账号">
                     <el-input v-model="query.keyword" clearable maxlength="100" />
                 </el-form-item>
@@ -302,11 +307,11 @@ watch(
                     <el-button type="primary" native-type="submit">查询</el-button>
                     <el-button @click="resetSearch">重置</el-button>
                 </el-form-item>
-            </el-form>
+            </FilterPanel>
             <p v-if="!registrations" class="approval-hint">
                 待审核账号须在“注册审核”中批准并分配任职与权限；已驳回账号须由申请人修改后重新提交。
             </p>
-            <el-table
+            <ResponsiveTable
                 :ref="setTableRef"
                 v-loading="loading"
                 :data="rows"
@@ -444,8 +449,8 @@ watch(
                         </template>
                     </template>
                 </el-table-column>
-            </el-table>
-            <el-pagination
+            </ResponsiveTable>
+            <ResponsivePagination
                 v-model:current-page="query.page"
                 v-model:page-size="query.pageSize"
                 :page-sizes="[10, 20, 50, 100]"
@@ -470,7 +475,7 @@ watch(
             width="680px"
         >
             <template v-if="target">
-                <el-descriptions :column="2" border>
+                <el-descriptions :column="isMobile ? 1 : 2" border>
                     <el-descriptions-item label="姓名">{{ target.name }}</el-descriptions-item>
                     <el-descriptions-item label="账号">{{ target.username }}</el-descriptions-item>
                     <el-descriptions-item label="联系电话">{{ target.phone }}</el-descriptions-item>
@@ -493,7 +498,7 @@ watch(
                     <el-descriptions-item label="社工号">
                         {{ target.socialWorkerNo ?? '未填写' }}
                     </el-descriptions-item>
-                    <el-descriptions-item label="服务领域" :span="2">
+                    <el-descriptions-item label="服务领域" :span="isMobile ? 1 : 2">
                         {{
                             target.serviceFieldCodes?.join('、') ||
                             target.serviceFieldCode ||
@@ -503,7 +508,11 @@ watch(
                     <el-descriptions-item label="督导身份">
                         {{ target.isSupervisor ? '是' : '否' }}
                     </el-descriptions-item>
-                    <el-descriptions-item v-if="target.reviewComment" label="审核意见" :span="2">
+                    <el-descriptions-item
+                        v-if="target.reviewComment"
+                        label="审核意见"
+                        :span="isMobile ? 1 : 2"
+                    >
                         {{ target.reviewComment }}
                     </el-descriptions-item>
                 </el-descriptions>

@@ -126,4 +126,9 @@ p {
 .actions {
     margin-top: 20px;
 }
+@media (max-width: 767px) {
+    .status-page {
+        padding: 16px 12px;
+    }
+}
 </style>

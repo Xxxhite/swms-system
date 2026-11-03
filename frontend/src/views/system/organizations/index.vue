@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { useTableSort, type SortQuery } from '@/utils/tableSort'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -124,7 +125,8 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <el-table
+            <ResponsiveTable
+                :mobile-cards="false"
                 :ref="setTableRef"
                 :data="tree"
                 row-key="id"
@@ -157,7 +159,7 @@ onMounted(load)
                         <el-button link type="danger" @click="remove(row)">删除</el-button>
                     </template>
                 </el-table-column>
-            </el-table>
+            </ResponsiveTable>
         </template>
         <el-dialog v-model="dialog" :title="selectedId ? '编辑组织' : '新增组织'" width="520px">
             <el-form label-width="90px" @submit.prevent="save">

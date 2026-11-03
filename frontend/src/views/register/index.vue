@@ -89,4 +89,9 @@ h1 {
 a {
     color: var(--el-color-primary);
 }
+@media (max-width: 767px) {
+    .account-page {
+        padding: 16px 12px;
+    }
+}
 </style>

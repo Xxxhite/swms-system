@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { planApi } from '@/api/modules/plan'
@@ -80,7 +83,7 @@ onMounted(async () => {
             type="info"
             :closable="false"
         />
-        <el-form :inline="true" class="filter-form" @submit.prevent="search">
+        <FilterPanel :inline="true" class="filter-form" @submit.prevent="search">
             <el-form-item label="合同包">
                 <el-select v-model="query.projectId" clearable @change="query.teamId = undefined">
                     <el-option
@@ -113,8 +116,8 @@ onMounted(async () => {
                 <el-button type="primary" native-type="submit">查询</el-button>
                 <el-button @click="reset">重置</el-button>
             </el-form-item>
-        </el-form>
-        <el-table v-loading="loading" :data="rows" stripe>
+        </FilterPanel>
+        <ResponsiveTable v-loading="loading" :data="rows" stripe>
             <el-table-column label="指标" min-width="180">
                 <template #default="{ row }">
                     <el-link type="primary" @click="router.push(`/service/plans/${row.id}`)">
@@ -142,8 +145,8 @@ onMounted(async () => {
                     <el-tag v-if="row.stale" type="warning">目标已变更</el-tag>
                 </template>
             </el-table-column>
-        </el-table>
-        <el-pagination
+        </ResponsiveTable>
+        <ResponsivePagination
             v-model:current-page="query.page"
             v-model:page-size="query.pageSize"
             :total="total"

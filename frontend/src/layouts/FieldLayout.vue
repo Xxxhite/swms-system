@@ -83,4 +83,34 @@ nav a.router-link-exact-active {
     padding: 16px;
     box-sizing: border-box;
 }
+@media (max-width: 767px) {
+    .field-layout {
+        height: 100dvh;
+    }
+    header {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    header span {
+        max-width: 35%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    nav {
+        padding: 4px;
+        gap: 0;
+        flex-wrap: wrap;
+    }
+    nav a {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+    }
+    .field-layout :deep(.field-layout__content) {
+        padding: 12px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+}
 </style>

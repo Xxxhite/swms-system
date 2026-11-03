@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { taskApi } from '@/api/modules/task'
@@ -112,7 +113,7 @@ onMounted(async () => {
             </el-button>
             <el-button @click="split">均分目标</el-button>
         </div>
-        <el-table :data="model.periods">
+        <ResponsiveTable :mobile-cards="false" :data="model.periods">
             <el-table-column type="index" width="55" />
             <el-table-column label="开始日期" min-width="175">
                 <template #default="{ row }">
@@ -142,7 +143,7 @@ onMounted(async () => {
                     </el-button>
                 </template>
             </el-table-column>
-        </el-table>
+        </ResponsiveTable>
     </el-form>
 </template>
 <style scoped>
@@ -154,5 +155,10 @@ onMounted(async () => {
 .el-select,
 .el-date-editor {
     width: 100%;
+}
+@media (max-width: 767px) {
+    .plan-editor__actions {
+        flex-wrap: wrap;
+    }
 }
 </style>

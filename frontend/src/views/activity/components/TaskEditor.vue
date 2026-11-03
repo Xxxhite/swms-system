@@ -345,4 +345,13 @@ defineExpose({
 .task-editor :deep(.el-date-editor) {
     width: 100%;
 }
+@media (max-width: 767px) {
+    .task-editor__row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .task-editor__row > * {
+        width: 100%;
+    }
+}
 </style>

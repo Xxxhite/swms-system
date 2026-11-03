@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -320,7 +321,7 @@ onMounted(load)
                         新增联系人
                     </el-button>
                     <!-- @vue-generic {ResourceContact} -->
-                    <el-table :data="resource.contacts">
+                    <ResponsiveTable :data="resource.contacts">
                         <el-table-column prop="name" label="姓名" />
                         <el-table-column prop="position" label="职务" />
                         <el-table-column prop="phone" label="电话" />
@@ -346,7 +347,7 @@ onMounted(load)
                                 </el-button>
                             </template>
                         </el-table-column>
-                    </el-table>
+                    </ResponsiveTable>
                 </template>
             </el-tab-pane>
             <el-tab-pane label="合作事项" name="cooperations">
@@ -358,7 +359,7 @@ onMounted(load)
                     新增合作事项
                 </el-button>
                 <!-- @vue-generic {ResourceCooperation} -->
-                <el-table :data="resource.cooperations">
+                <ResponsiveTable :data="resource.cooperations">
                     <el-table-column prop="title" label="事项" min-width="180" />
                     <el-table-column label="来源">
                         <template #default="{ row }">
@@ -394,7 +395,7 @@ onMounted(load)
                             </el-button>
                         </template>
                     </el-table-column>
-                </el-table>
+                </ResponsiveTable>
             </el-tab-pane>
             <el-tab-pane label="跟进记录" name="followups">
                 <el-button
@@ -405,7 +406,7 @@ onMounted(load)
                     新增跟进
                 </el-button>
                 <!-- @vue-generic {ResourceFollowup} -->
-                <el-table :data="resource.followups">
+                <ResponsiveTable :data="resource.followups">
                     <el-table-column label="联系时间" min-width="175">
                         <template #default="{ row }">{{ formatDateTime(row.occurredAt) }}</template>
                     </el-table-column>
@@ -430,10 +431,10 @@ onMounted(load)
                             </el-button>
                         </template>
                     </el-table-column>
-                </el-table>
+                </ResponsiveTable>
             </el-tab-pane>
             <el-tab-pane label="关联合同" name="contracts">
-                <el-table :data="resource.contracts">
+                <ResponsiveTable :data="resource.contracts">
                     <el-table-column prop="projectName" label="合同包" />
                     <el-table-column prop="contractNo" label="合同编号" />
                     <el-table-column prop="partnerName" label="签约名称" />
@@ -454,10 +455,10 @@ onMounted(load)
                             </el-button>
                         </template>
                     </el-table-column>
-                </el-table>
+                </ResponsiveTable>
             </el-tab-pane>
             <el-tab-pane label="操作历史" name="events">
-                <el-table :data="resource.events">
+                <ResponsiveTable :data="resource.events">
                     <el-table-column label="操作">
                         <template #default="{ row }">{{ auditActionLabel(row.action) }}</template>
                     </el-table-column>
@@ -465,17 +466,17 @@ onMounted(load)
                     <el-table-column label="时间">
                         <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                     </el-table-column>
-                </el-table>
+                </ResponsiveTable>
             </el-tab-pane>
             <el-tab-pane label="合并历史" name="history">
-                <el-table :data="resource.merges">
+                <ResponsiveTable :data="resource.merges">
                     <el-table-column prop="sourceId" label="来源编号" />
                     <el-table-column prop="targetId" label="目标编号" />
                     <el-table-column prop="reason" label="原因" />
                     <el-table-column label="时间">
                         <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
                     </el-table-column>
-                </el-table>
+                </ResponsiveTable>
             </el-tab-pane>
         </el-tabs>
         <el-dialog
@@ -706,5 +707,10 @@ onMounted(load)
 h2 {
     margin: 0;
     font-size: 18px;
+}
+@media (max-width: 767px) {
+    .resource-detail {
+        padding: 0;
+    }
 }
 </style>

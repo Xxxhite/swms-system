@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import ResponsivePagination from '@/components/ResponsivePagination.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import { useViewport } from '@/composables/useViewport'
 import { useTableSort } from '@/utils/tableSort'
 import { onMounted, ref } from 'vue'
 import { useApprovalList } from './useApprovalList'
@@ -69,6 +73,7 @@ async function decide(approved: boolean) {
     }
 }
 onMounted(load)
+const { isMobile } = useViewport()
 </script>
 <template>
     <el-card>
@@ -80,7 +85,7 @@ onMounted(load)
             :closable="false"
         />
         <template v-else>
-            <el-form class="filter-form" @submit.prevent="search">
+            <FilterPanel class="filter-form" @submit.prevent="search">
                 <el-form-item label="任务状态">
                     <el-select v-model="query.status" clearable>
                         <el-option
@@ -95,8 +100,8 @@ onMounted(load)
                     <el-button type="primary" native-type="submit">查询</el-button>
                     <el-button @click="reset">重置</el-button>
                 </el-form-item>
-            </el-form>
-            <el-table
+            </FilterPanel>
+            <ResponsiveTable
                 :ref="setTableRef"
                 v-loading="loading"
                 :data="rows"
@@ -162,8 +167,8 @@ onMounted(load)
                         </el-button>
                     </template>
                 </el-table-column>
-            </el-table>
-            <el-pagination
+            </ResponsiveTable>
+            <ResponsivePagination
                 v-model:current-page="query.page"
                 :total="total"
                 v-model:page-size="query.pageSize"
@@ -176,7 +181,7 @@ onMounted(load)
         </template>
         <el-dialog v-model="dialog" title="服务档案审批详情" width="700px">
             <template v-if="detail">
-                <el-descriptions :column="2" border>
+                <el-descriptions :column="isMobile ? 1 : 2" border>
                     <el-descriptions-item label="项目">
                         {{ detail.businessSnapshot.projectName }}
                     </el-descriptions-item>
@@ -197,7 +202,7 @@ onMounted(load)
                             detail.businessSnapshot.proposedValue
                         }}
                     </el-descriptions-item>
-                    <el-descriptions-item label="原因" :span="2">
+                    <el-descriptions-item label="原因" :span="isMobile ? 1 : 2">
                         {{ detail.businessSnapshot.reason }}
                     </el-descriptions-item>
                 </el-descriptions>

@@ -1,5 +1,6 @@
 import {
   date,
+  double,
   datetime,
   decimal,
   int,
@@ -92,6 +93,9 @@ export const projectServicePoints = mysqlTable("contract_service_points", {
     .references(() => projects.id),
   name: varchar("name", { length: 100 }).notNull(),
   address: varchar("address", { length: 255 }),
+  latitude: double("latitude"),
+  longitude: double("longitude"),
+  radius: int("radius", { unsigned: true }),
   note: varchar("note", { length: 1000 }),
   deletedAt: datetime("deleted_at", { mode: "date", fsp: 3 }),
   ...businessTimestamps(),

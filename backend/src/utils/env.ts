@@ -10,6 +10,8 @@ function toPositiveInt(value: string | undefined, fallback: number): number {
 }
 
 export const env = {
+  executionUploadDir: process.env.EXECUTION_UPLOAD_DIR?.trim() || "./storage/execution",
+  executionUploadMaxBytes: toPositiveInt(process.env.EXECUTION_UPLOAD_MAX_BYTES, 10 * 1024 * 1024),
   uploadDir: process.env.UPLOAD_DIR?.trim() || "./storage/contracts",
   uploadMaxBytes: toPositiveInt(process.env.UPLOAD_MAX_BYTES, 20 * 1024 * 1024),
   nodeEnv: process.env.NODE_ENV ?? "development",

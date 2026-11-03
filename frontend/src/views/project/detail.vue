@@ -592,6 +592,11 @@ onMounted(load)
                 </div>
             </el-tab-pane>
             <el-tab-pane label="服务点">
+                <el-alert
+                    title="现场参考点使用 WGS84 经纬度；请核对定位来源后填写。"
+                    type="info"
+                    :closable="false"
+                />
                 <div v-for="(point, index) in points" :key="index" class="edit-row">
                     <el-input
                         v-model="point.name"
@@ -610,6 +615,32 @@ onMounted(load)
                         :disabled="!has('project:record:update')"
                         placeholder="说明"
                         maxlength="1000"
+                    />
+                    <el-input-number
+                        v-model="point.latitude"
+                        :disabled="!has('project:record:update')"
+                        :min="-90"
+                        :max="90"
+                        :precision="6"
+                        placeholder="纬度"
+                        aria-label="参考点纬度"
+                    />
+                    <el-input-number
+                        v-model="point.longitude"
+                        :disabled="!has('project:record:update')"
+                        :min="-180"
+                        :max="180"
+                        :precision="6"
+                        placeholder="经度"
+                        aria-label="参考点经度"
+                    />
+                    <el-input-number
+                        v-model="point.radius"
+                        :disabled="!has('project:record:update')"
+                        :min="50"
+                        :max="5000"
+                        placeholder="范围（米）"
+                        aria-label="参考范围（米）"
                     />
                     <el-button v-if="has('project:record:update')" @click="points.splice(index, 1)">
                         移除

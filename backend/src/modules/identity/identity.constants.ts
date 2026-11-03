@@ -1,3 +1,4 @@
+import { executionPermissionEntries } from "@/modules/execution/execution-permissions"
 import { taskPermissionEntries } from "@/modules/task/task-permissions"
 import { resourcePermissionEntries } from "@/modules/resource/resource-permissions"
 import { businessPermissionEntries } from "@/modules/project/business-permissions"
@@ -112,6 +113,7 @@ export const permissionCatalog = [
   ...businessPermissionEntries,
   ...resourcePermissionEntries,
   ...taskPermissionEntries,
+  ...executionPermissionEntries,
   ["system:view", "系统管理"],
   ["system:org:manage", "管理组织"],
   ["system:user:view", "查询人员"],

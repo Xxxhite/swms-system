@@ -1,3 +1,4 @@
+import { executionRoleDefaults } from "@/modules/execution/execution-permissions"
 import { taskRoleDefaults } from "@/modules/task/task-permissions"
 import { resourceRoleDefaults } from "@/modules/resource/resource-permissions"
 import { businessRoleDefaults } from "@/modules/project/business-permissions"
@@ -110,6 +111,7 @@ export async function seedIdentity(
                 ...(businessRoleDefaults[definition.code] ?? []),
                 ...(resourceRoleDefaults[definition.code] ?? []),
                 ...(taskRoleDefaults[definition.code] ?? []),
+                ...(executionRoleDefaults[definition.code] ?? []),
               ]),
             ].map((permissionCode) => ({ roleId: role.id, permissionCode })),
           )

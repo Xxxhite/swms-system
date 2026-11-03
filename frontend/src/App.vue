@@ -3,11 +3,15 @@ import { ElConfigProvider } from 'element-plus'
 import zhCN from 'element-plus/es/locale/lang/zh-cn'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { LAYOUT_NAME } from '@/router/routes'
+import { FIELD_LAYOUT_NAME, LAYOUT_NAME } from '@/router/routes'
 
 const route = useRoute()
 /** 业务布局自行管理侧栏和内容滚动，公开长页面使用根级滚动容器。 */
-const hasLayout = computed(() => route.matched.some((record) => record.name === LAYOUT_NAME))
+const hasLayout = computed(() =>
+    route.matched.some(
+        (record) => record.name === LAYOUT_NAME || record.name === FIELD_LAYOUT_NAME,
+    ),
+)
 </script>
 
 <template>

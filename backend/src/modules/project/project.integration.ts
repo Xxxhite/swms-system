@@ -812,7 +812,11 @@ export function registerProjectTests(
           "INSERT INTO `contract_contracts` SELECT c.*",
           "INSERT INTO `contract_contracts` (`id`,`project_id`,`contract_no`,`partner_name`,`start_date`,`end_date`,`amount`,`service_area`,`note`,`created_at`,`updated_at`,`version`) SELECT c.*",
         )
-      for (const statement of copy
+      const compatibleCopy = copy.replace(
+        "INSERT INTO `contract_service_points` SELECT c.*",
+        "INSERT INTO `contract_service_points` (`id`,`project_id`,`name`,`address`,`note`,`deleted_at`,`created_at`,`updated_at`,`version`) SELECT c.*",
+      )
+      for (const statement of compatibleCopy
         .split("--> statement-breakpoint")
         .map((x) => x.trim())
         .filter(Boolean))

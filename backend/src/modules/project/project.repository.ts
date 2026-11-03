@@ -1,3 +1,4 @@
+import { executionWriter, loadExecutionState } from "@/modules/execution/execution.repository"
 import { taskWriter, loadTaskState } from "@/modules/task/task.repository"
 import { resourceWriter } from "@/modules/resource/resource.repository"
 import { and, asc, eq, inArray, isNull } from "drizzle-orm"
@@ -14,6 +15,7 @@ function writer(connection: RawConnection) {
   return {
     resources: resourceWriter(connection),
     scheduling: taskWriter(connection),
+    executions: executionWriter(connection),
     projects: {
       insert(values: typeof s.projects.$inferInsert) {
         return connection.insert(s.projects).values(values)
@@ -217,6 +219,7 @@ async function state(tx: RawConnection, actor?: Actor, lock = false) {
   return {
     identity,
     scheduling: await loadTaskState(tx),
+    executions: await loadExecutionState(tx),
     actor: current,
     projects,
     contracts: await tx
@@ -280,6 +283,22 @@ export class ProjectRepository {
       if (!user || user.authVersion !== actor.user.authVersion) throw AppError.tokenExpired()
       const current = actorFrom(data.identity, user)
       return work(writer(tx), data, current)
+    })
+  }
+  /** 公开凭证先按摘要筛选，命中后在同一身份／项目锁内重新核验。 */
+  async publicExecution<T>(
+    tokenHash: string,
+    work: (tx: BusinessConnection, data: BusinessState) => Promise<T>,
+  ): Promise<T> {
+    // 摘要预筛选不放在写事务中，避免锁等待前创建旧的一致性读快照。
+    const [credential] = await this.database
+      .select({ id: s.executionCredentials.id })
+      .from(s.executionCredentials)
+      .where(eq(s.executionCredentials.tokenHash, tokenHash))
+    if (!credential) throw AppError.notFound("参与凭证无效或已失效")
+    return this.database.transaction(async (tx) => {
+      const data = await state(tx, undefined, true)
+      return work(writer(tx), data)
     })
   }
   /** 审批快照只按实际任务关系授权，由审批服务裁剪输出。 */

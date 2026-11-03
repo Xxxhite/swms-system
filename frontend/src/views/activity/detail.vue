@@ -9,6 +9,7 @@ import { useMock } from '@/api/config'
 import { taskApi } from '@/api/modules/task'
 import { taskForms, taskStatuses, type Task } from '@/api/task-types'
 import { formatDateTime } from '@/utils/dateTime'
+import ExecutionPanel from './components/ExecutionPanel.vue'
 import TaskDialog from './components/TaskDialog.vue'
 const route = useRoute(),
     router = useRouter(),
@@ -147,6 +148,17 @@ onMounted(load)
                     任务 #{{ task.sourceTaskId }}
                 </el-descriptions-item>
             </el-descriptions>
+            <el-button
+                v-if="store.hasPermission(PERM.EXECUTION_VIEW)"
+                @click="router.push(`/field/tasks/${task.id}`)"
+            >
+                打开手机现场
+            </el-button>
+            <ExecutionPanel
+                v-if="store.hasPermission(PERM.EXECUTION_VIEW)"
+                :task-id="task.id"
+                @changed="load"
+            />
             <h3>指标计划</h3>
             <el-table :data="task.indicators">
                 <el-table-column prop="indicatorName" label="指标" />

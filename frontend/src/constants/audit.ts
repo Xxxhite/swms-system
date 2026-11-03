@@ -1,5 +1,21 @@
 /** 审计动作编码沿用后端记录，中文字典同时用于表格显示和筛选选项。 */
 export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    'configure-execution': '维护现场规则',
+    'record-staff-attendance': '记录到离',
+    'end-execution': '结束服务',
+    'stop-execution': '中止服务',
+    'create-service-participant': '新增服务对象',
+    'update-service-participant': '维护服务对象',
+    'archive-service-participant': '归档服务对象',
+    'add-execution-participant': '加入本次名单',
+    'record-participation': '记录参与来源',
+    'public-confirm-participation': '对象确认参与',
+    'issue-participation-credential': '发放个人参与卡',
+    'revoke-participation-credential': '撤销个人参与卡',
+    'upload-execution-evidence': '上传现场凭证',
+    'download-execution-evidence': '下载现场凭证',
+    'remove-unbound-execution-evidence': '移除未绑定凭证',
+    'explain-execution-exception': '追加异常说明',
     'save-service-plan': '保存阶段计划',
     'publish-service-plan': '发布阶段计划',
     'create-service-task': '新增服务任务',
@@ -62,6 +78,8 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
 
 /** 被操作的数据类别，与人员角色或账号状态分别管理。 */
 export const AUDIT_ENTITY_TYPE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    execution: '现场执行',
+    participant: '服务对象',
     resource: '单位资源',
     'service-plan': '阶段计划',
     'service-task': '服务任务',

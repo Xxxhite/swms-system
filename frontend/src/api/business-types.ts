@@ -87,7 +87,15 @@ export interface Project extends ProjectInput {
     visibleTeamIds: number[]
     contract: ContractInput | null
     teams: Array<{ teamId: number; reporterId: number; teamName: string; reporterName: string }>
-    servicePoints: Array<{ id?: number; name: string; address?: string; note?: string }>
+    servicePoints: Array<{
+        id?: number
+        name: string
+        address?: string
+        note?: string
+        latitude?: number | null
+        longitude?: number | null
+        radius?: number | null
+    }>
     indicators: Indicator[]
 }
 export interface Candidates {

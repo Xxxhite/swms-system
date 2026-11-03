@@ -64,6 +64,9 @@ export const pointBody = t.Array(
   t.Object({
     id: t.Optional(t.Integer({ minimum: 1 })),
     name: shortText(100, "服务点名称"),
+    latitude: t.Optional(t.Union([t.Number({ minimum: -90, maximum: 90 }), t.Null()])),
+    longitude: t.Optional(t.Union([t.Number({ minimum: -180, maximum: 180 }), t.Null()])),
+    radius: t.Optional(t.Union([t.Integer({ minimum: 50, maximum: 5000 }), t.Null()])),
     address: t.Optional(t.String({ maxLength: 255 })),
     note: t.Optional(t.String({ maxLength: 1000 })),
   }),

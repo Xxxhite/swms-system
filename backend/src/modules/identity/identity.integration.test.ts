@@ -1,3 +1,6 @@
+import { registerExecutionTests } from "@/modules/execution/execution.integration"
+import { createExecutionRoutes } from "@/modules/execution/execution.route"
+import { createParticipationRoutes } from "@/modules/execution/participation.route"
 import { registerTaskTests } from "@/modules/task/task.integration"
 import { createTaskRoutes } from "@/modules/task/task.route"
 import { createPlanRoutes } from "@/modules/task/plan.route"
@@ -37,6 +40,7 @@ let handle: (request: Request) => Response | Promise<Response>
 let adminToken = ""
 let pendingToken = ""
 let registeredId = 0
+let executionNow: Date | undefined
 
 async function request(path: string, method = "GET", token = "", body?: unknown) {
   const response = await handle(
@@ -82,6 +86,17 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "execution_exceptions",
+        "execution_evidence",
+        "execution_participations",
+        "participation_events",
+        "staff_execution_events",
+        "execution_credentials",
+        "execution_rosters",
+        "service_participants",
+        "execution_sessions",
+        "execution_policies",
+
         "service_task_events",
         "service_task_resources",
         "service_task_indicators",
@@ -157,6 +172,16 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
           createAuthRoutes(auth),
           createIdentityRoutes(identities),
           createSystemRoutes(identities),
+          createExecutionRoutes(
+            new ProjectRepository(database),
+            identities,
+            () => executionNow ?? new Date(),
+            "./storage/integration-execution",
+          ),
+          createParticipationRoutes(
+            new ProjectRepository(database),
+            () => executionNow ?? new Date(),
+          ),
           createTaskRoutes(new ProjectRepository(database), identities),
           createPlanRoutes(new ProjectRepository(database), identities),
           createResourceRoutes(new ResourceRepository(database), identities),
@@ -771,4 +796,11 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
   registerProjectTests(() => ({ database, handle }))
   registerResourceTests(() => ({ database, handle }))
   registerTaskTests(() => ({ database, handle }))
+  registerExecutionTests(() => ({
+    database,
+    handle,
+    setClock: (at: Date) => {
+      executionNow = at
+    },
+  }))
 })

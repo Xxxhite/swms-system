@@ -68,6 +68,19 @@ BUN_INSTALL="$APP_ROOT/runtime/bun" bash "$APP_ROOT/runtime/install-bun.sh" "bun
 `bun run build`。前端变量在构建时生效。数据库变更在本地生成并验证迁移，随代码发布。
 记录发布提交号；未提交的工作区快照需另外标注并记录包校验值。
 
+现场执行启用时，先备份数据库及合同、现场凭证目录，再停写应用并核对待执行迁移。
+`db:migrate` 应用发布包中全部待执行迁移；B1、B2尚未启用的环境会一并升级至0007。
+既有角色的现场动作使用 `bun run db:seed:execution-permissions` 预览，核对差异后追加
+`--apply`；资源和任务权限分别使用对应的显式脚本。保留既有自定义授权。
+
+服务器私有配置增加 `EXECUTION_UPLOAD_DIR=/srv/swms/shared/execution` 和
+`EXECUTION_UPLOAD_MAX_BYTES=10485760`，目录归应用账号所有、权限700，随私有数据备份。
+该目录须位于发布目录外。Nginx上传上限应覆盖multipart开销。
+
+手机现场通过HTTPS域名访问，验收Android Chrome的允许／拒绝定位、相机文件选择、个人二维码、
+弱网重试、返回与刷新。普通局域网HTTP地址的定位权限受浏览器安全上下文限制；本机模拟验收和
+Android真机HTTPS验收分别记录。公开参与页和工作人员页均使用同源 `/api`。
+
 仓库根目录的 PowerShell 示例：
 
 ```powershell

@@ -19,6 +19,17 @@ import { safeUser } from "@/utils/authorization"
 
 /** 顺序遵守外键；旧业务表也清空，仅保留迁移记录，不重置自增ID。 */
 export const demoResetTables = [
+  s.executionExceptions,
+  s.executionEvidence,
+  s.executionParticipations,
+  s.participationEvents,
+  s.staffExecutionEvents,
+  s.executionCredentials,
+  s.executionRosters,
+  s.serviceParticipants,
+  s.executionSessions,
+  s.executionPolicies,
+
   s.serviceTaskEvents,
   s.serviceTaskResources,
   s.serviceTaskIndicators,

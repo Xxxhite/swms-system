@@ -21,6 +21,7 @@
     "test:integration": "bun test src/modules/identity/identity.integration.test.ts",
     "db:seed:projects": "bun src/db/seed.ts --demo --projects",
     "db:seed:business-permissions": "bun src/db/seed.ts --business-permissions",
+    "db:seed:execution-permissions": "bun src/db/seed.ts --execution-permissions",
     "db:seed:task-permissions": "bun src/db/seed.ts --task-permissions",
     "db:seed:resource-permissions": "bun src/db/seed.ts --resource-permissions"
   },

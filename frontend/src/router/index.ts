@@ -1,6 +1,14 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 
-import { filterMenuTree, LAYOUT_NAME, menuToRoutes, menuTree, publicRoutes } from '@/router/routes'
+import {
+    filterMenuTree,
+    FIELD_LAYOUT_NAME,
+    fieldRoutes,
+    LAYOUT_NAME,
+    menuToRoutes,
+    menuTree,
+    publicRoutes,
+} from '@/router/routes'
 
 /**
  * 路由表分两部分：
@@ -25,6 +33,7 @@ router.afterEach((to) => {
  */
 export function installLayout(permissions: string[]): void {
     if (router.hasRoute(LAYOUT_NAME)) router.removeRoute(LAYOUT_NAME)
+    if (router.hasRoute(FIELD_LAYOUT_NAME)) router.removeRoute(FIELD_LAYOUT_NAME)
 
     const menus = filterMenuTree(menuTree, permissions)
     const children: RouteRecordRaw[] = [
@@ -57,11 +66,13 @@ export function installLayout(permissions: string[]): void {
         redirect: '/dashboard',
         children,
     })
+    for (const route of fieldRoutes(permissions)) router.addRoute(route)
 }
 
 /** 退出登录时清掉动态路由 */
 export function clearLayout(): void {
     if (router.hasRoute(LAYOUT_NAME)) router.removeRoute(LAYOUT_NAME)
+    if (router.hasRoute(FIELD_LAYOUT_NAME)) router.removeRoute(FIELD_LAYOUT_NAME)
 }
 
 export default router

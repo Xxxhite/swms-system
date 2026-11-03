@@ -452,7 +452,15 @@ export class ProjectService {
   points(
     actor: Actor,
     id: number,
-    points: Array<{ id?: number; name: string; address?: string; note?: string }>,
+    points: Array<{
+      id?: number
+      name: string
+      address?: string
+      note?: string
+      latitude?: number | null
+      longitude?: number | null
+      radius?: number | null
+    }>,
     version: number,
   ) {
     return this.repository.write(actor, async (tx, data, current) => {
@@ -473,6 +481,8 @@ export class ProjectService {
         })
       }
       for (const point of points) {
+        if ((point.latitude == null) !== (point.longitude == null))
+          throw AppError.badRequest("服务点经纬度须成对填写")
         if (point.id) {
           const row = old.find((o) => o.id === point.id)
           if (!row) throw AppError.badRequest("服务点不属于本项目")

@@ -13,7 +13,11 @@ interface MockAccount {
 }
 
 const allPermissions = Object.values(PERM)
+const executionPermissions = Object.values(PERM).filter((p) =>
+    /^service:(execution|participant|credential|evidence|exception):/.test(p),
+)
 const readBusiness = [
+    ...executionPermissions.filter((p) => p !== PERM.EXECUTION_CONFIGURE),
     PERM.RESOURCE,
     PERM.ACTIVITY,
     PERM.PLAN_VIEW,
@@ -73,6 +77,7 @@ const accounts: Record<string, MockAccount> = {
             dataScope: 'ALL',
             permissions: [
                 ...readBusiness,
+                PERM.EXECUTION_CONFIGURE,
                 PERM.MONTHLY_APPROVE,
                 PERM.ANALYSIS,
                 PERM.REPORT_VIEW,
@@ -112,6 +117,7 @@ const accounts: Record<string, MockAccount> = {
             permissions: [
                 ...readBusiness,
                 ...reportBusiness,
+                PERM.EXECUTION_CONFIGURE,
                 PERM.MONTHLY_APPROVE,
                 PERM.SERVICE_MONITOR,
                 PERM.SERVICE_ARCHIVE,

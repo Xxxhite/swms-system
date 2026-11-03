@@ -8,6 +8,7 @@ export interface MenuNode {
     title: string
     /** 功能权限码；不填表示任何登录用户都能看到 */
     permission?: string
+    layout?: 'field'
     children?: MenuNode[]
 }
 
@@ -25,6 +26,12 @@ export const menuTree: MenuNode[] = [
                 path: '/service/contract-package-projects',
                 title: '合同包项目管理',
                 permission: PERM.PROJECT_RECORD_VIEW,
+            },
+            {
+                path: '/field/tasks',
+                title: '手机现场',
+                permission: PERM.EXECUTION_VIEW,
+                layout: 'field',
             },
             { path: '/service/plans', title: '阶段计划', permission: PERM.PLAN_VIEW },
             { path: '/service/records', title: '服务档案填报', permission: PERM.MONTHLY_VIEW },
@@ -107,12 +114,15 @@ export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
         '/system/roles': () => import('@/views/system/roles/index.vue'),
         '/system/logs': () => import('@/views/system/audit/index.vue'),
     }
-    const routes: RouteRecordRaw[] = flattenMenu(nodes).map(({ node, parents }) => ({
-        path: node.path,
-        name: `menu:${node.path}`,
-        component: pages[node.path] ?? (() => import('@/views/placeholder/ModulePlaceholder.vue')),
-        meta: { title: node.title, parents },
-    }))
+    const routes: RouteRecordRaw[] = flattenMenu(nodes)
+        .filter(({ node }) => node.layout !== 'field')
+        .map(({ node, parents }) => ({
+            path: node.path,
+            name: `menu:${node.path}`,
+            component:
+                pages[node.path] ?? (() => import('@/views/placeholder/ModulePlaceholder.vue')),
+            meta: { title: node.title, parents },
+        }))
     if (routes.some((route) => route.path === '/service/contract-package-projects'))
         routes.push({
             path: '/service/contract-package-projects/:id',
@@ -163,6 +173,12 @@ export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
 /** 不需要登录的路由 */
 export const publicRoutes: RouteRecordRaw[] = [
     {
+        path: '/participation',
+        name: 'Participation',
+        component: () => import('@/views/participation/index.vue'),
+        meta: { title: '参与确认', public: true },
+    },
+    {
         path: '/register',
         name: 'Register',
         component: () => import('@/views/register/index.vue'),
@@ -189,3 +205,37 @@ export const publicRoutes: RouteRecordRaw[] = [
 ]
 
 export const LAYOUT_NAME = 'Layout'
+export const FIELD_LAYOUT_NAME = 'FieldLayout'
+export function fieldRoutes(permissions: string[]): RouteRecordRaw[] {
+    if (!permissions.includes(PERM.EXECUTION_VIEW)) return []
+    const children: RouteRecordRaw[] = [
+        {
+            path: 'tasks',
+            name: 'FieldTasks',
+            component: () => import('@/views/field/index.vue'),
+            meta: { title: '我的现场任务' },
+        },
+        {
+            path: 'tasks/:id',
+            name: 'FieldTaskDetail',
+            component: () => import('@/views/field/detail.vue'),
+            meta: { title: '现场任务' },
+        },
+    ]
+    if (permissions.includes(PERM.EXCEPTION_VIEW))
+        children.push({
+            path: 'exceptions',
+            name: 'FieldExceptions',
+            component: () => import('@/views/field/exceptions.vue'),
+            meta: { title: '异常与核验' },
+        })
+    return [
+        {
+            path: '/field',
+            name: FIELD_LAYOUT_NAME,
+            component: () => import('@/layouts/FieldLayout.vue'),
+            redirect: '/field/tasks',
+            children,
+        },
+    ]
+}

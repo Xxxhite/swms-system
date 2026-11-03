@@ -322,6 +322,8 @@ function eventSnapshot(data: BusinessState, value: unknown) {
   }
 }
 function taskDto(data: BusinessState, actor: Actor, t: Task) {
+  const execution = data.executions.sessions.find((e) => e.taskId === t.id)
+
   const staffRows = data.scheduling.staff.filter((s) => s.taskId === t.id)
   const eligible = qualifiedStaff(
     data,
@@ -373,7 +375,7 @@ function taskDto(data: BusinessState, actor: Actor, t: Task) {
   const can = (permission: string) => {
     try {
       taskManage(data, actor, t.projectId, t.teamId, permission)
-      return t.status === "SCHEDULED"
+      return t.status === "SCHEDULED" && !execution
     } catch {
       return false
     }
@@ -382,7 +384,19 @@ function taskDto(data: BusinessState, actor: Actor, t: Task) {
     ...t,
     requestKey: undefined,
     batchFingerprint: undefined,
-    ...taskState(t.status === "CANCELED"),
+    ...taskState(
+      t.status === "CANCELED",
+      execution
+        ? {
+            started: true,
+            ended: execution.status !== "IN_PROGRESS",
+            required: 0,
+            approved: 0,
+            pending: 0,
+            rejected: 0,
+          }
+        : undefined,
+    ),
     overdue: t.status === "SCHEDULED" && t.endAt < new Date(),
     needsRearrangement,
     staffIds: staffRows.map((s) => s.userId),
@@ -531,6 +545,8 @@ export class TaskService {
   ) {
     return this.repository.write(actor, async (tx, data, current) => {
       const old = findTask(data, current, id)
+      if (data.executions.sessions.some((e) => e.taskId === id))
+        throw AppError.conflict("服务已有现场来源，原安排保持不变")
       assertVersion(old.version, input.version)
       const { version, reason, previewToken, conflictReason, ...fields } = input
       void version
@@ -566,6 +582,8 @@ export class TaskService {
       const t = findTask(data, current, id)
       taskManage(data, current, t.projectId, t.teamId, "activity:task:cancel")
       assertVersion(t.version, version)
+      if (data.executions.sessions.some((e) => e.taskId === id))
+        throw AppError.conflict("已有现场执行，请使用现场中止或后续核验流程")
       if (t.status !== "SCHEDULED") throw AppError.conflict("任务已取消")
       await tx.scheduling.tasks.update(id, { status: "CANCELED", version: t.version + 1 })
       await tx.scheduling.events.insert({

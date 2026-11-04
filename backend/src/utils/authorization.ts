@@ -8,6 +8,7 @@ export type SafeUser = Omit<User, "passwordHash">
 export interface CurrentUser {
   isSupervisor?: boolean
   isDevSuperadmin?: boolean
+  superadminMode?: "development" | "testing" | null
   serviceFieldCodes?: string[]
   id: number
   username: string

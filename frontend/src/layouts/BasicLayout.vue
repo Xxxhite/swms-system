@@ -122,7 +122,9 @@ async function handleCommand(command: string): Promise<void> {
                     <el-tag v-if="!isNarrow" type="warning" effect="plain">
                         {{
                             userStore.profile?.isDevSuperadmin
-                                ? '开发超级管理员'
+                                ? userStore.profile.superadminMode === 'testing'
+                                    ? '测试超级管理员'
+                                    : '开发超级管理员'
                                 : userStore.dataScopeText
                         }}
                     </el-tag>

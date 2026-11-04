@@ -69,7 +69,8 @@ BUN_INSTALL="$APP_ROOT/runtime/bun" bash "$APP_ROOT/runtime/install-bun.sh" "bun
 记录发布提交号；未提交的工作区快照需另外标注并记录包校验值。
 
 现场执行启用时，先备份数据库及合同、现场凭证目录，再停写应用并核对待执行迁移。
-`db:migrate` 应用发布包中全部待执行迁移；B1、B2尚未启用的环境会一并升级至0007。
+`db:migrate` 应用发布包中全部待执行迁移；尚未启用B1—B4的环境会一并升级至0008，
+目标为58张业务表、9条迁移。旧指标默认人工申报，既有档案与批准数量保留。
 既有角色的现场动作使用 `bun run db:seed:execution-permissions` 预览，核对差异后追加
 `--apply`；资源和任务权限分别使用对应的显式脚本。保留既有自定义授权。
 
@@ -80,6 +81,16 @@ BUN_INSTALL="$APP_ROOT/runtime/bun" bash "$APP_ROOT/runtime/install-bun.sh" "bun
 手机现场通过HTTPS域名访问，验收Android Chrome的允许／拒绝定位、相机文件选择、个人二维码、
 弱网重试、返回与刷新。普通局域网HTTP地址的定位权限受浏览器安全上下文限制；本机模拟验收和
 Android真机HTTPS验收分别记录。公开参与页和工作人员页均使用同源 `/api`。
+
+### 服务器测试超级管理员
+
+需要全局业务测试时，在共享环境文件中显式配置 `TEST_SUPERADMIN_USERNAME=admin`，保持
+`NODE_ENV=production`。仅精确匹配、账号启用且拥有启用admin角色的用户获得测试超管。
+角色与动作码继续生效，实际直接主管审批、岗位资格与现场分派按原业务规则执行。
+界面显示“测试超级管理员”；既有开发开关 `DEV_SUPERADMIN_USERNAME` 仍在生产环境忽略。
+
+配置修改后重启服务；测试结束后清空 `TEST_SUPERADMIN_USERNAME` 并重启，收回额外范围。
+不需要修改人员岗位、直接主管、密码或数据库中的业务数据。
 
 仓库根目录的 PowerShell 示例：
 

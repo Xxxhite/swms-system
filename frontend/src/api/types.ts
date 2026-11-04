@@ -34,6 +34,7 @@ export interface CurrentUser {
     orgName: string | null
     isSupervisor?: boolean
     isDevSuperadmin?: boolean
+    superadminMode?: 'development' | 'testing' | null
     serviceFieldCodes?: string[]
     positionCode: string | null
     supervisorId: number | null

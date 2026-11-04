@@ -51,6 +51,16 @@ export function actorFrom(state: IdentityState, user: User): Actor {
     ? state.managed.filter((item) => item.userId === user.id).map((item) => item.orgId)
     : []
   const team = active ? teamFor(state.orgs, user.orgId) : undefined
+  const developmentSuperadmin =
+    active &&
+    env.nodeEnv !== "production" &&
+    !!env.devSuperadminUsername &&
+    user.username === env.devSuperadminUsername
+  const testingSuperadmin =
+    active &&
+    !!env.testSuperadminUsername &&
+    user.username === env.testSuperadminUsername &&
+    assigned.some((role) => role.code === "admin")
   // TEAM/SUBTREE 展开成组织 ID 集合供列表和详情复用；SELF 直接按人员 ID 校验。
   const orgIds = unassigned
     ? []
@@ -76,11 +86,9 @@ export function actorFrom(state: IdentityState, user: User): Actor {
       teamName: team?.name ?? null,
       isSupervisor: active && user.isSupervisor,
       serviceFieldCodes: user.serviceFieldCodes ?? [],
-      isDevSuperadmin:
-        active &&
-        env.nodeEnv !== "production" &&
-        !!env.devSuperadminUsername &&
-        user.username === env.devSuperadminUsername,
+      // 保留既有业务范围判断字段；展示模式明确区分开发与测试授权。
+      isDevSuperadmin: developmentSuperadmin || testingSuperadmin,
+      superadminMode: testingSuperadmin ? "testing" : developmentSuperadmin ? "development" : null,
       positionCode: active ? user.positionCode : null,
       supervisorId: active ? user.supervisorId : null,
       managedOrgIds,

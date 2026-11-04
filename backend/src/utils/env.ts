@@ -17,6 +17,8 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   // 仅开发环境中显式指定的启用账号可全局查看、维护项目和填写服务档案。
   devSuperadminUsername: process.env.DEV_SUPERADMIN_USERNAME?.trim() ?? "",
+  // 显式测试授权仅作用于拥有启用管理员角色的指定账号，可用于生产部署的测试。
+  testSuperadminUsername: process.env.TEST_SUPERADMIN_USERNAME?.trim() ?? "",
   // 线上由本机 Nginx 转发；显式指定 HOST 可调整监听地址。
   host: process.env.HOST?.trim() || "127.0.0.1",
   port: toPositiveInt(process.env.PORT, 3000),

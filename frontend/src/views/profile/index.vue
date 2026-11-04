@@ -91,8 +91,14 @@ const { isMobile } = useViewport()
             <el-descriptions-item label="督导身份">
                 {{ store.profile?.isSupervisor ? '是' : '否' }}
             </el-descriptions-item>
-            <el-descriptions-item label="开发超级管理员">
-                {{ store.profile?.isDevSuperadmin ? '已启用' : '未启用' }}
+            <el-descriptions-item label="超级管理员">
+                {{
+                    store.profile?.isDevSuperadmin
+                        ? store.profile.superadminMode === 'testing'
+                            ? '测试授权已启用'
+                            : '开发授权已启用'
+                        : '未启用'
+                }}
             </el-descriptions-item>
             <el-descriptions-item label="数据范围">{{ store.dataScopeText }}</el-descriptions-item>
         </el-descriptions>

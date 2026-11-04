@@ -628,6 +628,75 @@ export function registerProjectTests(
         .set({ dataScope: "TEAM" })
         .where(eq(s.users.id, socialId))
     })
+    test("生产测试超管须显式指定启用管理员，关闭和角色撤销即时收回", async () => {
+      const original = {
+          nodeEnv: env.nodeEnv,
+          devSuperadminUsername: env.devSuperadminUsername,
+          testSuperadminUsername: env.testSuperadminUsername,
+        },
+        database = context().database
+      const [adminUser] = await database.select().from(s.users).where(eq(s.users.username, "admin"))
+      const [role] = await database.select().from(s.roles).where(eq(s.roles.code, "admin"))
+      const grants = await database
+        .select()
+        .from(s.userRoles)
+        .where(eq(s.userRoles.userId, adminUser!.id))
+      try {
+        Object.assign(env, {
+          nodeEnv: "production",
+          devSuperadminUsername: "admin",
+          testSuperadminUsername: "",
+        })
+        expect((await request("/auth/profile", "GET", admin)).data.superadminMode).toBeNull()
+        Object.assign(env, { testSuperadminUsername: "admin" })
+        const profile = (await request("/auth/profile", "GET", admin)).data
+        expect(profile.isDevSuperadmin).toBe(true)
+        expect(profile.superadminMode).toBe("testing")
+        expect((await request(base, "GET", admin)).data.total).toBe(3)
+        expect((await request(`${base}/candidates`, "GET", admin)).code).toBe(0)
+        const tasks = (await request("/approvals/tasks?pageSize=100", "GET", admin)).data.list
+        expect(tasks.length).toBeGreaterThan(0)
+        expect(tasks.every((t: { canDecide: boolean }) => !t.canDecide)).toBe(true)
+        expect(
+          (
+            await request(`/approvals/tasks/${tasks[0].id}/approve`, "POST", admin, {
+              version: tasks[0].version,
+            })
+          ).code,
+        ).not.toBe(0)
+        Object.assign(env, { testSuperadminUsername: "social" })
+        expect((await request("/auth/profile", "GET", social)).data.isDevSuperadmin).toBe(false)
+        Object.assign(env, { testSuperadminUsername: "admin" })
+        await database.delete(s.userRoles).where(eq(s.userRoles.userId, adminUser!.id))
+        expect((await request("/auth/profile", "GET", admin)).data.isDevSuperadmin).toBe(false)
+        await database.insert(s.userRoles).values(grants)
+        await database.update(s.roles).set({ status: "DISABLED" }).where(eq(s.roles.id, role!.id))
+        expect((await request("/auth/profile", "GET", admin)).data.isDevSuperadmin).toBe(false)
+        await database.update(s.roles).set({ status: "ACTIVE" }).where(eq(s.roles.id, role!.id))
+        expect((await request("/auth/profile", "GET", admin)).data.isDevSuperadmin).toBe(true)
+        await database
+          .update(s.users)
+          .set({ status: "DISABLED" })
+          .where(eq(s.users.id, adminUser!.id))
+        expect((await request("/auth/profile", "GET", admin)).code).not.toBe(0)
+        await database
+          .update(s.users)
+          .set({ status: "ACTIVE" })
+          .where(eq(s.users.id, adminUser!.id))
+        Object.assign(env, { testSuperadminUsername: "" })
+        expect((await request("/auth/profile", "GET", admin)).data.isDevSuperadmin).toBe(false)
+        expect((await request(base, "GET", admin)).data.total).toBe(0)
+      } finally {
+        Object.assign(env, original)
+        await database
+          .update(s.users)
+          .set({ status: "ACTIVE" })
+          .where(eq(s.users.id, adminUser!.id))
+        await database.update(s.roles).set({ status: "ACTIVE" }).where(eq(s.roles.id, role!.id))
+        await database.delete(s.userRoles).where(eq(s.userRoles.userId, adminUser!.id))
+        if (grants.length) await database.insert(s.userRoles).values(grants)
+      }
+    })
     test("开发超管可新增维护和跨团队填报，负责人资格与直接主管审批保留", async () => {
       const original = env.devSuperadminUsername,
         originalNodeEnv = env.nodeEnv

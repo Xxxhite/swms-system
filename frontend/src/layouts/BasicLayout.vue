@@ -244,6 +244,9 @@ async function handleCommand(command: string): Promise<void> {
     }
 }
 @media (max-width: 767px) {
+    .layout__menu-button {
+        min-height: 36px;
+    }
     .layout__user {
         min-height: 44px;
     }

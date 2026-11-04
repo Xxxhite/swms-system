@@ -284,18 +284,19 @@ body {
     .mobile-record-card .el-button {
         margin-left: 0;
     }
-    .el-button {
-        min-height: 44px;
-        min-width: 44px;
+    body .el-button {
+        min-height: 36px;
+        min-width: 36px;
         max-width: 100%;
         height: auto;
+        padding: 8px 12px;
         white-space: normal;
     }
     .el-button + .el-button {
         margin-left: 0;
     }
-    .el-button.is-link {
-        padding: 8px 6px;
+    body .el-button.is-link {
+        padding: 4px;
     }
     .el-input__wrapper,
     .el-select__wrapper,
@@ -514,7 +515,7 @@ body {
         max-width: 100%;
     }
     .el-table .el-button {
-        min-width: 44px;
+        min-width: 36px;
     }
     .el-table .cell {
         overflow-wrap: anywhere;

@@ -1,3 +1,4 @@
+import { outcomeTaskState } from "@/modules/outcome/outcome.status"
 import {
   projectRepository,
   type ProjectRepository,
@@ -17,7 +18,6 @@ import {
   instant,
   occurrences,
   overlaps,
-  taskState,
   type Recurrence,
 } from "./task-calendar"
 import { taskManage, taskReadable, qualifiedStaff } from "./task.authorization"
@@ -384,20 +384,8 @@ function taskDto(data: BusinessState, actor: Actor, t: Task) {
     ...t,
     requestKey: undefined,
     batchFingerprint: undefined,
-    ...taskState(
-      t.status === "CANCELED",
-      execution
-        ? {
-            started: true,
-            ended: execution.status !== "IN_PROGRESS",
-            required: 0,
-            approved: 0,
-            pending: 0,
-            rejected: 0,
-          }
-        : undefined,
-    ),
-    overdue: t.status === "SCHEDULED" && t.endAt < new Date(),
+    ...outcomeTaskState(data, t.id),
+    overdue: outcomeTaskState(data, t.id).state === "SCHEDULED" && t.endAt < new Date(),
     needsRearrangement,
     staffIds: staffRows.map((s) => s.userId),
     staff: staffRows.map((s) => ({

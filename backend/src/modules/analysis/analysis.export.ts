@@ -56,5 +56,8 @@ export async function exportIndicators(rows: Rows): Promise<Uint8Array> {
   note.addRow(["合同、团队与本人记录分别展示，不将分层记录重复相加。"])
   note.addRow(["按现有有效记录回算，草稿及撤销记录不计累计；不同单位及口径不得混合。"])
   note.addRow(["数量为精确十进制文本，完成率为百分数；本人局部记录不计算团队完成率。"])
+  note.addRow([
+    "人数按对象编号去重；工作人员小时按人员实际时段取并集。月度与团队结果不能直接相加为合同累计。",
+  ])
   return new Uint8Array(await book.xlsx.writeBuffer())
 }

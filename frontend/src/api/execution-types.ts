@@ -26,7 +26,7 @@ export interface Evidence {
     contentType: string
     uploadedBy: number
     sha256: string
-    boundKind: 'STAFF' | 'PARTICIPATION' | 'EXCEPTION' | null
+    boundKind: 'STAFF' | 'PARTICIPATION' | 'EXCEPTION' | 'OUTCOME' | null
     boundId: number | null
     createdAt: string
 }
@@ -137,6 +137,7 @@ export interface ExecutionDetail {
     participationEvents: ParticipationEvent[]
     exceptions: ExecutionException[]
     canRecord: boolean
+    canOrganize: boolean
     canConfigure: boolean
     canStart: boolean
     canCheckIn: boolean

@@ -243,7 +243,7 @@ export const executionEvidence = mysqlTable(
     sha256: varchar("sha256", { length: 64 }).notNull(),
     storageKey: varchar("storage_key", { length: 64 }).notNull().unique(),
     requestKey: varchar("request_key", { length: 64 }).notNull(),
-    boundKind: mysqlEnum("bound_kind", ["STAFF", "PARTICIPATION", "EXCEPTION"]),
+    boundKind: mysqlEnum("bound_kind", ["STAFF", "PARTICIPATION", "EXCEPTION", "OUTCOME"]),
     boundId: int("bound_id", { unsigned: true }),
     deletedAt: datetime("deleted_at", { mode: "date", fsp: 3 }),
     ...businessTimestamps(),

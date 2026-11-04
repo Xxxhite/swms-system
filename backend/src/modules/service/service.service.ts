@@ -1,3 +1,5 @@
+import { calculationRule } from "@/modules/outcome/outcome.source"
+import { sourceActual } from "@/modules/outcome/outcome.statistics"
 import { matchesRecordChange } from "@/modules/approval/approval-link"
 import * as s from "@/db/schema"
 import { requirePermission, assertVersion, type Actor } from "@/utils/authorization"
@@ -23,7 +25,7 @@ import {
 } from "@/modules/project/project.service"
 import { sortRows, sortDecimal } from "@/utils/list-sort"
 import { pageResult, type BusinessQuery } from "@/modules/project/project.validation"
-import { businessToday, sumValues, indicatorWarning } from "./indicator-calculation"
+import { businessToday, indicatorWarning } from "./indicator-calculation"
 import { actorFrom } from "@/modules/identity/identity.service"
 import type { MonthlyInput } from "./service.validation"
 export type Monthly = typeof s.monthlyReports.$inferSelect
@@ -120,6 +122,17 @@ export function reportDto(data: BusinessState, r: Monthly, actor: Actor) {
           )))
   return {
     ...r,
+    outcome:
+      data.outcomes.links
+        .filter((l) => l.recordId === r.id)
+        .map((l) => ({
+          taskId: l.taskId,
+          outcomeId: l.outcomeId,
+          snapshotId: l.draftSnapshotId,
+          sourceChanged:
+            data.outcomes.snapshots.find((s) => s.id === l.draftSnapshotId)?.sourceVersion !==
+            data.executions.sessions.find((s) => s.taskId === l.taskId)?.sourceVersion,
+        }))[0] ?? null,
     canMaintain:
       !!project &&
       (canMaintainProject(actor, project) ||
@@ -309,6 +322,13 @@ export class ServiceService {
           "请使用当前唯一负责的合同包项目填报",
         )
       }
+      if (id && data.outcomes.links.some((l) => l.recordId === id))
+        throw AppError.conflict("任务来源档案请在任务整理中维护")
+      if (
+        !id &&
+        (calculationRule(data, input.indicatorId, input.serviceDate)?.mode ?? "MANUAL") !== "MANUAL"
+      )
+        throw AppError.conflict("该指标已启用自动口径，请从任务生成档案")
       decimalUnits(input.actualValue)
       const payload = {
         indicatorId: input.indicatorId,
@@ -372,6 +392,8 @@ export class ServiceService {
     return this.repository.write(actor, async (tx, data, current) => {
       const r = data.reports.find((r) => r.id === id)
       if (!r) throw AppError.notFound()
+      if (data.outcomes.links.some((l) => l.recordId === id))
+        throw AppError.conflict("任务来源档案请使用任务整理提交或更正")
       const { project, indicator, contract } = maintainReport(
         data,
         current,
@@ -542,20 +564,17 @@ export class ServiceService {
         month: asOfDate.slice(0, 7),
         calculationNote: "按现有有效记录回算",
       }
+      const visibleReports = data.reports.filter((r) => canReadReport(data, actor, r))
       const actual = (teamId?: number, monthOnly = false) =>
-        sumValues(
-          data.reports
-            .filter(
-              (r) =>
-                r.indicatorId === indicator.id &&
-                (!teamId || r.teamId === teamId) &&
-                canReadReport(data, actor, r) &&
-                r.status === "SUBMITTED" &&
-                (!r.serviceDate || r.serviceDate <= asOfDate) &&
-                (monthOnly ? r.month === asOfDate.slice(0, 7) : r.month <= asOfDate.slice(0, 7)),
-            )
-            .map((r) => r.actualValue),
-        )
+        sourceActual(data, visibleReports, indicator.id, teamId, asOfDate, monthOnly).value
+      base.calculationNote = sourceActual(
+        data,
+        visibleReports,
+        indicator.id,
+        undefined,
+        asOfDate,
+        false,
+      ).note
       if (!q.teamId && fullProject(data, actor, p)) {
         const cumulative = actual()
         rows.push({

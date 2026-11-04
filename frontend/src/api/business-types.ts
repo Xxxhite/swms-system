@@ -1,3 +1,4 @@
+import type { OutcomeSource, OutcomeDecision } from './outcome-types'
 import type { SortQuery } from '@/utils/tableSort'
 
 export interface BusinessQuery extends SortQuery {
@@ -128,6 +129,11 @@ export interface ApprovalInstance {
     applicantId: number
     status: string
     businessSnapshot: Record<string, unknown>
+    outcome?: {
+        snapshotId: number
+        source: OutcomeSource
+        review: { value: string; mode: string; decisions: OutcomeDecision[]; reason: string } | null
+    }
     workflowSnapshot: unknown
     tasks?: ApprovalTask[]
     records?: Array<{
@@ -150,6 +156,12 @@ export interface ApprovalTask {
     instance?: ApprovalInstance
 }
 export interface Monthly extends Omit<MonthlyInput, 'serviceDate'> {
+    outcome?: {
+        taskId: number
+        outcomeId: number
+        snapshotId: number | null
+        sourceChanged: boolean
+    } | null
     serviceDate: string | null
     createdAt: string
     legacyReportId?: number | null

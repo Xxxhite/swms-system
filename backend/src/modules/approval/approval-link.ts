@@ -19,6 +19,8 @@ export function isHandledApproval(
   data: BusinessState,
   instance: { businessType: string; businessId: number },
 ): boolean {
+  if (instance.businessType === "TASK_SUMMARY")
+    return data.outcomes.outcomes.some((o) => o.id === instance.businessId)
   if (instance.businessType === "SERVICE_SUBMISSION")
     return data.reports.some((r) => r.id === instance.businessId)
   return data.changes.some((c) => matchesRecordChange(data, instance, c))

@@ -1,3 +1,5 @@
+import { OutcomeReviewService } from "@/modules/outcome/outcome.review"
+import { outcomeDecisions, outcomeReviewBody } from "@/modules/outcome/outcome.validation"
 import { Elysia, t } from "elysia"
 import { createAuthentication } from "@/plugins/auth"
 import { identityService, type IdentityService } from "@/modules/identity/identity.service"
@@ -10,10 +12,13 @@ export function createApprovalRoutes(
   repository: ProjectRepository = projectRepository,
   identities: IdentityService = identityService,
 ) {
+  const reviews = new OutcomeReviewService(repository)
   const service = new ApprovalService(repository),
     body = t.Object({
       version: t.Integer({ minimum: 1 }),
       comment: t.Optional(t.String({ maxLength: 1000 })),
+      decisions: t.Optional(outcomeDecisions),
+      previewToken: t.Optional(t.String({ maxLength: 64 })),
     })
   return new Elysia({ prefix: "/approvals", tags: ["审批"] })
     .use(createAuthentication(identities))
@@ -28,9 +33,22 @@ export function createApprovalRoutes(
       { params: idParam },
     )
     .post(
+      "/tasks/:id/outcome-preview",
+      async ({ authenticate, params, body }) =>
+        ok(await reviews.preview(await authenticate(), params.id, body)),
+      { params: idParam, body: outcomeReviewBody },
+    )
+    .post(
       "/tasks/:id/approve",
       async ({ authenticate, params, body }) =>
-        ok(await service.decide(await authenticate(), params.id, body.version, true, body.comment)),
+        ok(
+          await service.decide(await authenticate(), params.id, body.version, true, body.comment, {
+            version: body.version,
+            decisions: body.decisions ?? [],
+            comment: body.comment,
+            previewToken: body.previewToken,
+          }),
+        ),
       { params: idParam, body },
     )
     .post(

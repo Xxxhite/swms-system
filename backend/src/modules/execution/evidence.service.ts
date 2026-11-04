@@ -1,3 +1,4 @@
+import { outcomeAccess } from "@/modules/outcome/outcome.authorization"
 import { mkdir, unlink } from "node:fs/promises"
 import { basename, resolve } from "node:path"
 import {
@@ -40,6 +41,21 @@ export function evidenceAllowed(data: BusinessState, actor: Actor, f: Evidence) 
   if (!t) return false
   if (!f.boundKind) return f.uploadedBy === actor.user.id && canDetail(data, actor, t)
   if (canDetail(data, actor, t)) return true
+  if (
+    data.outcomes.snapshots.some(
+      (frame) =>
+        frame.data.evidence.some((file) => file.id === f.id) &&
+        data.instances.some(
+          (i) =>
+            (i.businessSnapshot as Record<string, unknown>).outcomeSnapshotId === frame.id &&
+            (i.applicantId === actor.user.id ||
+              data.tasks.some(
+                (task) => task.instanceId === i.id && task.approverId === actor.user.id,
+              )),
+        ),
+    )
+  )
+    return true
   return data.executions.exceptions.some(
     (e) =>
       e.taskId === f.taskId &&
@@ -65,7 +81,7 @@ export class EvidenceService {
         .map(evidenceDto)
     })
   }
-  async upload(actor: Actor, taskId: number, file: File, requestKey: string) {
+  async upload(actor: Actor, taskId: number, file: File, requestKey: string, forOutcome = false) {
     if (!file.size || file.size > env.executionUploadMaxBytes)
       throw AppError.badRequest("现场凭证须大于0且不超过配置的大小上限")
     const name = basename(file.name.replaceAll("\\", "/"))
@@ -88,24 +104,27 @@ export class EvidenceService {
           now = this.now()
         if (t.status === "CANCELED" && !session)
           throw AppError.conflict("任务已取消且没有可补录的执行来源")
-        const at = new Date(
-          Math.min(Math.max(now.getTime(), t.startAt.getTime()), t.endAt.getTime() - 1),
-        )
-        assigned(
-          data,
-          current,
-          t,
-          "service:evidence:upload",
-          at,
-          !!session && session.status !== "IN_PROGRESS",
-        )
-        if (
-          session &&
-          (session.status !== "IN_PROGRESS" ||
-            now.getTime() > t.endAt.getTime() + policyFor(data, t).afterMinutes * 60000)
-        )
-          supplementTime(data, t, session.status === "STOPPED" ? session.endedAt! : at, now)
-        else withinWindow(t, policyFor(data, t), now)
+        if (forOutcome) outcomeAccess(data, current, taskId, "service:monthly:update", true)
+        else {
+          const at = new Date(
+            Math.min(Math.max(now.getTime(), t.startAt.getTime()), t.endAt.getTime() - 1),
+          )
+          assigned(
+            data,
+            current,
+            t,
+            "service:evidence:upload",
+            at,
+            !!session && session.status !== "IN_PROGRESS",
+          )
+          if (
+            session &&
+            (session.status !== "IN_PROGRESS" ||
+              now.getTime() > t.endAt.getTime() + policyFor(data, t).afterMinutes * 60000)
+          )
+            supplementTime(data, t, session.status === "STOPPED" ? session.endedAt! : at, now)
+          else withinWindow(t, policyFor(data, t), now)
+        }
         const old = data.executions.evidence.find(
           (f) => f.uploadedBy === current.user.id && f.requestKey === requestKey,
         )

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import OutcomeReview from '@/views/activity/components/OutcomeReview.vue'
+import { outcomeApi } from '@/api/modules/outcome'
+import type { OutcomePreview } from '@/api/outcome-types'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -19,6 +22,24 @@ const busy = ref(false),
     selected = ref<ApprovalTask>(),
     detail = ref<ApprovalInstance>(),
     comment = ref('')
+const outcomeReview = ref<InstanceType<typeof OutcomeReview>>(),
+    preview = ref<OutcomePreview>()
+async function previewOutcome() {
+    if (!selected.value || !outcomeReview.value) return
+    if (!outcomeReview.value.complete()) {
+        ElMessage.warning('请完成所有来源的核验决定和依据')
+        return
+    }
+    try {
+        preview.value = await outcomeApi.preview(selected.value.id, {
+            version: selected.value.version,
+            decisions: outcomeReview.value.decisions(),
+            comment: comment.value,
+        })
+    } catch {
+        /* 请求层提示 */
+    }
+}
 const { setTableRef, defaultSort, onSortChange, resetSort } = useTableSort(
     query,
     'createdAt',
@@ -42,6 +63,7 @@ function reset() {
 /** 打开审批时重新读取不可变业务快照及当次意见历史。 */
 async function open(row: ApprovalTask) {
     try {
+        preview.value = undefined
         selected.value = row
         detail.value = await approvalApi.detail(row.instanceId)
         comment.value = ''
@@ -58,9 +80,27 @@ async function decide(approved: boolean) {
         return
     }
     const task = selected.value
+    if (approved && detail.value?.outcome && !preview.value) {
+        ElMessage.warning('请先完成来源核验并预览核定量')
+        return
+    }
+    if (approved && preview.value?.difference && !comment.value.trim()) {
+        ElMessage.warning('请填写核定数量差异说明')
+        return
+    }
     busy.value = true
     try {
-        await approvalApi.decide(task, approved, comment.value)
+        await approvalApi.decide(
+            task,
+            approved,
+            comment.value,
+            approved && detail.value?.outcome && preview.value
+                ? {
+                      decisions: outcomeReview.value?.decisions() ?? [],
+                      previewToken: preview.value.previewToken,
+                  }
+                : undefined,
+        )
         taskList.applyDecision(task.id, approved)
         dialog.value = false
         ElMessage.success('审批已处理')
@@ -230,10 +270,27 @@ const { isMobile } = useViewport()
                         />
                     </el-form-item>
                 </el-form>
+                <OutcomeReview
+                    v-if="detail.outcome"
+                    ref="outcomeReview"
+                    :source="detail.outcome.source"
+                    :decisions="detail.outcome.review?.decisions"
+                    :editable="selected?.status === 'PENDING' && selected.canDecide !== false"
+                    @changed="preview = undefined"
+                />
+                <el-alert
+                    v-if="preview"
+                    :title="`申报量${preview.declaredValue}，核定量${preview.value}${preview.difference ? '；存在差异，请填写审批意见' : ''}`"
+                    :closable="false"
+                    :type="preview.difference ? 'warning' : 'success'"
+                />
             </template>
             <template #footer>
                 <el-button @click="dialog = false">关闭</el-button>
                 <template v-if="selected?.status === 'PENDING' && selected.canDecide !== false">
+                    <el-button v-if="detail?.outcome" :loading="busy" @click="previewOutcome">
+                        预览核定量
+                    </el-button>
                     <el-button type="danger" :loading="busy" @click="decide(false)">驳回</el-button>
                     <el-button type="primary" :loading="busy" @click="decide(true)">通过</el-button>
                 </template>

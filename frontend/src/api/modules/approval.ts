@@ -11,9 +11,18 @@ export const approvalApi = {
     tasks: (q: BusinessQuery): Promise<PageResult<ApprovalTask>> =>
         http.get('/approvals/tasks', queryParams(q)),
     detail: (id: number): Promise<ApprovalInstance> => http.get(`/approvals/instances/${id}`),
-    decide: (t: ApprovalTask, approved: boolean, comment: string) =>
+    decide: (
+        t: ApprovalTask,
+        approved: boolean,
+        comment: string,
+        outcome?: {
+            decisions: import('@/api/outcome-types').OutcomeDecision[]
+            previewToken: string
+        },
+    ) =>
         http.post(`/approvals/tasks/${t.id}/${approved ? 'approve' : 'reject'}`, {
             version: t.version,
             comment,
+            ...outcome,
         }),
 }

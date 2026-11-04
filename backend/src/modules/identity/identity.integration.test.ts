@@ -1,4 +1,6 @@
+import { createOutcomeRoutes } from "@/modules/outcome/outcome.route"
 import { registerExecutionTests } from "@/modules/execution/execution.integration"
+import { registerOutcomeTests } from "@/modules/outcome/outcome.integration"
 import { createExecutionRoutes } from "@/modules/execution/execution.route"
 import { createParticipationRoutes } from "@/modules/execution/participation.route"
 import { registerTaskTests } from "@/modules/task/task.integration"
@@ -86,6 +88,11 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "outcome_reviews",
+        "outcome_record_links",
+        "outcome_snapshots",
+        "task_outcomes",
+        "indicator_calculation_rules",
         "execution_exceptions",
         "execution_evidence",
         "execution_participations",
@@ -183,6 +190,11 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
             () => executionNow ?? new Date(),
           ),
           createTaskRoutes(new ProjectRepository(database), identities),
+          createOutcomeRoutes(
+            new ProjectRepository(database),
+            identities,
+            "./storage/integration-execution",
+          ),
           createPlanRoutes(new ProjectRepository(database), identities),
           createResourceRoutes(new ResourceRepository(database), identities),
           createProjectRoutes(new ProjectRepository(database), identities),
@@ -797,6 +809,13 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
   registerResourceTests(() => ({ database, handle }))
   registerTaskTests(() => ({ database, handle }))
   registerExecutionTests(() => ({
+    database,
+    handle,
+    setClock: (at: Date) => {
+      executionNow = at
+    },
+  }))
+  registerOutcomeTests(() => ({
     database,
     handle,
     setClock: (at: Date) => {

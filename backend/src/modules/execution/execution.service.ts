@@ -1,3 +1,4 @@
+import { outcomeTaskState } from "@/modules/outcome/outcome.status"
 import { pageResult } from "@/modules/project/project.validation"
 import {
   projectRepository,
@@ -8,7 +9,7 @@ import {
 import { requirePermission, assertVersion, type Actor } from "@/utils/authorization"
 import { managementPositions } from "@/modules/identity/identity.constants"
 import { qualifiedStaff } from "@/modules/task/task.authorization"
-import { businessDate, fingerprint, instant, taskState } from "@/modules/task/task-calendar"
+import { businessDate, fingerprint, instant } from "@/modules/task/task-calendar"
 import { businessAudit } from "@/utils/business-audit"
 import { AppError } from "@/utils/errors"
 import {
@@ -66,7 +67,6 @@ export class ExecutionService {
         )
         .sort((a, b) => b.startAt.getTime() - a.startAt.getTime() || b.id - a.id)
         .map((t) => {
-          const session = sessionFor(data, t.id)
           return {
             id: t.id,
             title: t.title,
@@ -78,19 +78,7 @@ export class ExecutionService {
             startAt: t.startAt,
             endAt: t.endAt,
             leaderId: t.leaderId,
-            state: taskState(
-              t.status === "CANCELED",
-              session
-                ? {
-                    started: true,
-                    ended: session.status !== "IN_PROGRESS",
-                    required: 0,
-                    approved: 0,
-                    pending: 0,
-                    rejected: 0,
-                  }
-                : undefined,
-            ).state,
+            state: outcomeTaskState(data, t.id).state,
           }
         })
       return pageResult(tasks, query)
@@ -177,19 +165,7 @@ export class ExecutionService {
             }
           : null,
         sourceVersion: session?.sourceVersion ?? 0,
-        state: taskState(
-          t.status === "CANCELED",
-          session
-            ? {
-                started: true,
-                ended: session.status !== "IN_PROGRESS",
-                required: 0,
-                approved: 0,
-                pending: 0,
-                rejected: 0,
-              }
-            : undefined,
-        ).state,
+        state: outcomeTaskState(data, t.id).state,
         summary: {
           registered: facts.length,
           requiresReview: facts.filter((f) => f.requiresReview).length,
@@ -233,6 +209,7 @@ export class ExecutionService {
           session?.status === "IN_PROGRESS" &&
           t.status !== "CANCELED",
         canConfigure,
+        canOrganize: detail && current.profile.permissions.includes("service:monthly:view"),
         canStart:
           normalWindow &&
           !session &&

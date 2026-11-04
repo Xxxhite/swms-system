@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CalculationRuleDialog from './components/CalculationRuleDialog.vue'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import { useViewport } from '@/composables/useViewport'
@@ -17,6 +18,7 @@ import {
 import 'element-plus/es/components/message/style/css'
 import { useUserStore } from '@/stores/user'
 import { projectApi } from '@/api/modules/project'
+import { useMock } from '@/api/config'
 import {
     businessStatus,
     projectCategories,
@@ -29,6 +31,16 @@ import {
 import ProjectForm from './components/ProjectForm.vue'
 import ContractResourcePicker from '@/views/resource/components/ContractResourcePicker.vue'
 defineOptions({ name: 'ProjectDetail' })
+const ruleOpen = ref(false),
+    ruleIndicator = ref<{ id: number; name: string; unit: string }>()
+function openCalculationRule(row: { id: number; name: string; unit: string }) {
+    if (useMock) {
+        ElMessage.info('计算口径设置请使用真实接口模式')
+        return
+    }
+    ruleIndicator.value = row
+    ruleOpen.value = true
+}
 const route = useRoute(),
     router = useRouter(),
     store = useUserStore()
@@ -723,6 +735,14 @@ const { isMobile } = useViewport()
                                 编辑
                             </el-button>
                             <el-button
+                                v-if="has('service:indicator:manage')"
+                                link
+                                type="primary"
+                                @click="openCalculationRule(row)"
+                            >
+                                计算口径
+                            </el-button>
+                            <el-button
                                 v-if="has('service:indicator:allocate')"
                                 link
                                 type="primary"
@@ -767,6 +787,7 @@ const { isMobile } = useViewport()
                 </p>
             </el-tab-pane>
         </el-tabs>
+        <CalculationRuleDialog v-model="ruleOpen" :indicator="ruleIndicator" />
         <el-dialog
             v-model="indicatorDialog"
             :title="selected ? '编辑指标' : '新增指标'"

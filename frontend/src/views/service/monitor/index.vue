@@ -239,6 +239,7 @@ onMounted(async () => {
                 />
                 <!-- @vue-generic {Progress} -->
                 <el-table-column prop="cumulative" sortable="custom" label="累计完成" width="110" />
+                <el-table-column prop="calculationNote" label="计算说明" min-width="210" />
                 <!-- @vue-generic {Progress} -->
                 <el-table-column prop="completionRate" sortable="custom" label="完成率" width="100">
                     <template #default="{ row }">

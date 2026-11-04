@@ -1,3 +1,5 @@
+import { outcomeFresh, outcomeAccess } from "@/modules/outcome/outcome.authorization"
+import { calculateOutcome } from "@/modules/outcome/outcome.calculation"
 import { matchesRecordChange } from "@/modules/approval/approval-link"
 import { actorFrom } from "@/modules/identity/identity.service"
 import { assertVersion, requirePermission, type Actor } from "@/utils/authorization"
@@ -39,10 +41,22 @@ export class MonthlyChangeService {
       if (!supervisor || supervisor.id === current.user.id)
         throw AppError.conflict("请先配置启用的直接主管，且不得自审")
       requirePermission(actorFrom(data.identity, supervisor), "service:monthly:approve")
+      const link = data.outcomes.links.find((l) => l.recordId === id),
+        frame = data.outcomes.snapshots.find((s) => s.id === link?.draftSnapshotId)
+      const sourceRule = frame?.data.rules.find((rule) => rule.indicatorId === r.indicatorId)
+      if (link) {
+        if (!frame || !sourceRule) throw AppError.conflict("请先重新整理任务来源")
+        outcomeAccess(data, current, link.taskId, "service:monthly:update", true)
+        outcomeFresh(data, frame)
+        if (sourceRule.mode === "MANUAL" && !frame.data.evidence.length)
+          throw AppError.badRequest("专业成果请附受控凭证")
+      }
       const value =
-        input.operation === "CORRECT"
-          ? decimalText(decimalUnits(input.actualValue ?? "invalid"))
-          : r.actualValue
+        link && frame && sourceRule && input.operation !== "DELETE"
+          ? calculateOutcome(frame.data, sourceRule.mode, [], sourceRule.manualValue).value
+          : input.operation === "CORRECT"
+            ? decimalText(decimalUnits(input.actualValue ?? "invalid"))
+            : r.actualValue
       const [change] = await tx.monthlyReportChanges.insert({
         reportId: id,
         operation: input.operation,
@@ -50,7 +64,7 @@ export class MonthlyChangeService {
         beforeValue: r.actualValue,
         beforeStatus: r.status,
         proposedValue: value,
-        proposedNote: input.note ?? r.note,
+        proposedNote: link && frame ? frame.data.summary.slice(0, 1000) : (input.note ?? r.note),
         reason: input.reason,
         applicantId: current.user.id,
         pendingReportId: id,
@@ -78,6 +92,14 @@ export class MonthlyChangeService {
           beforeValue: r.actualValue,
           proposedValue: value,
           reportVersion: r.version,
+          ...(link && frame
+            ? {
+                outcomeId: link.outcomeId,
+                outcomeRecordLinkId: link.id,
+                outcomeSnapshotId: frame.id,
+                taskId: link.taskId,
+              }
+            : {}),
           reason: input.reason,
         },
       })

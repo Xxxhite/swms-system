@@ -1,3 +1,4 @@
+import { createOutcomeRoutes } from "./outcome/outcome.route"
 import { createExecutionRoutes } from "./execution/execution.route"
 import { createParticipationRoutes } from "./execution/participation.route"
 import { createTaskRoutes } from "./task/task.route"
@@ -29,6 +30,7 @@ import { createSystemRoutes } from "./system/system.route"
 export const modules: AnyElysia[] = [
   createAuthRoutes(),
   createTaskRoutes(),
+  createOutcomeRoutes(),
   createExecutionRoutes(),
   createParticipationRoutes(),
   createPlanRoutes(),

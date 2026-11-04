@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -19,6 +20,7 @@ import { useMock } from '@/api/config'
 import { serviceApi } from '@/api/modules/service'
 import { businessStatus, type Monthly, type MonthlyInput } from '@/api/business-types'
 import { formatDateTime } from '@/utils/dateTime'
+const router = useRouter()
 const store = useUserStore(),
     rows = ref<Monthly[]>([]),
     total = ref(0),
@@ -380,11 +382,20 @@ onMounted(async () => {
                 <el-table-column label="操作" min-width="280" fixed="right">
                     <template #default="{ row }">
                         <el-button link type="primary" @click="showHistory(row)">详情</el-button>
+                        <el-button
+                            v-if="row.outcome"
+                            link
+                            type="primary"
+                            @click="router.push(`/activity/${row.outcome.taskId}`)"
+                        >
+                            来源整理
+                        </el-button>
                         <template
                             v-if="
                                 ['DRAFT', 'REJECTED'].includes(row.status) &&
                                 row.canMaintain &&
-                                !row.legacyReportId
+                                !row.legacyReportId &&
+                                !row.outcome
                             "
                         >
                             <el-button
@@ -446,7 +457,9 @@ onMounted(async () => {
                         </el-button>
                         <template
                             v-else-if="
-                                row.canMaintain && !row.changes.some((c) => c.pendingReportId)
+                                row.canMaintain &&
+                                !row.outcome &&
+                                !row.changes.some((c) => c.pendingReportId)
                             "
                         >
                             <el-tooltip

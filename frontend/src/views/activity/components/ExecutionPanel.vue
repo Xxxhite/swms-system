@@ -17,6 +17,7 @@ import {
     type Evidence,
     type ExecutionException,
 } from '@/api/execution-types'
+import OutcomePanel from './OutcomePanel.vue'
 import AttendanceDialog from './AttendanceDialog.vue'
 import PolicyDialog from './PolicyDialog.vue'
 import ParticipantDialog from './ParticipantDialog.vue'
@@ -728,6 +729,14 @@ onMounted(load)
                             </template>
                         </el-table-column>
                     </ResponsiveTable>
+                </el-tab-pane>
+                <el-tab-pane v-if="data.canOrganize" label="档案整理" name="outcome">
+                    <OutcomePanel
+                        v-if="tab === 'outcome'"
+                        :task-id="taskId"
+                        :ended="!!data.session && data.session.status !== 'IN_PROGRESS'"
+                        @changed="refresh"
+                    />
                 </el-tab-pane>
             </el-tabs>
             <AttendanceDialog

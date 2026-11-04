@@ -1,4 +1,5 @@
 import { executionWriter, loadExecutionState } from "@/modules/execution/execution.repository"
+import { outcomeWriter, loadOutcomeState } from "@/modules/outcome/outcome.repository"
 import { taskWriter, loadTaskState } from "@/modules/task/task.repository"
 import { resourceWriter } from "@/modules/resource/resource.repository"
 import { and, asc, eq, inArray, isNull } from "drizzle-orm"
@@ -16,6 +17,7 @@ function writer(connection: RawConnection) {
     resources: resourceWriter(connection),
     scheduling: taskWriter(connection),
     executions: executionWriter(connection),
+    outcomes: outcomeWriter(connection),
     projects: {
       insert(values: typeof s.projects.$inferInsert) {
         return connection.insert(s.projects).values(values)
@@ -220,6 +222,7 @@ async function state(tx: RawConnection, actor?: Actor, lock = false) {
     identity,
     scheduling: await loadTaskState(tx),
     executions: await loadExecutionState(tx),
+    outcomes: await loadOutcomeState(tx),
     actor: current,
     projects,
     contracts: await tx

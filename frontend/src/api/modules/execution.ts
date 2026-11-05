@@ -1,3 +1,4 @@
+import type { RegistrationDetail, RegistrationInput } from '@/api/execution-types'
 import { http } from '@/api/request'
 import type { PageResult } from '@/api/types'
 import type {
@@ -13,6 +14,10 @@ import type {
 } from '@/api/execution-types'
 const base = (id: number) => `/service/tasks/${id}/execution`
 export const executionApi = {
+    registration: (id: number, startAt?: string): Promise<RegistrationDetail> =>
+        http.get(`/service/tasks/${id}/registration`, startAt ? { startAt } : {}),
+    saveRegistration: (id: number, body: RegistrationInput) =>
+        http.put(`/service/tasks/${id}/registration`, body),
     mine: (page = 1): Promise<PageResult<FieldTask>> =>
         http.get('/service/execution/my-tasks', { page, pageSize: 20 }),
     detail: (id: number): Promise<ExecutionDetail> => http.get(base(id)),

@@ -71,6 +71,7 @@ export const serviceTasks = mysqlTable(
       .notNull()
       .references(() => organizations.id),
     title: varchar("title", { length: 150 }).notNull(),
+    executionMode: mysqlEnum("execution_mode", ["LEGACY", "SIMPLE"]).notNull().default("LEGACY"),
     form: mysqlEnum("form", ["COLLECTIVE", "HOME_VISIT", "STATIONED"]).notNull(),
     kind: mysqlEnum("kind", ["INDICATOR", "OTHER"]).notNull(),
     pointId: int("point_id", { unsigned: true }).references(() => projectServicePoints.id),

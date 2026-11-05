@@ -30,6 +30,7 @@ export interface OutcomeIssue {
   notes: Array<{ reason: string; createdAt: string; evidenceIds: number[] }>
 }
 export interface OutcomeSource {
+  registration?: import("./execution").ExecutionRegistration
   address?: string
   regionPathSnapshot?: Array<{ code: string; name: string }> | null
   taskId: number
@@ -76,6 +77,7 @@ export interface OutcomeSource {
     ruleVersion: number
     manualValue: string
     plannedValue: string
+    registeredValue?: string
   }>
 }
 export interface OutcomeDecision {

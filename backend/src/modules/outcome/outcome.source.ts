@@ -1,3 +1,4 @@
+import { calculateOutcome } from "./outcome.calculation"
 import type { BusinessState } from "@/modules/project/project.repository"
 import type { OutcomeSource } from "@/db/schema/outcome"
 import { businessDate } from "@/modules/task/task-calendar"
@@ -96,7 +97,7 @@ export function outcomeSource(
         notes: e.notes,
       }
     })
-  for (const s of staff)
+  for (const s of session.registration ? [] : staff)
     if ((!s.inId || !s.outId) && !issues.some((i) => i.target === "STAFF" && i.targetId === s.id))
       issues.push({
         key: `MISSING_STAFF:${s.id}`,
@@ -134,7 +135,41 @@ export function outcomeSource(
       plannedValue: i.plannedValue,
     }
   })
-  return {
+  const registeredPeople = session.registration
+    ? [...new Set(session.registration.indicators.flatMap((r) => r.participantIds))].map((id) => {
+        const p = data.executions.participants.find((p) => p.id === id)!
+        return {
+          id,
+          name: p?.name ?? "原服务对象",
+          rosterId: 0,
+          eventId: 0,
+          occurredAt: session.registration!.submittedAt,
+          method: "REGISTRATION",
+          status: "RECORDED",
+          flags: [] as string[],
+        }
+      })
+    : participants
+  const registeredStaff = session.registration
+    ? [
+        ...new Map(
+          session.registration.indicators
+            .flatMap((r) => r.intervals)
+            .map((i) => [`${i.userId}:${i.startAt}:${i.endAt}`, i]),
+        ).values(),
+      ].map((i) => ({
+        id: i.userId,
+        name: session.snapshot.staff.find((s) => s.userId === i.userId)?.name ?? "原工作人员",
+        inId: null,
+        outId: null,
+        startAt: i.startAt,
+        endAt: i.endAt,
+        flags: [] as string[],
+        location: "负责人登记",
+      }))
+    : staff
+  const result: OutcomeSource = {
+    ...(session.registration ? { registration: session.registration } : {}),
     taskId,
     taskVersion: task.version,
     sourceVersion: session.sourceVersion,
@@ -150,9 +185,9 @@ export function outcomeSource(
     startedAt: session.startedAt.toISOString(),
     endedAt: session.endedAt.toISOString(),
     summary,
-    staff,
-    participants,
-    issues,
+    staff: registeredStaff,
+    participants: registeredPeople,
+    issues: session.registration ? [] : issues,
     rules,
     evidence: data.executions.evidence
       .filter((f) => f.taskId === taskId && !f.deletedAt && f.boundKind)
@@ -164,4 +199,15 @@ export function outcomeSource(
         contentType: f.contentType,
       })),
   }
+  if (result.registration)
+    for (const rule of result.rules)
+      rule.registeredValue = calculateOutcome(
+        result,
+        rule.mode,
+        [],
+        rule.manualValue,
+        false,
+        rule.indicatorId,
+      ).value
+  return result
 }

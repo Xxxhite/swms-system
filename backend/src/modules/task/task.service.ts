@@ -523,6 +523,7 @@ export class TaskService {
         const v = values(taskInput, item.times, item.area)
         const id = await tx.scheduling.tasks.insert({
           ...v,
+          executionMode: "SIMPLE",
           createdBy: current.user.id,
           requestKey,
           batchIndex: index,

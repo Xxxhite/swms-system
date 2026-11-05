@@ -1,3 +1,5 @@
+import { registerRegistrationTests } from "@/modules/execution/registration.integration"
+import { createRegistrationRoutes } from "@/modules/execution/registration.route"
 import { registerRegionTests } from "@/modules/region/region.integration"
 import { createRegionRoutes } from "@/modules/region/region.route"
 import { RegionRepository } from "@/modules/region/region.repository"
@@ -219,6 +221,11 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
           createServiceRoutes(new ProjectRepository(database), identities, "records"),
           createApprovalRoutes(new ProjectRepository(database), identities),
           createAnalysisRoutes(new ProjectRepository(database), identities),
+          createRegistrationRoutes(
+            new ProjectRepository(database),
+            identities,
+            () => executionNow ?? new Date(),
+          ),
         ]),
       )
       .compile()
@@ -824,6 +831,13 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     },
   }))
   registerOutcomeTests(() => ({
+    database,
+    handle,
+    setClock: (at: Date) => {
+      executionNow = at
+    },
+  }))
+  registerRegistrationTests(() => ({
     database,
     handle,
     setClock: (at: Date) => {

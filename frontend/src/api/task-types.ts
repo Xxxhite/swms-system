@@ -37,7 +37,21 @@ export interface Recurrence {
     until: string
     weekdays: number[]
 }
+export function taskStatusLabel(task: { state: string; registrationState?: string }): string {
+    const labels: Record<string, string> = {
+        TO_REGISTER: '待登记',
+        TO_SUBMIT: '待提交',
+        REJECTED: '已退回',
+        NEEDS_CORRECTION: '待更正',
+        IN_REVIEW: '待审批',
+        COMPLETED: '已完成',
+        CANCELED: '已取消',
+    }
+    return labels[task.registrationState ?? ''] ?? taskStatuses[task.state] ?? task.state
+}
 export interface Task extends Omit<TaskInput, 'resources'> {
+    executionMode?: 'LEGACY' | 'SIMPLE'
+    registrationState?: string
     id: number
     version: number
     status: 'SCHEDULED' | 'CANCELED'

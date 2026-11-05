@@ -102,7 +102,7 @@ export function registerOutcomeTests(
         resources: [],
       }
       const preview = await good("/service/tasks/preview", "POST", manager, body)
-      return (
+      const created = (
         await good("/service/tasks", "POST", manager, {
           ...body,
           previewToken: preview.previewToken,
@@ -110,6 +110,11 @@ export function registerOutcomeTests(
           conflictReason: "隔离来源计算样例",
         })
       ).id as number
+      await context()
+        .database.update(s.serviceTasks)
+        .set({ executionMode: "LEGACY" })
+        .where(eq(s.serviceTasks.id, created))
+      return created
     }
     async function runTask(
       id: number,

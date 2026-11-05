@@ -8,7 +8,7 @@ import { calculationLabels, type OutcomeDetail, type OutcomeRecord } from '@/api
 import { useUserStore } from '@/stores/user'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import OutcomeReview from './OutcomeReview.vue'
-const props = defineProps<{ taskId: number; ended?: boolean }>(),
+const props = defineProps<{ taskId: number; ended?: boolean; simple?: boolean }>(),
     emit = defineEmits<{ changed: [] }>(),
     store = useUserStore()
 const data = ref<OutcomeDetail>(),
@@ -113,7 +113,7 @@ async function change(row: OutcomeRecord, operation: 'CORRECT' | 'DELETE' | 'RES
             { inputType: 'textarea', inputPattern: /\S/, inputErrorMessage: '请填写原因' },
         )
         await execute(async () => {
-            await save()
+            if (!props.simple) await save()
             await load()
             const record = data.value!.records.find((r) => r.recordId === row.recordId)!.record
             await serviceApi.change(
@@ -166,7 +166,7 @@ onMounted(load)
 <template>
     <section v-loading="busy" class="outcome-panel">
         <div class="page-actions">
-            <h3>服务档案整理</h3>
+            <h3>{{ simple ? '档案与审批状态' : '服务档案整理' }}</h3>
             <el-button @click="load">刷新整理</el-button>
         </div>
         <el-alert
@@ -177,6 +177,7 @@ onMounted(load)
         />
         <el-button
             v-if="
+                !simple &&
                 ended &&
                 !data?.outcome &&
                 data?.canMaintain &&
@@ -194,7 +195,11 @@ onMounted(load)
                 type="warning"
                 :closable="false"
             />
-            <el-form label-position="top" :disabled="!data.canMaintain || !!pendingSubmission">
+            <el-form
+                v-if="!simple"
+                label-position="top"
+                :disabled="!data.canMaintain || !!pendingSubmission"
+            >
                 <el-form-item label="服务总结" required>
                     <el-input
                         v-model="summary"
@@ -218,14 +223,18 @@ onMounted(load)
             </el-form>
             <div class="page-actions">
                 <el-button
-                    v-if="data.canMaintain"
+                    v-if="!simple && data.canMaintain"
                     :disabled="busy || !!pendingSubmission"
                     @click="saveClicked"
                 >
                     保存并刷新来源
                 </el-button>
                 <el-button
-                    v-if="data.canMaintain && store.hasPermission('service:evidence:upload')"
+                    v-if="
+                        !simple &&
+                        data.canMaintain &&
+                        store.hasPermission('service:evidence:upload')
+                    "
                     :disabled="busy"
                     @click="fileInput?.click()"
                 >
@@ -236,6 +245,7 @@ onMounted(load)
                 </el-button>
                 <el-button
                     v-if="
+                        !simple &&
                         data.canMaintain &&
                         canSubmit &&
                         store.hasPermission('service:monthly:submit')
@@ -264,7 +274,13 @@ onMounted(load)
                 hidden
                 @change="files"
             />
-            <p>保存保留一份来源快照；提交后由直接主管核验，批准后计入正式量。</p>
+            <p>
+                {{
+                    simple
+                        ? '更正数量前先保存上方登记，再在对应档案申请更正；原批准量保留至更正批准。'
+                        : '保存保留一份来源快照；提交后由直接主管核验，批准后计入正式量。'
+                }}
+            </p>
             <ResponsiveTable :data="data.records">
                 <el-table-column label="成果指标">
                     <template #default="{ row }">
@@ -342,17 +358,21 @@ onMounted(load)
                     </template>
                 </el-table-column>
             </ResponsiveTable>
-            <OutcomeReview v-if="data.source" :source="data.source" />
-            <h4>来源快照历史</h4>
-            <div class="page-actions">
-                <el-button
-                    v-for="snapshot in data.snapshots"
-                    :key="snapshot.id"
-                    @click="openHistory(snapshot.id)"
-                >
-                    快照{{ snapshot.id }} · 来源版本{{ snapshot.sourceVersion }}
-                </el-button>
-            </div>
+            <el-collapse>
+                <el-collapse-item title="登记依据与历史">
+                    <OutcomeReview v-if="data.source" :source="data.source" />
+                    <h4>来源历史</h4>
+                    <div class="page-actions">
+                        <el-button
+                            v-for="snapshot in data.snapshots"
+                            :key="snapshot.id"
+                            @click="openHistory(snapshot.id)"
+                        >
+                            快照{{ snapshot.id }} · 来源版本{{ snapshot.sourceVersion }}
+                        </el-button>
+                    </div>
+                </el-collapse-item>
+            </el-collapse>
         </template>
         <el-dialog v-model="historyOpen" title="服务来源快照" width="860px">
             <OutcomeReview v-if="history" :source="history.source" />

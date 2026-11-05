@@ -10,7 +10,7 @@ import { useUserStore } from '@/stores/user'
 import { PERM } from '@/api/permissions'
 import { useMock } from '@/api/config'
 import { taskApi } from '@/api/modules/task'
-import { taskForms, taskStatuses, type Task } from '@/api/task-types'
+import { taskForms, taskStatuses, taskStatusLabel, type Task } from '@/api/task-types'
 import { formatDateTime } from '@/utils/dateTime'
 import ExecutionPanel from './components/ExecutionPanel.vue'
 import TaskDialog from './components/TaskDialog.vue'
@@ -124,7 +124,7 @@ const { isMobile } = useViewport()
                     {{ taskForms[task.form] }}
                 </el-descriptions-item>
                 <el-descriptions-item label="状态">
-                    {{ taskStatuses[task.state] }}
+                    {{ taskStatusLabel(task) }}
                 </el-descriptions-item>
                 <el-descriptions-item label="开始时间">
                     {{ formatDateTime(task.startAt) }}
@@ -156,7 +156,7 @@ const { isMobile } = useViewport()
                 v-if="store.hasPermission(PERM.EXECUTION_VIEW)"
                 @click="router.push(`/field/tasks/${task.id}`)"
             >
-                打开手机现场
+                打开执行登记
             </el-button>
             <ExecutionPanel
                 v-if="store.hasPermission(PERM.EXECUTION_VIEW)"

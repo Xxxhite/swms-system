@@ -72,7 +72,11 @@ export async function touchExecution(tx: BusinessConnection, data: BusinessState
   })
   return session.sourceVersion
 }
+export function legacyExecution(t: ExecutionTask) {
+  if (t.executionMode === "SIMPLE") throw AppError.conflict("本任务请使用执行登记")
+}
 export function openExecution(data: BusinessState, t: ExecutionTask) {
+  legacyExecution(t)
   const session = sessionFor(data, t.id)
   if (t.status === "CANCELED" || !session || session.status !== "IN_PROGRESS")
     throw AppError.conflict("本次服务未开放或已经结束／中止")

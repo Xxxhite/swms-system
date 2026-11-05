@@ -45,7 +45,33 @@ export function calculateOutcome(
   decisions: OutcomeDecision[] = [],
   manualValue = "0.00",
   strict = false,
+  indicatorId?: number,
 ): OutcomeMeasure {
+  if (source.registration) {
+    const entry = source.registration.indicators.find((r) => r.indicatorId === indicatorId)
+    if (mode === "MANUAL" && !indicatorId && !source.rules.length)
+      return { mode, value: "0.00", people: [], intervals: [] }
+    if (!entry) throw AppError.conflict("缺少本指标的执行登记依据")
+    if (decisions.length) throw AppError.badRequest("执行登记不使用旧现场逐项核验")
+    const people = [...new Set(entry.participantIds)],
+      intervals = entry.intervals
+    const value =
+      mode === "SCENES"
+        ? source.state === "ENDED"
+          ? "1.00"
+          : "0.00"
+        : mode === "PEOPLE"
+          ? decimalText(BigInt(people.length) * 100n)
+          : mode === "STAFF_HOURS"
+            ? hoursValue(intervalSeconds(intervals))
+            : decimalText(decimalUnits(entry.value))
+    return {
+      mode,
+      value,
+      people: mode === "PEOPLE" ? people : [],
+      intervals: mode === "STAFF_HOURS" ? intervals : [],
+    }
+  }
   const byKey = new Map(decisions.map((d) => [d.key, d]))
   if (
     byKey.size !== decisions.length ||

@@ -29,7 +29,7 @@ export const menuTree: MenuNode[] = [
             },
             {
                 path: '/field/tasks',
-                title: '手机现场',
+                title: '执行登记',
                 permission: PERM.EXECUTION_VIEW,
                 layout: 'field',
             },
@@ -213,13 +213,13 @@ export function fieldRoutes(permissions: string[]): RouteRecordRaw[] {
             path: 'tasks',
             name: 'FieldTasks',
             component: () => import('@/views/field/index.vue'),
-            meta: { title: '我的现场任务' },
+            meta: { title: '我的执行任务' },
         },
         {
             path: 'tasks/:id',
             name: 'FieldTaskDetail',
             component: () => import('@/views/field/detail.vue'),
-            meta: { title: '现场任务' },
+            meta: { title: '执行任务' },
         },
     ]
     if (permissions.includes(PERM.EXCEPTION_VIEW))

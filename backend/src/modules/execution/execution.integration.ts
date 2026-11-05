@@ -110,6 +110,10 @@ export function registerExecutionTests(
         conflictReason: "测试不同服务场景的独立来源",
       })
       expect(r.code).toBe(0)
+      await context()
+        .database.update(s.serviceTasks)
+        .set({ executionMode: "LEGACY" })
+        .where(eq(s.serviceTasks.id, r.data.id))
       const d = await detail(r.data.id, manager)
       const configured = await request(`${base(r.data.id)}/policy`, "PUT", manager, {
         ...d.policy,

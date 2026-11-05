@@ -68,6 +68,7 @@ export function reviewOutcome(
     input.decisions,
     rule?.manualValue ?? "0.00",
     true,
+    rule?.indicatorId,
   )
   const measure: OutcomeMeasure =
     context.reference.operation === "DELETE"
@@ -113,6 +114,11 @@ export async function applyOutcomeReview(
     measure: preview.measure,
     reason: input.comment ?? "",
   })
+  if (preview.context.link && preview.context.snapshot.data.registration)
+    await tx.monthlyReports.update(preview.context.link.recordId, {
+      serviceDate: preview.context.snapshot.data.date,
+      month: preview.context.snapshot.data.date.slice(0, 7),
+    })
   if (preview.context.link)
     await tx.outcomes.links.update(preview.context.link.id, {
       effectiveReviewId: reviewId,

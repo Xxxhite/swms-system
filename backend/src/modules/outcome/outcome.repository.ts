@@ -4,6 +4,12 @@ import type { ResourceTransaction } from "@/modules/resource/resource.repository
 
 export function outcomeWriter(tx: ResourceTransaction) {
   return {
+    async refresh() {
+      return {
+        outcomes: await loadOutcomeState(tx),
+        reports: await tx.select().from(s.monthlyReports),
+      }
+    },
     rules: {
       async insert(value: typeof s.indicatorCalculationRules.$inferInsert) {
         const [r] = await tx.insert(s.indicatorCalculationRules).values(value)

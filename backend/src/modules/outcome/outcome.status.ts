@@ -4,7 +4,14 @@ export function outcomeTaskState(data: BusinessState, taskId: number) {
   const task = data.scheduling.tasks.find((t) => t.id === taskId)!,
     session = data.executions.sessions.find((s) => s.taskId === taskId),
     outcome = data.outcomes.outcomes.find((o) => o.taskId === taskId)
-  if (!session) return { ...taskState(task.status === "CANCELED"), sourceChanged: false }
+  if (!session)
+    return {
+      ...taskState(task.status === "CANCELED"),
+      sourceChanged: false,
+      ...(task.executionMode === "SIMPLE"
+        ? { registrationState: task.status === "CANCELED" ? "CANCELED" : "TO_REGISTER" }
+        : {}),
+    }
   const required = session.snapshot.indicators.length || 1
   let approved = 0,
     pending = 0,
@@ -53,5 +60,21 @@ export function outcomeTaskState(data: BusinessState, taskId: number) {
       rejected,
     }),
     sourceChanged,
+    ...(task.executionMode === "SIMPLE"
+      ? {
+          registrationState:
+            task.status === "CANCELED"
+              ? "CANCELED"
+              : pending
+                ? "IN_REVIEW"
+                : rejected
+                  ? "REJECTED"
+                  : approved === required
+                    ? "COMPLETED"
+                    : sourceChanged
+                      ? "NEEDS_CORRECTION"
+                      : "TO_SUBMIT",
+        }
+      : {}),
   }
 }

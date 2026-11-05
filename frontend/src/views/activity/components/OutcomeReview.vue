@@ -12,6 +12,7 @@ const methodLabels: Record<string, string> = {
     FAMILY: '家属确认',
     ASSISTED: '辅助登记',
     SUPPLEMENT: '补录',
+    REGISTRATION: '负责人登记',
 }
 const props = defineProps<{
     source: OutcomeSource
@@ -53,6 +54,7 @@ async function download(id: number, name: string) {
 <template>
     <section class="outcome-review">
         <h3>{{ source.title }}</h3>
+        <p v-if="source.registration">来源：负责人执行登记</p>
         <p>
             实际执行：{{ formatDateTime(source.startedAt) }} 至 {{ formatDateTime(source.endedAt) }}
         </p>
@@ -64,6 +66,7 @@ async function download(id: number, name: string) {
             <el-table-column prop="indicatorName" label="成果指标" />
             <el-table-column prop="plannedValue" label="任务计划量" />
             <el-table-column prop="unit" label="单位" />
+            <el-table-column v-if="source.registration" prop="registeredValue" label="登记成果" />
             <el-table-column label="计算口径">
                 <template #default="{ row }">
                     {{ calculationLabels[row.mode as keyof typeof calculationLabels] }}
@@ -71,7 +74,36 @@ async function download(id: number, name: string) {
             </el-table-column>
         </ResponsiveTable>
         <el-collapse>
-            <el-collapse-item title="工作人员与实际到离" name="staff">
+            <el-collapse-item v-if="source.registration" title="各指标登记依据" name="registration">
+                <section v-for="rule in source.rules" :key="rule.indicatorId">
+                    <h4>{{ rule.indicatorName }}：{{ rule.registeredValue }} {{ rule.unit }}</h4>
+                    <template
+                        v-for="entry in source.registration.indicators.filter(
+                            (r) => r.indicatorId === rule.indicatorId,
+                        )"
+                        :key="entry.indicatorId"
+                    >
+                        <p v-if="rule.mode === 'PEOPLE'">
+                            服务对象：{{
+                                entry.participantIds
+                                    .map(
+                                        (id) =>
+                                            source.participants.find((p) => p.id === id)?.name ??
+                                            '原服务对象',
+                                    )
+                                    .join('、') || '名单按权限显示；0人时无名单'
+                            }}
+                        </p>
+                        <p v-for="(interval, index) in entry.intervals" :key="index">
+                            {{ source.staff.find((s) => s.id === interval.userId)?.name }}：{{
+                                formatDateTime(interval.startAt)
+                            }}
+                            至 {{ formatDateTime(interval.endAt) }}
+                        </p>
+                    </template>
+                </section>
+            </el-collapse-item>
+            <el-collapse-item v-if="!source.registration" title="工作人员与实际到离" name="staff">
                 <ResponsiveTable :data="source.staff">
                     <el-table-column prop="name" label="工作人员" />
                     <el-table-column label="到岗">
@@ -91,6 +123,7 @@ async function download(id: number, name: string) {
                 </ResponsiveTable>
             </el-collapse-item>
             <el-collapse-item
+                v-if="!source.registration"
                 :title="`参与明细（${source.participants.length}项）`"
                 name="participants"
             >

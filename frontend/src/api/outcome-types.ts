@@ -12,6 +12,12 @@ export interface OutcomeDecision {
     reason: string
 }
 export interface OutcomeSource {
+    registration?: {
+        schemaVersion: number
+        submittedAt: string
+        submittedBy: number
+        indicators: import('./execution-types').RegistrationMetric[]
+    }
     address?: string
     regionPathSnapshot?: Array<{ code: string; name: string }> | null
     taskId: number
@@ -60,6 +66,7 @@ export interface OutcomeSource {
         ruleVersion: number
         manualValue: string
         plannedValue: string
+        registeredValue?: string
     }>
 }
 export interface OutcomeRecord {

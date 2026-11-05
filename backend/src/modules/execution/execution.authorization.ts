@@ -15,6 +15,16 @@ export function executionTask(
   requirePermission(actor, permission)
   const task = data.scheduling.tasks.find((t) => t.id === id)
   if (!task || !taskReadable(data, actor, task.projectId, task.teamId)) throw AppError.notFound()
+  if (
+    task.executionMode === "SIMPLE" &&
+    [
+      "service:execution:manage",
+      "service:execution:record",
+      "service:execution:configure",
+      "service:credential:issue",
+    ].includes(permission)
+  )
+    throw AppError.conflict("本任务请使用执行登记")
   return task
 }
 export function executionArranger(

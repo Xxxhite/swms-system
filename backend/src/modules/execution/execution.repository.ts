@@ -4,6 +4,9 @@ import type { ResourceTransaction } from "@/modules/resource/resource.repository
 /** 数据库访问仅由仓储执行，与既有身份和项目事务共用连接。 */
 export function executionWriter(tx: ResourceTransaction) {
   return {
+    refreshSessions() {
+      return tx.select().from(s.executionSessions)
+    },
     policies: {
       async insert(values: typeof s.executionPolicies.$inferInsert) {
         const [r] = await tx.insert(s.executionPolicies).values(values)

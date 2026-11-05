@@ -7,6 +7,15 @@ import type { FieldTask } from '@/api/execution-types'
 import { taskForms, taskStatuses } from '@/api/task-types'
 import { formatDateTime } from '@/utils/dateTime'
 import { useMock } from '@/api/config'
+const registrationLabels: Record<string, string> = {
+    TO_REGISTER: '待登记',
+    TO_SUBMIT: '待提交',
+    REJECTED: '已退回',
+    NEEDS_CORRECTION: '待更正',
+    IN_REVIEW: '待审批',
+    COMPLETED: '已完成',
+    CANCELED: '已取消',
+}
 const router = useRouter(),
     rows = ref<FieldTask[]>([]),
     total = ref(0),
@@ -39,7 +48,7 @@ onMounted(() => load(true))
 <template>
     <section v-loading="loading">
         <div class="field-tasks__heading">
-            <h2>我的现场任务</h2>
+            <h2>我的执行任务</h2>
             <el-button @click="load(true)">刷新</el-button>
         </div>
         <el-alert
@@ -54,13 +63,19 @@ onMounted(() => load(true))
             <p>{{ formatDateTime(t.startAt) }} 至 {{ formatDateTime(t.endAt) }}</p>
             <p>{{ t.location }} · {{ taskForms[t.form] }} {{ regionText(t) }} {{ t.address }}</p>
             <div class="field-tasks__heading">
-                <el-tag>{{ taskStatuses[t.state] ?? t.state }}</el-tag>
+                <el-tag>
+                    {{
+                        registrationLabels[t.registrationState ?? ''] ??
+                        taskStatuses[t.state] ??
+                        t.state
+                    }}
+                </el-tag>
                 <el-button type="primary" @click="router.push(`/field/tasks/${t.id}`)">
-                    进入现场
+                    查看登记
                 </el-button>
             </div>
         </el-card>
-        <el-empty v-if="!loading && !rows.length" description="暂无本人分派的现场任务" />
+        <el-empty v-if="!loading && !rows.length" description="暂无本人分派的执行任务" />
         <el-button
             v-if="rows.length < total"
             :loading="loading"

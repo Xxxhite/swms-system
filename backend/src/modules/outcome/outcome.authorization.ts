@@ -20,6 +20,8 @@ export function outcomeAccess(
   if (!actual && !actualArranger(data, actor, task))
     throw AppError.forbidden("仅实际任务工作人员或业务负责人可整理来源档案")
   if (write) {
+    if (task.executionMode === "SIMPLE" && task.leaderId !== actor.user.id)
+      throw AppError.forbidden("仅任务负责人可维护执行登记档案")
     if (!session?.endedAt || session.status === "IN_PROGRESS")
       throw AppError.conflict("服务结束后再整理档案")
     const project = data.projects.find((p) => p.id === task.projectId && !p.deletedAt)

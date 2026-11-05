@@ -22,6 +22,14 @@ import type { OutcomeSource } from "@/db/schema/outcome"
 export function sourceView(source: OutcomeSource, actor: Actor) {
   return {
     ...source,
+    ...(source.registration && !actor.profile.permissions.includes("service:participant:view")
+      ? {
+          registration: {
+            ...source.registration,
+            indicators: source.registration.indicators.map((r) => ({ ...r, participantIds: [] })),
+          },
+        }
+      : {}),
     participants: actor.profile.permissions.includes("service:participant:view")
       ? source.participants
       : [],
@@ -201,112 +209,150 @@ export class OutcomeService {
     })
   }
   generate(actor: Actor, taskId: number) {
-    return this.repository.write(actor, async (tx, data, current) => {
-      outcomeAccess(data, current, taskId, "service:monthly:create", true)
-      const existing = data.outcomes.outcomes.find((o) => o.taskId === taskId)
-      if (existing) return { id: existing.id, replayed: true }
-      const source = outcomeSource(data, taskId, "")
-      const id = await tx.outcomes.outcomes.insert({ taskId, createdBy: current.user.id }),
-        snapshotId = await freeze(tx, current, id, source)
-      for (const rule of source.rules) {
-        if (source.state === "STOPPED" && rule.mode !== "MANUAL") continue
-        maintainReport(
-          data,
-          current,
-          rule.indicatorId,
-          source.teamId,
-          "service:monthly:create",
-          source.date,
-        )
-        const value = calculateOutcome(source, rule.mode, [], rule.manualValue).value
-        const [record] = await tx.monthlyReports.insert({
-          indicatorId: rule.indicatorId,
-          teamId: source.teamId,
-          serviceDate: source.date,
-          month: source.date.slice(0, 7),
-          actualValue: value,
-          createdBy: current.user.id,
-          requestKey: `outcome:${taskId}:${rule.indicatorId}`,
-        })
-        await tx.outcomes.links.insert({
-          outcomeId: id,
-          taskId,
-          indicatorId: rule.indicatorId,
-          recordId: record.insertId,
-          draftSnapshotId: snapshotId,
-        })
-      }
-      await tx.outcomes.outcomes.update(id, { draftSnapshotId: snapshotId })
-      await businessAudit(tx, current.user.id, "generate-task-outcome", "execution", taskId, null, {
-        outcomeId: id,
-        snapshotId,
-      })
-      return { id, replayed: false }
+    return this.repository.write(actor, (tx, data, current) => {
+      if (data.scheduling.tasks.find((t) => t.id === taskId)?.executionMode === "SIMPLE")
+        throw AppError.conflict("本任务请使用执行登记")
+      return this.generateWithin(tx, data, current, taskId)
     })
   }
-  save(actor: Actor, taskId: number, input: OutcomeInput) {
-    return this.repository.write(actor, async (tx, data, current) => {
-      outcomeAccess(data, current, taskId, "service:monthly:update", true)
-      const outcome = data.outcomes.outcomes.find((o) => o.taskId === taskId)
-      if (!outcome) throw AppError.conflict("请先生成来源草稿")
-      outcomeVersion(outcome.version, input.version)
-      const source = outcomeSource(data, taskId, input.summary, input.manualValues)
-      assertVersion(source.sourceVersion, input.sourceVersion)
-      if (
-        Object.keys(input.manualValues).some(
-          (id) => !source.rules.some((r) => String(r.indicatorId) === id && r.mode === "MANUAL"),
-        )
+  async generateWithin(
+    tx: BusinessConnection,
+    data: BusinessState,
+    current: Actor,
+    taskId: number,
+  ) {
+    outcomeAccess(data, current, taskId, "service:monthly:create", true)
+    const existing = data.outcomes.outcomes.find((o) => o.taskId === taskId)
+    if (existing) return { id: existing.id, replayed: true }
+    const source = outcomeSource(data, taskId, "")
+    const id = await tx.outcomes.outcomes.insert({ taskId, createdBy: current.user.id }),
+      snapshotId = await freeze(tx, current, id, source)
+    for (const rule of source.rules) {
+      if (source.state === "STOPPED" && rule.mode !== "MANUAL") continue
+      maintainReport(
+        data,
+        current,
+        rule.indicatorId,
+        source.teamId,
+        "service:monthly:create",
+        source.date,
       )
-        throw AppError.badRequest("人工成果指标不属于本次任务或不是人工口径")
-      for (const id of [...new Set(input.evidenceIds)]) {
-        const file = data.executions.evidence.find(
-          (f) =>
-            f.id === id &&
-            f.taskId === taskId &&
-            !f.deletedAt &&
-            ((f.boundKind === "OUTCOME" && f.boundId === outcome.id) ||
-              (!f.boundKind && f.uploadedBy === current.user.id)),
-        )
-        if (!file) throw AppError.forbidden("整理凭证不存在或不属于本人及本次任务")
-        if (!file.boundKind) {
-          await tx.executions.evidence.update(id, {
-            boundKind: "OUTCOME",
-            boundId: outcome.id,
-            version: file.version + 1,
-          })
-          file.boundKind = "OUTCOME"
-          file.boundId = outcome.id
-        }
-      }
-      const actual = outcomeSource(data, taskId, input.summary, input.manualValues),
-        snapshotId = await freeze(tx, current, outcome.id, actual)
-      for (const link of data.outcomes.links.filter((l) => l.outcomeId === outcome.id)) {
-        const record = data.reports.find((r) => r.id === link.recordId)!,
-          rule = actual.rules.find((r) => r.indicatorId === link.indicatorId)!
-        if (record.status === "IN_REVIEW") continue
-        await tx.outcomes.links.update(link.id, {
-          draftSnapshotId: snapshotId,
-          version: link.version + 1,
-        })
-        if (["DRAFT", "REJECTED"].includes(record.status) && !record.submittedAt)
-          await tx.monthlyReports.update(record.id, {
-            actualValue: calculateOutcome(actual, rule.mode, [], rule.manualValue).value,
-            note: input.summary.slice(0, 1000),
-            status: "DRAFT",
-            version: record.version + 1,
-          })
-      }
-      await tx.outcomes.outcomes.update(outcome.id, {
-        summary: input.summary,
+      const value = calculateOutcome(
+        source,
+        rule.mode,
+        [],
+        rule.manualValue,
+        false,
+        rule.indicatorId,
+      ).value
+      const [record] = await tx.monthlyReports.insert({
+        indicatorId: rule.indicatorId,
+        teamId: source.teamId,
+        serviceDate: source.date,
+        month: source.date.slice(0, 7),
+        actualValue: value,
+        createdBy: current.user.id,
+        requestKey: `outcome:${taskId}:${rule.indicatorId}`,
+      })
+      await tx.outcomes.links.insert({
+        outcomeId: id,
+        taskId,
+        indicatorId: rule.indicatorId,
+        recordId: record.insertId,
         draftSnapshotId: snapshotId,
-        version: outcome.version + 1,
       })
-      await businessAudit(tx, current.user.id, "save-task-outcome", "execution", taskId, null, {
-        snapshotId,
-        sourceVersion: source.sourceVersion,
-      })
-      return { id: outcome.id, snapshotId }
+    }
+    await tx.outcomes.outcomes.update(id, { draftSnapshotId: snapshotId })
+    await businessAudit(tx, current.user.id, "generate-task-outcome", "execution", taskId, null, {
+      outcomeId: id,
+      snapshotId,
     })
+    return { id, replayed: false }
+  }
+  save(actor: Actor, taskId: number, input: OutcomeInput) {
+    return this.repository.write(actor, (tx, data, current) => {
+      if (data.scheduling.tasks.find((t) => t.id === taskId)?.executionMode === "SIMPLE")
+        throw AppError.conflict("本任务请使用执行登记")
+      return this.saveWithin(tx, data, current, taskId, input)
+    })
+  }
+  async saveWithin(
+    tx: BusinessConnection,
+    data: BusinessState,
+    current: Actor,
+    taskId: number,
+    input: OutcomeInput,
+  ) {
+    outcomeAccess(data, current, taskId, "service:monthly:update", true)
+    const outcome = data.outcomes.outcomes.find((o) => o.taskId === taskId)
+    if (!outcome) throw AppError.conflict("请先生成来源草稿")
+    outcomeVersion(outcome.version, input.version)
+    const source = outcomeSource(data, taskId, input.summary, input.manualValues)
+    assertVersion(source.sourceVersion, input.sourceVersion)
+    if (
+      Object.keys(input.manualValues).some(
+        (id) => !source.rules.some((r) => String(r.indicatorId) === id && r.mode === "MANUAL"),
+      )
+    )
+      throw AppError.badRequest("人工成果指标不属于本次任务或不是人工口径")
+    for (const id of [...new Set(input.evidenceIds)]) {
+      const file = data.executions.evidence.find(
+        (f) =>
+          f.id === id &&
+          f.taskId === taskId &&
+          !f.deletedAt &&
+          ((f.boundKind === "OUTCOME" && f.boundId === outcome.id) ||
+            (!f.boundKind && f.uploadedBy === current.user.id)),
+      )
+      if (!file) throw AppError.forbidden("整理凭证不存在或不属于本人及本次任务")
+      if (!file.boundKind) {
+        await tx.executions.evidence.update(id, {
+          boundKind: "OUTCOME",
+          boundId: outcome.id,
+          version: file.version + 1,
+        })
+        file.boundKind = "OUTCOME"
+        file.boundId = outcome.id
+      }
+    }
+    const actual = outcomeSource(data, taskId, input.summary, input.manualValues),
+      snapshotId = await freeze(tx, current, outcome.id, actual)
+    for (const link of data.outcomes.links.filter((l) => l.outcomeId === outcome.id)) {
+      const record = data.reports.find((r) => r.id === link.recordId)!,
+        rule = actual.rules.find((r) => r.indicatorId === link.indicatorId)!
+      if (record.status === "IN_REVIEW") continue
+      await tx.outcomes.links.update(link.id, {
+        draftSnapshotId: snapshotId,
+        version: link.version + 1,
+      })
+      if (["DRAFT", "REJECTED"].includes(record.status) && !record.submittedAt)
+        await tx.monthlyReports.update(record.id, {
+          actualValue: calculateOutcome(
+            actual,
+            rule.mode,
+            [],
+            rule.manualValue,
+            false,
+            rule.indicatorId,
+          ).value,
+          note: input.summary.slice(0, 1000),
+          ...(actual.registration
+            ? { serviceDate: actual.date, month: actual.date.slice(0, 7) }
+            : {}),
+          status: "DRAFT",
+          version: record.version + 1,
+        })
+    }
+    await tx.outcomes.outcomes.update(outcome.id, {
+      summary: input.summary,
+      draftSnapshotId: snapshotId,
+      version: outcome.version + 1,
+    })
+    await businessAudit(tx, current.user.id, "save-task-outcome", "execution", taskId, null, {
+      snapshotId,
+      sourceVersion: source.sourceVersion,
+    })
+    return { id: outcome.id, snapshotId }
   }
   submit(actor: Actor, taskId: number, input: OutcomeSubmitInput) {
     return this.repository.write(actor, async (tx, data, current) => {
@@ -476,7 +522,7 @@ export class OutcomeService {
         values: source.rules
           .map((rule) => ({
             indicatorId: rule.indicatorId,
-            ...calculateOutcome(source, rule.mode, [], rule.manualValue),
+            ...calculateOutcome(source, rule.mode, [], rule.manualValue, false, rule.indicatorId),
           }))
           .map((v) => ({ indicatorId: v.indicatorId, mode: v.mode, value: v.value })),
       }

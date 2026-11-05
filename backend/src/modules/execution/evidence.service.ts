@@ -104,7 +104,18 @@ export class EvidenceService {
           now = this.now()
         if (t.status === "CANCELED" && !session)
           throw AppError.conflict("任务已取消且没有可补录的执行来源")
-        if (forOutcome) outcomeAccess(data, current, taskId, "service:monthly:update", true)
+        if (t.executionMode === "SIMPLE") {
+          requirePermission(current, "service:monthly:update")
+          if (t.leaderId !== current.user.id)
+            throw AppError.forbidden("仅任务负责人可上传执行登记附件")
+          assigned(
+            data,
+            current,
+            t,
+            "service:evidence:upload",
+            new Date(Math.min(Math.max(now.getTime(), t.startAt.getTime()), t.endAt.getTime() - 1)),
+          )
+        } else if (forOutcome) outcomeAccess(data, current, taskId, "service:monthly:update", true)
         else {
           const at = new Date(
             Math.min(Math.max(now.getTime(), t.startAt.getTime()), t.endAt.getTime() - 1),

@@ -19,6 +19,7 @@ import {
     type ExecutionException,
 } from '@/api/execution-types'
 import OutcomePanel from './OutcomePanel.vue'
+import ExecutionRegistration from './ExecutionRegistration.vue'
 import AttendanceDialog from './AttendanceDialog.vue'
 import PolicyDialog from './PolicyDialog.vue'
 import ParticipantDialog from './ParticipantDialog.vue'
@@ -373,7 +374,12 @@ onMounted(load)
             type="info"
             :closable="false"
         />
-        <template v-if="data">
+        <ExecutionRegistration
+            v-if="data?.task.executionMode === 'SIMPLE'"
+            :task-id="taskId"
+            @changed="refresh"
+        />
+        <template v-else-if="data">
             <div class="execution-panel__heading">
                 <h2 v-if="mobile">{{ data.task.title }}</h2>
                 <h3 v-else>现场执行</h3>

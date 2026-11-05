@@ -22,6 +22,7 @@ import {
 } from "./execution.authorization"
 import { geoChecks, validatePolicy, exceptionLabels } from "./execution-geo"
 import {
+  legacyExecution,
   executionRead,
   executionWrite,
   sessionFor,
@@ -70,6 +71,7 @@ export class ExecutionService {
           return {
             id: t.id,
             title: t.title,
+            executionMode: t.executionMode,
             projectId: t.projectId,
             projectName: data.projects.find((p) => p.id === t.projectId)?.name,
             teamId: t.teamId,
@@ -81,6 +83,7 @@ export class ExecutionService {
             endAt: t.endAt,
             leaderId: t.leaderId,
             state: outcomeTaskState(data, t.id).state,
+            registrationState: outcomeTaskState(data, t.id).registrationState,
           }
         })
       return pageResult(tasks, query)
@@ -99,6 +102,7 @@ export class ExecutionService {
       const normalWindow = can(() => withinWindow(t, p, this.now()))
       const isLeader = isAssigned && t.leaderId === current.user.id
       const canConfigure =
+        t.executionMode !== "SIMPLE" &&
         !session &&
         t.status !== "CANCELED" &&
         can(() => executionArranger(data, current, t, "service:execution:configure"))
@@ -135,6 +139,7 @@ export class ExecutionService {
         task: {
           id: t.id,
           title: t.title,
+          executionMode: t.executionMode,
           projectId: t.projectId,
           teamId: t.teamId,
           form: t.form,
@@ -171,6 +176,7 @@ export class ExecutionService {
           : null,
         sourceVersion: session?.sourceVersion ?? 0,
         state: outcomeTaskState(data, t.id).state,
+        registrationState: outcomeTaskState(data, t.id).registrationState,
         summary: {
           registered: facts.length,
           requiresReview: facts.filter((f) => f.requiresReview).length,
@@ -209,6 +215,7 @@ export class ExecutionService {
                 .map((e) => ({ ...e, label: exceptionLabels[e.code] ?? e.code }))
             : [],
         canRecord:
+          t.executionMode !== "SIMPLE" &&
           isAssigned &&
           normalWindow &&
           session?.status === "IN_PROGRESS" &&
@@ -216,18 +223,21 @@ export class ExecutionService {
         canConfigure,
         canOrganize: detail && current.profile.permissions.includes("service:monthly:view"),
         canStart:
+          t.executionMode !== "SIMPLE" &&
           normalWindow &&
           !session &&
           isLeader &&
           t.status !== "CANCELED" &&
           current.profile.permissions.includes("service:execution:manage"),
         canCheckIn:
+          t.executionMode !== "SIMPLE" &&
           normalWindow &&
           isAssigned &&
           session?.status === "IN_PROGRESS" &&
           t.status !== "CANCELED" &&
           !mine.some((e) => e.kind === "CHECK_IN"),
         canCheckOut:
+          t.executionMode !== "SIMPLE" &&
           normalWindow &&
           isAssigned &&
           !!session &&
@@ -236,26 +246,31 @@ export class ExecutionService {
           mine.some((e) => e.kind === "CHECK_IN") &&
           !mine.some((e) => e.kind === "CHECK_OUT"),
         canEnd:
+          t.executionMode !== "SIMPLE" &&
           normalWindow &&
           isLeader &&
           session?.status === "IN_PROGRESS" &&
           current.profile.permissions.includes("service:execution:manage"),
         canStop:
+          t.executionMode !== "SIMPLE" &&
           session?.status === "IN_PROGRESS" &&
           ((isLeader && current.profile.permissions.includes("service:execution:manage")) ||
             (actualArranger(data, current, t) &&
               can(() => executionArranger(data, current, t, "activity:task:cancel")))),
         canManageParticipants:
+          t.executionMode !== "SIMPLE" &&
           isAssigned &&
           t.status !== "CANCELED" &&
           (!session || session.status === "IN_PROGRESS") &&
           current.profile.permissions.includes("service:participant:manage"),
         canIssue:
+          t.executionMode !== "SIMPLE" &&
           normalWindow &&
           isAssigned &&
           session?.status === "IN_PROGRESS" &&
           current.profile.permissions.includes("service:credential:issue"),
         canSupplement:
+          t.executionMode !== "SIMPLE" &&
           !!session &&
           can(() => assigned(data, current, t, "service:execution:supplement", t.startAt, true)) &&
           this.now().getTime() <= t.endAt.getTime() + p.supplementHours * 3600000,
@@ -265,6 +280,7 @@ export class ExecutionService {
   savePolicy(actor: Actor, taskId: number, input: PolicyInput) {
     return executionWrite(this.repository, actor, async (tx, data, current) => {
       const t = executionTask(data, current, taskId, "service:execution:configure")
+      legacyExecution(t)
       executionArranger(data, current, t, "service:execution:configure")
       assertVersion(t.version, input.taskVersion)
       if (t.status === "CANCELED") throw AppError.conflict("任务已取消")
@@ -505,6 +521,7 @@ export class ExecutionService {
           startedAt: now,
         })
       data.executions.sessions.push({
+        registration: null,
         id,
         taskId,
         status: "IN_PROGRESS",

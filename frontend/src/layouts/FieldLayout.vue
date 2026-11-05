@@ -20,7 +20,7 @@ async function logout() {
 <template>
     <section class="field-layout">
         <header>
-            <strong>手机现场</strong>
+            <strong>执行登记</strong>
             <span>{{ store.profile?.name }}</span>
             <el-button text @click="logout">退出登录</el-button>
         </header>

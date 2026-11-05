@@ -12,7 +12,7 @@ import {
 } from '../src/router/routes'
 import { PERM } from '../src/api/permissions'
 
-describe('手机现场与公开确认', () => {
+describe('执行登记与原公开确认', () => {
     test('一次主动定位使用高精度、零缓存，保留拒绝和超时状态', async () => {
         let options: PositionOptions | undefined
         const sample = await captureLocation({
@@ -76,6 +76,7 @@ describe('手机现场与公开确认', () => {
         const permissions = [PERM.EXECUTION_VIEW, PERM.EXCEPTION_VIEW]
         const menus = filterMenuTree(menuTree, permissions)
         expect(menus[0]?.children?.[0]?.path).toBe('/field/tasks')
+        expect(menus[0]?.children?.[0]?.title).toBe('执行登记')
         expect(menuToRoutes(menus).some((r) => r.path === '/field/tasks')).toBe(false)
         const router = createRouter({
             history: createMemoryHistory(),

@@ -9,7 +9,13 @@ import { useUserStore } from '@/stores/user'
 import { PERM } from '@/api/permissions'
 import { useMock } from '@/api/config'
 import { taskApi } from '@/api/modules/task'
-import { taskForms, taskStatuses, emptyCandidates, businessDay, type Task } from '@/api/task-types'
+import {
+    taskForms,
+    taskStatusLabel,
+    emptyCandidates,
+    businessDay,
+    type Task,
+} from '@/api/task-types'
 import { formatDateTime } from '@/utils/dateTime'
 import TaskDialog from './components/TaskDialog.vue'
 const { isMobile } = useViewport()
@@ -236,7 +242,7 @@ onMounted(async () => {
                     <template #default="{ row }">{{ formatDateTime(row.endAt) }}</template>
                 </el-table-column>
                 <el-table-column label="状态" width="100">
-                    <template #default="{ row }">{{ taskStatuses[row.state] }}</template>
+                    <template #default="{ row }">{{ taskStatusLabel(row as Task) }}</template>
                 </el-table-column>
             </ResponsiveTable>
             <template v-else>
@@ -254,7 +260,7 @@ onMounted(async () => {
                         </h3>
                         <p>{{ formatDateTime(t.startAt) }} 至 {{ formatDateTime(t.endAt) }}</p>
                         <p>{{ t.projectName }} · {{ t.location }}</p>
-                        <el-tag>{{ taskStatuses[t.state] }}</el-tag>
+                        <el-tag>{{ taskStatusLabel(t) }}</el-tag>
                     </el-card>
                     <el-empty v-if="!daily(businessDay(month)).length" description="当天暂无任务" />
                 </div>
@@ -269,7 +275,7 @@ onMounted(async () => {
                                 :class="{ 'is-canceled': t.status === 'CANCELED' }"
                                 @click.stop="router.push(`/activity/${t.id}`)"
                             >
-                                {{ t.title }} · {{ taskStatuses[t.state] }}
+                                {{ t.title }} · {{ taskStatusLabel(t) }}
                             </button>
                         </div>
                         <span v-else>{{ data.day.slice(-2) }}</span>

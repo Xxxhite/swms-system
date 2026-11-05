@@ -22,6 +22,7 @@ import {
   sourceVersion,
   touchExecution,
   openExecution,
+  legacyExecution,
   withinWindow,
   policyFor,
   supplementTime,
@@ -74,6 +75,7 @@ export async function recordParticipation(
     evidenceIds: number[]
   },
 ) {
+  legacyExecution(t)
   const current = data.executions.participations.find((p) => p.rosterId === rosterId)
   if (value.kind !== "CONFIRM" && !current) throw AppError.conflict("尚无可更正或作废的参与记录")
   if (value.kind === "CONFIRM" && current?.status === "RECORDED")
@@ -206,8 +208,16 @@ export class ParticipantService {
       if (!input.reason.trim()) throw AppError.badRequest("请填写资料调整原因")
       if (input.phone !== undefined) requirePermission(current, "service:participant:contact")
       const rosters = data.executions.rosters.filter((r) => r.participantId === id)
+      const references = [
+        ...rosters,
+        ...data.executions.sessions
+          .filter((session) =>
+            session.registration?.indicators.some((r) => r.participantIds.includes(id)),
+          )
+          .map((session) => ({ taskId: session.taskId })),
+      ]
       if (
-        rosters.some(
+        references.some(
           (r) =>
             r.taskId !== t.id &&
             !actualArranger(
@@ -224,7 +234,7 @@ export class ParticipantService {
         ...(archive ? { status: "ARCHIVED" as const } : {}),
         version: p.version + 1,
       })
-      for (const taskId of new Set(rosters.map((r) => r.taskId))) {
+      for (const taskId of new Set(references.map((r) => r.taskId))) {
         for (const c of data.executions.credentials.filter(
           (c) =>
             c.taskId === taskId &&
@@ -252,6 +262,7 @@ export class ParticipantService {
   addRoster(actor: Actor, taskId: number, participantId: number) {
     return executionWrite(this.repository, actor, async (tx, data, current) => {
       const t = executionTask(data, current, taskId, "service:participant:manage")
+      legacyExecution(t)
       participantWorker(data, current, t, "service:participant:manage", this.now())
       if (
         t.status === "CANCELED" ||

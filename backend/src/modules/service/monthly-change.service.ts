@@ -53,7 +53,14 @@ export class MonthlyChangeService {
       }
       const value =
         link && frame && sourceRule && input.operation !== "DELETE"
-          ? calculateOutcome(frame.data, sourceRule.mode, [], sourceRule.manualValue).value
+          ? calculateOutcome(
+              frame.data,
+              sourceRule.mode,
+              [],
+              sourceRule.manualValue,
+              false,
+              sourceRule.indicatorId,
+            ).value
           : input.operation === "CORRECT"
             ? decimalText(decimalUnits(input.actualValue ?? "invalid"))
             : r.actualValue

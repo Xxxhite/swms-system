@@ -104,6 +104,7 @@ export interface ExecutionException {
     } | null
 }
 export interface FieldTask {
+    executionMode?: 'LEGACY' | 'SIMPLE'
     id: number
     title: string
     projectId: number
@@ -116,6 +117,7 @@ export interface FieldTask {
     startAt: string
     endAt: string
     leaderId: number
+    registrationState?: string
     state: string
 }
 export interface ExecutionDetail {
@@ -133,6 +135,7 @@ export interface ExecutionDetail {
         sourceVersion: number
     } | null
     sourceVersion: number
+    registrationState?: string
     state: string
     summary: { registered: number; requiresReview: number; openExceptions: number }
     attendance: StaffEvent[]
@@ -207,4 +210,61 @@ export const executionFlags: Record<string, string> = {
     CORRECTION: '更正待核验',
     ASSISTED: '辅助确认待核验',
     VOID: '参与作废待核验',
+}
+
+export interface RegistrationMetric {
+    indicatorId: number
+    value: string
+    participantIds: number[]
+    intervals: Array<{ userId: number; startAt: string; endAt: string }>
+}
+export interface RegistrationInput {
+    requestKey: string
+    taskVersion: number
+    sourceVersion: number
+    outcomeVersion: number
+    startAt: string
+    endAt: string
+    summary: string
+    reason?: string
+    evidenceIds: number[]
+    indicators: RegistrationMetric[]
+}
+export interface RegistrationDetail {
+    task: {
+        id: number
+        projectId: number
+        teamId: number
+        title: string
+        projectName: string
+        teamName: string
+        leaderName: string
+        address: string
+        regionPathSnapshot?: Array<{ code: string; name: string }> | null
+        startAt: string
+        endAt: string
+    }
+    taskVersion: number
+    sourceVersion: number
+    outcomeVersion: number
+    canEdit: boolean
+    canSubmit: boolean
+    inReview: boolean
+    needsCorrection: boolean
+    registered: boolean
+    registrationState?: string
+    state: string
+    startAt: string
+    endAt: string
+    summary: string
+    rules: Array<{
+        indicatorId: number
+        indicatorName: string
+        unit: string
+        plannedValue: string
+        mode: import('./outcome-types').CalculationMode
+    }>
+    source: import('./outcome-types').OutcomeSource | null
+    participants: Array<{ id: number; name: string; code: string; status: string }>
+    staff: Array<{ userId: number; name: string }>
 }

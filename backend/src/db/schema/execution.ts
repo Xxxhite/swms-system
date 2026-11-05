@@ -28,7 +28,21 @@ export interface ExecutionPolicy {
   pointId: number | null
   pointVersion: number | null
 }
+export interface ExecutionRegistration {
+  schemaVersion: 1
+  requestKey: string
+  fingerprint: string
+  submittedBy: number
+  submittedAt: string
+  indicators: Array<{
+    indicatorId: number
+    value: string
+    participantIds: number[]
+    intervals: Array<{ userId: number; startAt: string; endAt: string }>
+  }>
+}
 export interface ExecutionSnapshot {
+  executionMode?: "LEGACY" | "SIMPLE"
   taskVersion: number
   startAt: string
   endAt: string
@@ -75,6 +89,7 @@ export const executionSessions = mysqlTable("execution_sessions", {
     .references(() => serviceTasks.id),
   status: mysqlEnum("status", ["IN_PROGRESS", "ENDED", "STOPPED"]).notNull(),
   snapshot: json("snapshot").$type<ExecutionSnapshot>().notNull(),
+  registration: json("registration").$type<ExecutionRegistration>(),
   sourceVersion: int("source_version", { unsigned: true }).notNull().default(1),
   startedAt: datetime("started_at", { mode: "date", fsp: 3 }).notNull(),
   startedBy: int("started_by", { unsigned: true })

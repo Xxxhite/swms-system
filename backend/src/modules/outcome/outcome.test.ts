@@ -125,3 +125,50 @@ describe("来源成果计算", () => {
     expect(() => calculateOutcome(source(), "MANUAL", [], "-1")).toThrow()
   })
 })
+
+test("执行登记分指标计算与旧来源共用人数／工时集合", () => {
+  const legacy = source(),
+    simple = source()
+  simple.staff = []
+  simple.participants = []
+  simple.registration = {
+    schemaVersion: 1,
+    requestKey: "r",
+    fingerprint: "h",
+    submittedBy: 1,
+    submittedAt: "2026-11-04T12:00:00+08:00",
+    indicators: [
+      { indicatorId: 1, value: "1", participantIds: [], intervals: [] },
+      { indicatorId: 2, value: "20", participantIds: [], intervals: [] },
+      { indicatorId: 3, value: "3", participantIds: [], intervals: [] },
+      { indicatorId: 4, value: "0", participantIds: [1, 2], intervals: [] },
+      {
+        indicatorId: 5,
+        value: "0",
+        participantIds: [],
+        intervals: [
+          { userId: 1, startAt: "2026-11-04T09:30:00+08:00", endAt: "2026-11-04T11:00:00+08:00" },
+        ],
+      },
+      { indicatorId: 6, value: "0.10", participantIds: [], intervals: [] },
+    ],
+  }
+  const calc = (mode: Parameters<typeof calculateOutcome>[1], id: number) =>
+    calculateOutcome(simple, mode, [], "0", true, id)
+  expect(calc("SCENES", 1).value).toBe("1.00")
+  expect(calc("VISITS", 2).value).toBe("20.00")
+  expect(calc("VISITS", 3).value).toBe("3.00")
+  expect(calc("MANUAL", 6).value).toBe("0.10")
+  expect(aggregateMeasures([calculateOutcome(legacy, "PEOPLE"), calc("PEOPLE", 4)], "PEOPLE")).toBe(
+    "8.00",
+  )
+  expect(
+    aggregateMeasures(
+      [calculateOutcome(legacy, "STAFF_HOURS"), calc("STAFF_HOURS", 5)],
+      "STAFF_HOURS",
+    ),
+  ).toBe("2.00")
+  expect(() => calc("VISITS", 999)).toThrow("登记依据")
+  simple.state = "STOPPED"
+  expect(calc("SCENES", 1).value).toBe("0.00")
+})

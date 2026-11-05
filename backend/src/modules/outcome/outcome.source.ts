@@ -32,13 +32,16 @@ export function outcomeSource(
       startAt: enter?.occurredAt.toISOString() ?? null,
       endAt: exit?.occurredAt.toISOString() ?? null,
       flags: [...new Set([...(enter?.flags ?? []), ...(exit?.flags ?? [])])],
-      location: [enter, exit]
-        .filter(Boolean)
-        .map(
-          (e) =>
-            `${e!.geo.status}；距离${Math.round(e!.distance ?? 0)}米，精度${Math.round(e!.geo.accuracy ?? 0)}米`,
-        )
-        .join("；"),
+      location:
+        session.snapshot.policy.locationCheckEnabled === false
+          ? "按服务地点登记"
+          : [enter, exit]
+              .filter(Boolean)
+              .map(
+                (e) =>
+                  `${e!.geo.status}；距离${Math.round(e!.distance ?? 0)}米，精度${Math.round(e!.geo.accuracy ?? 0)}米`,
+              )
+              .join("；"),
     }
   })
   const participants = data.executions.rosters
@@ -138,6 +141,8 @@ export function outcomeSource(
     projectId: task.projectId,
     teamId: task.teamId,
     title: task.title,
+    address: session.snapshot.address,
+    regionPathSnapshot: session.snapshot.regionPathSnapshot,
     date,
     form: task.form,
     state: session.status,

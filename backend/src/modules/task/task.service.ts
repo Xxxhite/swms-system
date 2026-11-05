@@ -1,3 +1,4 @@
+import { regionAddress } from "@/modules/region/region.shared"
 import { outcomeTaskState } from "@/modules/outcome/outcome.status"
 import {
   projectRepository,
@@ -35,7 +36,32 @@ function arranged(
   actor: Actor,
   input: TaskInput,
   times: { startAt: Date; endAt: Date },
+  old?: Task,
 ) {
+  const area = regionAddress(
+    data.regions,
+    input,
+    old,
+    input.address !== old?.address || (input.pointId ?? null) !== (old?.pointId ?? null),
+    true,
+  )
+  if ((!old || input.address !== old.address) && !input.address.trim())
+    throw AppError.badRequest("请填写任务详细地址")
+  if (input.pointId) {
+    const point = data.points.find(
+      (p) => p.id === input.pointId && p.projectId === input.projectId && !p.deletedAt,
+    )
+    if (
+      !point ||
+      ((!old ||
+        input.pointId !== old.pointId ||
+        input.address !== old.address ||
+        area.regionCode !== old.regionCode) &&
+        (point.regionCode !== area.regionCode ||
+          (point.address ?? "").trim() !== input.address.trim()))
+    )
+      throw AppError.conflict("服务点地址已变化，请重新选择；不同地址请使用临时地点")
+  }
   const { startAt, endAt } = times,
     start = businessDate(startAt),
     end = businessDate(new Date(endAt.getTime() - 1))
@@ -132,7 +158,7 @@ function arranged(
       collaboration: r.collaboration.trim(),
     }
   })
-  return { times, indicators, resources }
+  return { times, indicators, resources, area }
 }
 function review(
   data: BusinessState,
@@ -158,7 +184,7 @@ function review(
       throw AppError.conflict("仅可维护待开展任务，项目和团队须保持原安排")
   }
   const instances = occurrences(input.startAt, input.endAt, recurrence).map((times) =>
-    arranged(data, actor, input, times),
+    arranged(data, actor, input, times, excludeId ? findTask(data, actor, excludeId) : undefined),
   )
   const conflicts: Array<{
     instance: number
@@ -271,7 +297,11 @@ async function children(
   for (const i of item.indicators) await tx.scheduling.indicators.insert({ ...i, taskId: id })
   for (const r of item.resources) await tx.scheduling.resources.insert({ ...r, taskId: id })
 }
-function values(input: TaskInput, times: { startAt: Date; endAt: Date }) {
+function values(
+  input: TaskInput,
+  times: { startAt: Date; endAt: Date },
+  area: ReturnType<typeof regionAddress>,
+) {
   return {
     projectId: input.projectId,
     teamId: input.teamId,
@@ -281,6 +311,7 @@ function values(input: TaskInput, times: { startAt: Date; endAt: Date }) {
     pointId: input.pointId ?? null,
     location: input.location.trim(),
     address: input.address.trim(),
+    ...area,
     ...times,
     leaderId: input.leaderId,
     expectedPeople: input.expectedPeople,
@@ -303,6 +334,8 @@ function eventSnapshot(data: BusinessState, value: unknown) {
     endAt: row.endAt,
     location: row.location,
     address: row.address,
+    regionCode: row.regionCode,
+    regionPathSnapshot: row.regionPathSnapshot,
     leaderName: data.identity.users.find((u) => u.id === row.leaderId)?.name,
     staffNames: Array.isArray(row.staffIds)
       ? row.staffIds.map((id) => data.identity.users.find((u) => u.id === id)?.name ?? "历史人员")
@@ -487,7 +520,7 @@ export class TaskService {
       confirm(result, { previewToken, conflictReason })
       const ids: number[] = []
       for (const [index, item] of result.instances.entries()) {
-        const v = values(taskInput, item.times)
+        const v = values(taskInput, item.times, item.area)
         const id = await tx.scheduling.tasks.insert({
           ...v,
           createdBy: current.user.id,
@@ -541,7 +574,7 @@ export class TaskService {
       const result = review(data, current, fields, undefined, id)
       confirm(result, { previewToken, conflictReason })
       const item = result.instances[0]!,
-        v = values(fields, item.times)
+        v = values(fields, item.times, item.area)
       await tx.scheduling.tasks.update(id, { ...v, version: old.version + 1 })
       await children(tx, id, fields, item)
       await tx.scheduling.events.insert({
@@ -669,7 +702,14 @@ export class TaskService {
         }),
         points: data.points
           .filter((p) => !p.deletedAt && selected.some((t) => t.projectId === p.projectId))
-          .map((p) => ({ id: p.id, projectId: p.projectId, name: p.name, address: p.address })),
+          .map((p) => ({
+            id: p.id,
+            projectId: p.projectId,
+            name: p.name,
+            address: p.address,
+            regionCode: p.regionCode,
+            regionPathSnapshot: p.regionPathSnapshot,
+          })),
         resources: units.map((u) => ({
           id: u.id,
           name: u.name,

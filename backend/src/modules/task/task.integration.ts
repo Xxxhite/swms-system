@@ -74,6 +74,7 @@ export function registerTaskTests(
       pointId,
       location: "测试服务点",
       address: "虚构地址",
+      regionCode: "440304",
       startAt: `${day}T09:00:00+08:00`,
       endAt: `${day}T10:00:00+08:00`,
       leaderId: socialId,
@@ -128,6 +129,7 @@ export function registerTaskTests(
         endDate: end,
         amount: "100",
         serviceArea: "测试区域",
+        regionCode: "440304",
       })
       await db.insert(s.projectTeams).values({ projectId, teamId, reporterId: leaderId })
       await db.insert(s.projectMemberships).values(
@@ -141,7 +143,7 @@ export function registerTaskTests(
       )
       const [point] = await db
         .insert(s.projectServicePoints)
-        .values({ projectId, name: "测试服务点", address: "虚构地址" })
+        .values({ projectId, name: "测试服务点", address: "虚构地址", regionCode: "440304" })
       pointId = point.insertId
       const [i] = await db.insert(s.projectIndicators).values({
         projectId,
@@ -161,6 +163,7 @@ export function registerTaskTests(
         normalizedName: "b2合作资源",
         unitType: "社区",
         region: "测试区域",
+        regionCode: "440304",
         ownerOrgId: m.orgId!,
         maintainerId: m.id,
         createdBy: m.id,
@@ -220,6 +223,16 @@ export function registerTaskTests(
       let r = await request(base, "POST", leader, b)
       expect(r.code).toBe(0)
       taskId = r.data.id
+      for (const changed of [{ regionCode: "440305" }, { address: "伪造同一服务点地址" }])
+        expect(
+          (
+            await request(`${base}/preview`, "POST", manager, {
+              ...fields(b),
+              ...changed,
+              excludeId: taskId,
+            })
+          ).status,
+        ).toBe(409)
       for (const [key, form, hour] of [
         ["visit", "HOME_VISIT", 11],
         ["station", "STATIONED", 13],
@@ -409,6 +422,7 @@ export function registerTaskTests(
             name,
             unitType: "社区",
             region: "测试",
+            regionCode: "440304",
             ownerOrgId: m.orgId,
             maintainerId: m.id,
           })
@@ -511,6 +525,7 @@ export function registerTaskTests(
         endDate: stop,
         amount: "1",
         serviceArea: "测试",
+        regionCode: "440304",
       })
       await db
         .insert(s.projectTeams)
@@ -597,6 +612,7 @@ export function registerTaskTests(
         kind: "OTHER",
         location: "受限场所",
         address: "",
+        regionCode: "440304",
         startAt,
         endAt,
         leaderId: senior.id,

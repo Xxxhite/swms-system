@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { regionText } from '@/api/region-types'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -434,6 +435,10 @@ onMounted(load)
             <el-tabs v-model="tab">
                 <el-tab-pane label="执行概览" name="overview">
                     <el-descriptions :column="mobile || isMobile ? 1 : 2" border>
+                        <el-descriptions-item label="服务地点">
+                            {{ regionText(data.task) }}
+                            {{ data.task.address || data.task.location }}
+                        </el-descriptions-item>
                         <el-descriptions-item label="开始时间">
                             {{ formatDateTime(data.session?.startedAt) }}
                         </el-descriptions-item>
@@ -441,9 +446,14 @@ onMounted(load)
                             {{ formatDateTime(data.session?.endedAt) }}
                         </el-descriptions-item>
                         <el-descriptions-item label="位置检查">
-                            半径{{ data.policy.radius }}米，精度要求{{
-                                data.policy.accuracyLimit
-                            }}米
+                            <template v-if="data.policy.locationCheckEnabled === false">
+                                按服务地点登记
+                            </template>
+                            <template v-else>
+                                半径{{ data.policy.radius }}米，精度要求{{
+                                    data.policy.accuracyLimit
+                                }}米
+                            </template>
                         </el-descriptions-item>
                         <el-descriptions-item label="补录期限">
                             计划结束后{{ data.policy.supplementHours }}小时

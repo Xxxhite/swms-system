@@ -1,11 +1,12 @@
 export interface GeoSample {
-    status: 'OK' | 'DENIED' | 'UNAVAILABLE' | 'TIMEOUT' | 'UNSUPPORTED'
+    status: 'OK' | 'DENIED' | 'UNAVAILABLE' | 'TIMEOUT' | 'UNSUPPORTED' | 'NOT_REQUESTED'
     latitude?: number
     longitude?: number
     accuracy?: number
     sampledAt?: string
 }
 export interface ExecutionPolicy {
+    locationCheckEnabled?: boolean
     latitude: number | null
     longitude: number | null
     radius: number
@@ -110,6 +111,8 @@ export interface FieldTask {
     teamId: number
     form: string
     location: string
+    address?: string
+    regionPathSnapshot?: Array<{ code: string; name: string }> | null
     startAt: string
     endAt: string
     leaderId: number

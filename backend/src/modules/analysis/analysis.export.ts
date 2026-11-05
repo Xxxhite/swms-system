@@ -28,6 +28,7 @@ export async function exportIndicators(rows: Rows): Promise<Uint8Array> {
       "已逾期",
       "业务日期",
       "累计口径",
+      "服务区域",
     ])
     for (const r of rows.filter((r) => r.statisticsScope === scope))
       sheet.addRow([
@@ -45,12 +46,13 @@ export async function exportIndicators(rows: Rows): Promise<Uint8Array> {
         r.overdue ? "是" : "否",
         r.asOfDate,
         r.calculationNote,
+        r.serviceArea,
       ])
     sheet.getRow(1).font = { bold: true }
     sheet.views = [{ state: "frozen", ySplit: 1 }]
     sheet.columns.forEach((c) => (c.width = 20))
     sheet.getColumn(4).width = 40
-    sheet.autoFilter = { from: "A1", to: "N1" }
+    sheet.autoFilter = { from: "A1", to: "O1" }
   }
   const note = book.addWorksheet("口径说明")
   note.addRow(["合同、团队与本人记录分别展示，不将分层记录重复相加。"])

@@ -1,3 +1,4 @@
+import { createRegionRoutes } from "./region/region.route"
 import { createOutcomeRoutes } from "./outcome/outcome.route"
 import { createExecutionRoutes } from "./execution/execution.route"
 import { createParticipationRoutes } from "./execution/participation.route"
@@ -28,6 +29,7 @@ import { createSystemRoutes } from "./system/system.route"
  * 仅注册已实现的模块；待业务需求与表结构确认后再接入模块骨架。
  */
 export const modules: AnyElysia[] = [
+  createRegionRoutes(),
   createAuthRoutes(),
   createTaskRoutes(),
   createOutcomeRoutes(),

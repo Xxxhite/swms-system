@@ -220,6 +220,7 @@ async function state(tx: RawConnection, actor?: Actor, lock = false) {
   const indicatorIds = indicators.map((i) => i.id)
   return {
     identity,
+    regions: await tx.select().from(s.administrativeRegions),
     scheduling: await loadTaskState(tx),
     executions: await loadExecutionState(tx),
     outcomes: await loadOutcomeState(tx),

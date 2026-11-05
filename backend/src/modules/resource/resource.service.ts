@@ -1,3 +1,9 @@
+import {
+  regionAddress,
+  regionDisplay,
+  regionMatches,
+  validateRegionQuery,
+} from "@/modules/region/region.shared"
 import { dictionaries } from "@/modules/identity/identity.constants"
 import * as s from "@/db/schema"
 import { requirePermission, assertVersion, type Actor } from "@/utils/authorization"
@@ -125,8 +131,11 @@ export async function createResource(
     }
   }
   const { requestKey, ...values } = input
+  const area = regionAddress(await tx.regions.all(), input, undefined, true, true)
   const id = await tx.resources.insert({
     ...values,
+    ...area,
+    region: area.regionPathSnapshot!.at(-1)!.name,
     name: input.name.trim(),
     normalizedName: input.name.trim().normalize("NFKC").replace(/\s+/g, " ").toLowerCase(),
     creditCode: input.creditCode?.trim().toUpperCase() || null,
@@ -163,6 +172,8 @@ export class ResourceService {
       requirePermission(current, "resource:view")
       const cooperations = await validCooperations(tx),
         followups = await tx.followups.all()
+      const regions = await tx.regions.all()
+      validateRegionQuery(regions, q, q.region)
       const rows = (await tx.visible(current)).map((r) => ({
         ...r,
         maintainerName: identity.users.find((u) => u.id === r.maintainerId)?.name,
@@ -183,6 +194,8 @@ export class ResourceService {
               (!q.keyword || r.name.includes(q.keyword)) &&
               (!q.status || r.status === q.status) &&
               (!q.region || r.region === q.region) &&
+              regionMatches(regions, q.regionCode, r) &&
+              (!q.regionUnmapped || !r.regionCode) &&
               (!q.unitType || r.unitType === q.unitType) &&
               (!q.capability || r.capabilityCodes.includes(q.capability)) &&
               (!q.maintainerId || r.maintainerId === q.maintainerId) &&
@@ -213,7 +226,7 @@ export class ResourceService {
         serviceFields: dictionaries.serviceFields,
         resources: (await tx.visible(current))
           .filter((r) => r.status === "ACTIVE")
-          .map((r) => ({ id: r.id, name: r.name, region: r.region })),
+          .map((r) => ({ id: r.id, name: r.name, region: regionDisplay(r, r.region) })),
         organizations: identity.orgs
           .filter(
             (o) =>
@@ -299,10 +312,20 @@ export class ResourceService {
       assertVersion(r.version, version)
       validateFields(input)
       assignment(current, identity, input.ownerOrgId, input.maintainerId)
+      const area = regionAddress(
+        await tx.regions.all(),
+        input,
+        r,
+        (input.region !== undefined && input.region !== r.region) ||
+          (input.address !== undefined && input.address !== r.address),
+        true,
+      )
       const { requestKey, ...values } = input
       void requestKey
       await tx.resources.update(id, {
         ...values,
+        ...area,
+        region: area.regionPathSnapshot?.at(-1)?.name ?? r.region,
         name: input.name.trim(),
         normalizedName: input.name.trim().normalize("NFKC").replace(/\s+/g, " ").toLowerCase(),
         creditCode: input.creditCode?.trim().toUpperCase() || null,

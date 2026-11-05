@@ -1,0 +1,2234 @@
+[
+  {
+    "code": "330000",
+    "name": "浙江省",
+    "parentCode": null,
+    "level": 1,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330100",
+    "name": "杭州市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330102",
+    "name": "上城区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330105",
+    "name": "拱墅区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330106",
+    "name": "西湖区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330108",
+    "name": "滨江区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330109",
+    "name": "萧山区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330110",
+    "name": "余杭区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330111",
+    "name": "富阳区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "330112",
+    "name": "临安区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "330113",
+    "name": "临平区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "330114",
+    "name": "钱塘区",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 9
+  },
+  {
+    "code": "330122",
+    "name": "桐庐县",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 10
+  },
+  {
+    "code": "330127",
+    "name": "淳安县",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 11
+  },
+  {
+    "code": "330182",
+    "name": "建德市",
+    "parentCode": "330100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 12
+  },
+  {
+    "code": "330200",
+    "name": "宁波市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330203",
+    "name": "海曙区",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330205",
+    "name": "江北区",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330206",
+    "name": "北仑区",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330211",
+    "name": "镇海区",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330212",
+    "name": "鄞州区",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330213",
+    "name": "奉化区",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330225",
+    "name": "象山县",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "330226",
+    "name": "宁海县",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "330281",
+    "name": "余姚市",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "330282",
+    "name": "慈溪市",
+    "parentCode": "330200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 9
+  },
+  {
+    "code": "330300",
+    "name": "温州市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330302",
+    "name": "鹿城区",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330303",
+    "name": "龙湾区",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330304",
+    "name": "瓯海区",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330305",
+    "name": "洞头区",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330324",
+    "name": "永嘉县",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330326",
+    "name": "平阳县",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330327",
+    "name": "苍南县",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "330328",
+    "name": "文成县",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "330329",
+    "name": "泰顺县",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "330381",
+    "name": "瑞安市",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 9
+  },
+  {
+    "code": "330382",
+    "name": "乐清市",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 10
+  },
+  {
+    "code": "330383",
+    "name": "龙港市",
+    "parentCode": "330300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 11
+  },
+  {
+    "code": "330400",
+    "name": "嘉兴市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330402",
+    "name": "南湖区",
+    "parentCode": "330400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330411",
+    "name": "秀洲区",
+    "parentCode": "330400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330421",
+    "name": "嘉善县",
+    "parentCode": "330400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330424",
+    "name": "海盐县",
+    "parentCode": "330400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330481",
+    "name": "海宁市",
+    "parentCode": "330400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330482",
+    "name": "平湖市",
+    "parentCode": "330400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330483",
+    "name": "桐乡市",
+    "parentCode": "330400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "330500",
+    "name": "湖州市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330502",
+    "name": "吴兴区",
+    "parentCode": "330500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330503",
+    "name": "南浔区",
+    "parentCode": "330500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330521",
+    "name": "德清县",
+    "parentCode": "330500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330522",
+    "name": "长兴县",
+    "parentCode": "330500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330523",
+    "name": "安吉县",
+    "parentCode": "330500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330600",
+    "name": "绍兴市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330602",
+    "name": "越城区",
+    "parentCode": "330600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330603",
+    "name": "柯桥区",
+    "parentCode": "330600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330604",
+    "name": "上虞区",
+    "parentCode": "330600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330624",
+    "name": "新昌县",
+    "parentCode": "330600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330681",
+    "name": "诸暨市",
+    "parentCode": "330600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330683",
+    "name": "嵊州市",
+    "parentCode": "330600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330700",
+    "name": "金华市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "330702",
+    "name": "婺城区",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330703",
+    "name": "金东区",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330723",
+    "name": "武义县",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330726",
+    "name": "浦江县",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330727",
+    "name": "磐安县",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330781",
+    "name": "兰溪市",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330782",
+    "name": "义乌市",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "330783",
+    "name": "东阳市",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "330784",
+    "name": "永康市",
+    "parentCode": "330700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "330800",
+    "name": "衢州市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "330802",
+    "name": "柯城区",
+    "parentCode": "330800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330803",
+    "name": "衢江区",
+    "parentCode": "330800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330822",
+    "name": "常山县",
+    "parentCode": "330800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330824",
+    "name": "开化县",
+    "parentCode": "330800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "330825",
+    "name": "龙游县",
+    "parentCode": "330800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "330881",
+    "name": "江山市",
+    "parentCode": "330800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "330900",
+    "name": "舟山市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "330902",
+    "name": "定海区",
+    "parentCode": "330900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "330903",
+    "name": "普陀区",
+    "parentCode": "330900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "330921",
+    "name": "岱山县",
+    "parentCode": "330900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "330922",
+    "name": "嵊泗县",
+    "parentCode": "330900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "331000",
+    "name": "台州市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 9
+  },
+  {
+    "code": "331002",
+    "name": "椒江区",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "331003",
+    "name": "黄岩区",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "331004",
+    "name": "路桥区",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "331022",
+    "name": "三门县",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "331023",
+    "name": "天台县",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "331024",
+    "name": "仙居县",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "331081",
+    "name": "温岭市",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "331082",
+    "name": "临海市",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "331083",
+    "name": "玉环市",
+    "parentCode": "331000",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "331100",
+    "name": "丽水市",
+    "parentCode": "330000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 10
+  },
+  {
+    "code": "331102",
+    "name": "莲都区",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "331121",
+    "name": "青田县",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "331122",
+    "name": "缙云县",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "331123",
+    "name": "遂昌县",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "331124",
+    "name": "松阳县",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "331125",
+    "name": "云和县",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "331126",
+    "name": "庆元县",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "331127",
+    "name": "景宁畲族自治县",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "331181",
+    "name": "龙泉市",
+    "parentCode": "331100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "440000",
+    "name": "广东省",
+    "parentCode": null,
+    "level": 1,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440100",
+    "name": "广州市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440103",
+    "name": "荔湾区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440104",
+    "name": "越秀区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440105",
+    "name": "海珠区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440106",
+    "name": "天河区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440111",
+    "name": "白云区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440112",
+    "name": "黄埔区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "440113",
+    "name": "番禺区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "440114",
+    "name": "花都区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "440115",
+    "name": "南沙区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "440117",
+    "name": "从化区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 9
+  },
+  {
+    "code": "440118",
+    "name": "增城区",
+    "parentCode": "440100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 10
+  },
+  {
+    "code": "440200",
+    "name": "韶关市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440203",
+    "name": "武江区",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440204",
+    "name": "浈江区",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440205",
+    "name": "曲江区",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440222",
+    "name": "始兴县",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440224",
+    "name": "仁化县",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440229",
+    "name": "翁源县",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "440232",
+    "name": "乳源瑶族自治县",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "440233",
+    "name": "新丰县",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "440281",
+    "name": "乐昌市",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "440282",
+    "name": "南雄市",
+    "parentCode": "440200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 9
+  },
+  {
+    "code": "440300",
+    "name": "深圳市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": -1
+  },
+  {
+    "code": "440303",
+    "name": "罗湖区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440304",
+    "name": "福田区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440305",
+    "name": "南山区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440306",
+    "name": "宝安区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440307",
+    "name": "龙岗区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440308",
+    "name": "盐田区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "440309",
+    "name": "龙华区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "440310",
+    "name": "坪山区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "440311",
+    "name": "光明区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "440400",
+    "name": "珠海市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440402",
+    "name": "香洲区",
+    "parentCode": "440400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440403",
+    "name": "斗门区",
+    "parentCode": "440400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440404",
+    "name": "金湾区",
+    "parentCode": "440400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440500",
+    "name": "汕头市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440507",
+    "name": "龙湖区",
+    "parentCode": "440500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440511",
+    "name": "金平区",
+    "parentCode": "440500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440512",
+    "name": "濠江区",
+    "parentCode": "440500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440513",
+    "name": "潮阳区",
+    "parentCode": "440500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440514",
+    "name": "潮南区",
+    "parentCode": "440500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440515",
+    "name": "澄海区",
+    "parentCode": "440500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "440523",
+    "name": "南澳县",
+    "parentCode": "440500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "440600",
+    "name": "佛山市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "440604",
+    "name": "禅城区",
+    "parentCode": "440600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440605",
+    "name": "南海区",
+    "parentCode": "440600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440606",
+    "name": "顺德区",
+    "parentCode": "440600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440607",
+    "name": "三水区",
+    "parentCode": "440600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440608",
+    "name": "高明区",
+    "parentCode": "440600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440700",
+    "name": "江门市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "440703",
+    "name": "蓬江区",
+    "parentCode": "440700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440704",
+    "name": "江海区",
+    "parentCode": "440700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440705",
+    "name": "新会区",
+    "parentCode": "440700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440781",
+    "name": "台山市",
+    "parentCode": "440700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440783",
+    "name": "开平市",
+    "parentCode": "440700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440784",
+    "name": "鹤山市",
+    "parentCode": "440700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "440785",
+    "name": "恩平市",
+    "parentCode": "440700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "440800",
+    "name": "湛江市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "440802",
+    "name": "赤坎区",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440803",
+    "name": "霞山区",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440804",
+    "name": "坡头区",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440811",
+    "name": "麻章区",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440823",
+    "name": "遂溪县",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "440825",
+    "name": "徐闻县",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "440881",
+    "name": "廉江市",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "440882",
+    "name": "雷州市",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "440883",
+    "name": "吴川市",
+    "parentCode": "440800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "440900",
+    "name": "茂名市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 8
+  },
+  {
+    "code": "440902",
+    "name": "茂南区",
+    "parentCode": "440900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "440904",
+    "name": "电白区",
+    "parentCode": "440900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "440981",
+    "name": "高州市",
+    "parentCode": "440900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "440982",
+    "name": "化州市",
+    "parentCode": "440900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "440983",
+    "name": "信宜市",
+    "parentCode": "440900",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "441200",
+    "name": "肇庆市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 9
+  },
+  {
+    "code": "441202",
+    "name": "端州区",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "441203",
+    "name": "鼎湖区",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "441204",
+    "name": "高要区",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "441223",
+    "name": "广宁县",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "441224",
+    "name": "怀集县",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "441225",
+    "name": "封开县",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "441226",
+    "name": "德庆县",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "441284",
+    "name": "四会市",
+    "parentCode": "441200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "441300",
+    "name": "惠州市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 10
+  },
+  {
+    "code": "441302",
+    "name": "惠城区",
+    "parentCode": "441300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "441303",
+    "name": "惠阳区",
+    "parentCode": "441300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "441322",
+    "name": "博罗县",
+    "parentCode": "441300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "441323",
+    "name": "惠东县",
+    "parentCode": "441300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "441324",
+    "name": "龙门县",
+    "parentCode": "441300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "441400",
+    "name": "梅州市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 11
+  },
+  {
+    "code": "441402",
+    "name": "梅江区",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "441403",
+    "name": "梅县区",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "441422",
+    "name": "大埔县",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "441423",
+    "name": "丰顺县",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "441424",
+    "name": "五华县",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "441426",
+    "name": "平远县",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "441427",
+    "name": "蕉岭县",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "441481",
+    "name": "兴宁市",
+    "parentCode": "441400",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "441500",
+    "name": "汕尾市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 12
+  },
+  {
+    "code": "441502",
+    "name": "城区",
+    "parentCode": "441500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "441521",
+    "name": "海丰县",
+    "parentCode": "441500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "441523",
+    "name": "陆河县",
+    "parentCode": "441500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "441581",
+    "name": "陆丰市",
+    "parentCode": "441500",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "441600",
+    "name": "河源市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 13
+  },
+  {
+    "code": "441602",
+    "name": "源城区",
+    "parentCode": "441600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "441621",
+    "name": "紫金县",
+    "parentCode": "441600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "441622",
+    "name": "龙川县",
+    "parentCode": "441600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "441623",
+    "name": "连平县",
+    "parentCode": "441600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "441624",
+    "name": "和平县",
+    "parentCode": "441600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "441625",
+    "name": "东源县",
+    "parentCode": "441600",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "441700",
+    "name": "阳江市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 14
+  },
+  {
+    "code": "441702",
+    "name": "江城区",
+    "parentCode": "441700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "441704",
+    "name": "阳东区",
+    "parentCode": "441700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "441721",
+    "name": "阳西县",
+    "parentCode": "441700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "441781",
+    "name": "阳春市",
+    "parentCode": "441700",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "441800",
+    "name": "清远市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 15
+  },
+  {
+    "code": "441802",
+    "name": "清城区",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "441803",
+    "name": "清新区",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "441821",
+    "name": "佛冈县",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "441823",
+    "name": "阳山县",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "441825",
+    "name": "连山壮族瑶族自治县",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "441826",
+    "name": "连南瑶族自治县",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 5
+  },
+  {
+    "code": "441881",
+    "name": "英德市",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 6
+  },
+  {
+    "code": "441882",
+    "name": "连州市",
+    "parentCode": "441800",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 7
+  },
+  {
+    "code": "441900",
+    "name": "东莞市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 16
+  },
+  {
+    "code": "442000",
+    "name": "中山市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 17
+  },
+  {
+    "code": "445100",
+    "name": "潮州市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 18
+  },
+  {
+    "code": "445102",
+    "name": "湘桥区",
+    "parentCode": "445100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "445103",
+    "name": "潮安区",
+    "parentCode": "445100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "445122",
+    "name": "饶平县",
+    "parentCode": "445100",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "445200",
+    "name": "揭阳市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 19
+  },
+  {
+    "code": "445202",
+    "name": "榕城区",
+    "parentCode": "445200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "445203",
+    "name": "揭东区",
+    "parentCode": "445200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "445222",
+    "name": "揭西县",
+    "parentCode": "445200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "445224",
+    "name": "惠来县",
+    "parentCode": "445200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "445281",
+    "name": "普宁市",
+    "parentCode": "445200",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "445300",
+    "name": "云浮市",
+    "parentCode": "440000",
+    "level": 2,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 20
+  },
+  {
+    "code": "445302",
+    "name": "云城区",
+    "parentCode": "445300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 0
+  },
+  {
+    "code": "445303",
+    "name": "云安区",
+    "parentCode": "445300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 1
+  },
+  {
+    "code": "445321",
+    "name": "新兴县",
+    "parentCode": "445300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 2
+  },
+  {
+    "code": "445322",
+    "name": "郁南县",
+    "parentCode": "445300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 3
+  },
+  {
+    "code": "445381",
+    "name": "罗定市",
+    "parentCode": "445300",
+    "level": 3,
+    "kind": "ADMIN",
+    "enabled": true,
+    "sortOrder": 4
+  },
+  {
+    "code": "BIZ_SZ_DAPENG",
+    "name": "大鹏新区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "SERVICE",
+    "enabled": true,
+    "sortOrder": 100
+  },
+  {
+    "code": "BIZ_SZ_SHENSHAN",
+    "name": "深汕特别合作区",
+    "parentCode": "440300",
+    "level": 3,
+    "kind": "SERVICE",
+    "enabled": true,
+    "sortOrder": 101
+  }
+]

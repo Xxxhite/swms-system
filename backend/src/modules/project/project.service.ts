@@ -1,3 +1,4 @@
+import { regionAddress, regionMatches, validateRegionQuery } from "@/modules/region/region.shared"
 import { contractResource, syncContractCooperation } from "@/modules/resource/resource.service"
 import * as s from "@/db/schema"
 import { sortRows } from "@/utils/list-sort"
@@ -153,6 +154,7 @@ export class ProjectService {
       requirePermission(current, "project:record:view")
       if (query.dateFrom && query.dateTo && query.dateFrom > query.dateTo)
         throw AppError.badRequest("合同筛选开始日期不得晚于结束日期")
+      validateRegionQuery(data.regions, query, query.serviceArea)
       const rows = data.projects
         .filter((p) => {
           const c = data.contracts.find((c) => c.projectId === p.id)
@@ -164,6 +166,8 @@ export class ProjectService {
             (!query.teamId ||
               visibleTeams(data, current, p.id).some((t) => t.teamId === query.teamId)) &&
             (!query.serviceArea || c?.serviceArea === query.serviceArea) &&
+            regionMatches(data.regions, query.regionCode, c, true) &&
+            (!query.regionUnmapped || !c?.regionCode) &&
             (!query.dateFrom || (!!c && c.endDate >= query.dateFrom)) &&
             (!query.dateTo || (!!c && c.startDate <= query.dateTo))
           )
@@ -357,6 +361,13 @@ export class ProjectService {
       if (input.endDate < input.startDate) throw AppError.badRequest("合同结束日期不得早于开始日期")
       decimalUnits(input.amount, false, 12)
       const old = data.contracts.find((c) => c.projectId === id)
+      const area = regionAddress(
+        data.regions,
+        input,
+        old,
+        input.serviceArea !== undefined && input.serviceArea !== old?.serviceArea,
+      )
+      const serviceArea = area.regionPathSnapshot?.at(-1)?.name ?? old?.serviceArea ?? ""
       if (
         old &&
         (old.startDate !== input.startDate || old.endDate !== input.endDate) &&
@@ -379,7 +390,11 @@ export class ProjectService {
       )
         throw AppError.conflict("请先将成员有效期间调整至新的合同周期内")
       const link = await contractResource(tx.resources, current, data.identity, input, old)
-      const { quickResource, contactId, snapshotReason, resourceId, ...fields } = input
+      const { quickResource, contactId, snapshotReason, resourceId, ...fields } = {
+        ...input,
+        ...area,
+        serviceArea,
+      }
       void quickResource
       void contactId
       void resourceId
@@ -456,6 +471,7 @@ export class ProjectService {
       id?: number
       name: string
       address?: string
+      regionCode?: string | null
       note?: string
       latitude?: number | null
       longitude?: number | null
@@ -481,13 +497,30 @@ export class ProjectService {
         })
       }
       for (const point of points) {
+        const previous = old.find((o) => o.id === point.id)
+        const area = regionAddress(
+          data.regions,
+          point,
+          previous,
+          (point.address ?? "") !== (previous?.address ?? ""),
+          true,
+        )
+        if (!previous && !point.address?.trim()) throw AppError.badRequest("请填写服务点详细地址")
+        const fields = {
+          ...point,
+          ...area,
+          address:
+            previous && (point.address ?? "") === (previous.address ?? "")
+              ? previous.address
+              : point.address,
+        }
         if ((point.latitude == null) !== (point.longitude == null))
           throw AppError.badRequest("服务点经纬度须成对填写")
         if (point.id) {
           const row = old.find((o) => o.id === point.id)
           if (!row) throw AppError.badRequest("服务点不属于本项目")
-          await tx.projectServicePoints.update(row.id, { ...point, version: row.version + 1 })
-        } else await tx.projectServicePoints.insert({ ...point, projectId: id })
+          await tx.projectServicePoints.update(row.id, { ...fields, version: row.version + 1 })
+        } else await tx.projectServicePoints.insert({ ...fields, projectId: id })
       }
       await bumpProject(tx, p)
       await businessAudit(tx, current.user.id, "save-service-points", "project", id, old, points)

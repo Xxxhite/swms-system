@@ -35,6 +35,8 @@ watch(open, (value) => {
               pointId: t.pointId,
               location: t.location,
               address: t.address,
+              regionCode: t.regionCode ?? null,
+              regionPathSnapshot: t.regionPathSnapshot,
               startAt: toBusinessInput(t.startAt),
               endAt: toBusinessInput(t.endAt),
               leaderId: t.leaderId,

@@ -1,3 +1,4 @@
+import { seedRegions } from "@/modules/region/region.seed"
 import { eq, getTableName } from "drizzle-orm"
 import { dirname, resolve } from "node:path"
 import { unlink } from "node:fs/promises"
@@ -79,6 +80,7 @@ export const demoResetTables = [
   s.roles,
   s.permissions,
   s.organizations,
+  s.administrativeRegions,
 ] as const
 
 /** 破坏性入口须显式指定本机库，生产环境和未知表均拒绝。 */
@@ -397,7 +399,13 @@ export async function rebuildDemoData(database: Database, input: DemoDataInput) 
       const tx = transaction as unknown as Database
       await tx.update(s.users).set({ supervisorId: null, reviewedBy: null })
       await tx.update(s.organizations).set({ parentId: null })
-      for (const table of demoResetTables) await tx.delete(table)
+      for (const table of demoResetTables) {
+        if (table === s.administrativeRegions) {
+          for (const level of [3, 2, 1])
+            await tx.delete(table).where(eq(s.administrativeRegions.level, level))
+        } else await tx.delete(table)
+      }
+      await seedRegions(tx)
       await seedIdentity(tx, { adminUsername: "admin", adminPassword: input.adminPassword })
       const today = businessToday()
       const orgs = new Map((await tx.select().from(s.organizations)).map((o) => [o.code, o.id]))
@@ -615,6 +623,7 @@ export async function rebuildDemoData(database: Database, input: DemoDataInput) 
               name: `虚构合作单位${projectIndex + 1}（测试）`,
               unitType: "测试单位",
               region: definition.area,
+              regionCode: ["440304", "440305", "440303", "440306"][projectIndex],
               ownerOrgId: actor.user.orgId!,
               maintainerId: actor.user.id,
               requestKey: `demo-resource-${projectIndex}`,
@@ -623,6 +632,7 @@ export async function rebuildDemoData(database: Database, input: DemoDataInput) 
             endDate,
             amount: `${(projectIndex + 1) * 150000}.00`,
             serviceArea: definition.area,
+            regionCode: ["440304", "440305", "440303", "440306"][projectIndex],
             note: "全为虚构测试资料，用于系统功能验证",
           },
           (await detail()).version,
@@ -633,6 +643,7 @@ export async function rebuildDemoData(database: Database, input: DemoDataInput) 
           [1, 2].map((n) => ({
             name: `${definition.area}测试服务点${n}`,
             address: `${definition.area}虚构测试路${n}号`,
+            regionCode: ["440304", "440305", "440303", "440306"][projectIndex],
             note: "虚构地址，仅用于功能测试",
           })),
           (await detail()).version,

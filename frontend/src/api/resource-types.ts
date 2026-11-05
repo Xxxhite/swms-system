@@ -2,6 +2,8 @@ export interface ResourceInput {
     name: string
     unitType: string
     region: string
+    regionCode?: string | null
+    regionPathSnapshot?: Array<{ code: string; name: string }> | null
     ownerOrgId: number
     maintainerId: number
     creditCode?: string
@@ -125,7 +127,8 @@ export const cooperationStatus: Record<string, string> = {
 export const emptyResource = (): ResourceInput => ({
     name: '',
     unitType: '',
-    region: '',
+    region: '深圳市',
+    regionCode: '440300',
     ownerOrgId: 0,
     maintainerId: 0,
     creditCode: '',

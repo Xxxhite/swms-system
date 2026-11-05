@@ -61,6 +61,7 @@ declare module 'vue' {
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     FilterPanel: typeof import('./../components/FilterPanel.vue')['default']
+    RegionSelect: typeof import('./../components/RegionSelect.vue')['default']
     ResponsivePagination: typeof import('./../components/ResponsivePagination.vue')['default']
     ResponsiveTable: typeof import('./../components/ResponsiveTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

@@ -13,6 +13,7 @@ export const geoBody = t.Object({
     t.Literal("UNAVAILABLE"),
     t.Literal("TIMEOUT"),
     t.Literal("UNSUPPORTED"),
+    t.Literal("NOT_REQUESTED"),
   ]),
   latitude: t.Optional(t.Number({ minimum: -90, maximum: 90 })),
   longitude: t.Optional(t.Number({ minimum: -180, maximum: 180 })),
@@ -37,6 +38,7 @@ export const lifecycleBody = t.Object({
   evidenceIds: t.Array(id, { maxItems: 10, uniqueItems: true }),
 })
 export const policyBody = t.Object({
+  locationCheckEnabled: t.Optional(t.Boolean()),
   version: t.Integer({ minimum: 0 }),
   taskVersion: id,
   reason: shortText(1000, "规则调整原因"),

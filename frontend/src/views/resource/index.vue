@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { regionText } from '@/api/region-types'
+import RegionSelect from '@/components/RegionSelect.vue'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -34,6 +36,8 @@ const query = reactive({
     pageSize: 20,
     keyword: '',
     region: '',
+    regionCode: undefined as string | null | undefined,
+    regionUnmapped: undefined as string | undefined,
     unitType: '',
     capability: '',
     relationship: '',
@@ -78,6 +82,8 @@ function reset() {
         page: 1,
         keyword: '',
         region: '',
+        regionCode: undefined,
+        regionUnmapped: undefined,
         unitType: '',
         capability: '',
         relationship: '',
@@ -163,7 +169,22 @@ onMounted(async () => {
             <el-form-item label="单位名称">
                 <el-input v-model="query.keyword" clearable />
             </el-form-item>
-            <el-form-item label="区域"><el-input v-model="query.region" clearable /></el-form-item>
+            <el-form-item label="区域">
+                <RegionSelect
+                    v-model="query.regionCode"
+                    @change="query.regionUnmapped = undefined"
+                />
+            </el-form-item>
+            <el-form-item label="区域核对">
+                <el-select
+                    v-model="query.regionUnmapped"
+                    clearable
+                    placeholder="全部"
+                    @change="query.regionCode = undefined"
+                >
+                    <el-option label="历史区域待核对" value="1" />
+                </el-select>
+            </el-form-item>
             <el-form-item label="单位类型">
                 <el-input v-model="query.unitType" clearable />
             </el-form-item>
@@ -241,7 +262,9 @@ onMounted(async () => {
                     </el-link>
                 </template>
             </el-table-column>
-            <el-table-column prop="region" label="区域" min-width="110" />
+            <el-table-column prop="region" label="区域" min-width="180">
+                <template #default="{ row }">{{ regionText(row, row.region) }}</template>
+            </el-table-column>
             <el-table-column prop="unitType" label="单位类型" min-width="110" />
             <el-table-column label="资源能力" min-width="150">
                 <template #default="{ row }">{{ row.capabilityCodes.join('、') || '—' }}</template>

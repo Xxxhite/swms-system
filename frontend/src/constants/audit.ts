@@ -15,6 +15,7 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
     'upload-execution-evidence': '上传现场凭证',
     'download-execution-evidence': '下载现场凭证',
     'remove-unbound-execution-evidence': '移除未绑定凭证',
+    'normalize-region-address': '规范地区地址',
     'explain-execution-exception': '追加异常说明',
     'save-service-plan': '保存阶段计划',
     'publish-service-plan': '发布阶段计划',

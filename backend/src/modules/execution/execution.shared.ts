@@ -40,9 +40,14 @@ export function sessionFor(data: BusinessState, taskId: number) {
 }
 export function policyFor(data: BusinessState, t: ExecutionTask): ExecutionPolicy {
   const session = sessionFor(data, t.id)
-  if (session) return session.snapshot.policy
+  if (session)
+    return {
+      ...session.snapshot.policy,
+      locationCheckEnabled: session.snapshot.policy.locationCheckEnabled ?? true,
+    }
   const saved = data.executions.policies.find((p) => p.taskId === t.id)
-  if (saved) return saved.settings
+  if (saved)
+    return { ...saved.settings, locationCheckEnabled: saved.settings.locationCheckEnabled ?? true }
   const point = data.points.find((p) => p.id === t.pointId && !p.deletedAt)
   return {
     ...defaultPolicy,

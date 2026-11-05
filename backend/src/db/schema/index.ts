@@ -12,3 +12,5 @@ export * from "./task"
 
 export * from "./execution"
 export * from "./outcome"
+
+export * from "./region"

@@ -20,6 +20,8 @@ export interface TaskInput {
     pointId: number | null
     location: string
     address: string
+    regionCode?: string | null
+    regionPathSnapshot?: Array<{ code: string; name: string }> | null
     startAt: string
     endAt: string
     leaderId: number
@@ -126,7 +128,14 @@ export interface TaskCandidates {
         plan: { id: number; status: string } | null
         contract: { startDate: string; endDate: string }
     }>
-    points: Array<{ id: number; projectId: number; name: string; address: string | null }>
+    points: Array<{
+        id: number
+        projectId: number
+        name: string
+        address: string | null
+        regionCode?: string | null
+        regionPathSnapshot?: Array<{ code: string; name: string }> | null
+    }>
     resources: Array<{ id: number; name: string; contacts: Array<{ id: number; name: string }> }>
 }
 export interface TaskPreview {
@@ -152,6 +161,7 @@ export function emptyTask(): TaskInput {
         pointId: null,
         location: '',
         address: '',
+        regionCode: '440300',
         startAt: '',
         endAt: '',
         leaderId: 0,

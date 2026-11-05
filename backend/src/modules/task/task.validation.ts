@@ -1,3 +1,4 @@
+import { regionCodeBody } from "@/modules/region/region.validation"
 import { t, type Static } from "elysia"
 import { shortText } from "@/modules/project/project.validation"
 const id = t.Integer({ minimum: 1 })
@@ -9,6 +10,7 @@ export const taskBody = t.Object({
   kind: t.Union([t.Literal("INDICATOR"), t.Literal("OTHER")]),
   pointId: t.Optional(t.Union([id, t.Null()])),
   location: shortText(150, "地点"),
+  regionCode: regionCodeBody,
   address: t.String({ maxLength: 255 }),
   startAt: t.String({ maxLength: 40 }),
   endAt: t.String({ maxLength: 40 }),

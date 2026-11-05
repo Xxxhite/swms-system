@@ -1,4 +1,6 @@
+import { regionColumns, administrativeRegions } from "./region"
 import {
+  foreignKey,
   date,
   double,
   datetime,
@@ -81,25 +83,37 @@ export const projectContracts = mysqlTable("contract_contracts", {
   startDate: date("start_date", { mode: "string" }).notNull(),
   endDate: date("end_date", { mode: "string" }).notNull(),
   amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
+  ...regionColumns(),
   serviceArea: varchar("service_area", { length: 100 }).notNull(),
   note: text("note"),
   ...businessTimestamps(),
 })
 /** 服务点表：项目下的服务位置，填报数量不按服务点重复拆分。 */
-export const projectServicePoints = mysqlTable("contract_service_points", {
-  id: int("id", { unsigned: true }).autoincrement().primaryKey(),
-  projectId: int("project_id", { unsigned: true })
-    .notNull()
-    .references(() => projects.id),
-  name: varchar("name", { length: 100 }).notNull(),
-  address: varchar("address", { length: 255 }),
-  latitude: double("latitude"),
-  longitude: double("longitude"),
-  radius: int("radius", { unsigned: true }),
-  note: varchar("note", { length: 1000 }),
-  deletedAt: datetime("deleted_at", { mode: "date", fsp: 3 }),
-  ...businessTimestamps(),
-})
+export const projectServicePoints = mysqlTable(
+  "contract_service_points",
+  {
+    id: int("id", { unsigned: true }).autoincrement().primaryKey(),
+    projectId: int("project_id", { unsigned: true })
+      .notNull()
+      .references(() => projects.id),
+    name: varchar("name", { length: 100 }).notNull(),
+    ...regionColumns(false),
+    address: varchar("address", { length: 255 }),
+    latitude: double("latitude"),
+    longitude: double("longitude"),
+    radius: int("radius", { unsigned: true }),
+    note: varchar("note", { length: 1000 }),
+    deletedAt: datetime("deleted_at", { mode: "date", fsp: 3 }),
+    ...businessTimestamps(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.regionCode],
+      foreignColumns: [administrativeRegions.code],
+      name: "service_point_region_fk",
+    }),
+  ],
+)
 /** 项目服务团队表：保存团队及填报责任，历史引用存在时禁止移除。 */
 export const projectTeams = mysqlTable(
   "contract_teams",

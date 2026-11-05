@@ -1,3 +1,4 @@
+import { regionColumns } from "./region"
 import {
   date,
   datetime,
@@ -74,6 +75,7 @@ export const serviceTasks = mysqlTable(
     kind: mysqlEnum("kind", ["INDICATOR", "OTHER"]).notNull(),
     pointId: int("point_id", { unsigned: true }).references(() => projectServicePoints.id),
     location: varchar("location", { length: 150 }).notNull(),
+    ...regionColumns(),
     address: varchar("address", { length: 255 }).notNull(),
     startAt: datetime("start_at", { mode: "date", fsp: 3 }).notNull(),
     endAt: datetime("end_at", { mode: "date", fsp: 3 }).notNull(),

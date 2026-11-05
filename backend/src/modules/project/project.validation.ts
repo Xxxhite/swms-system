@@ -1,3 +1,4 @@
+import { regionCodeBody, regionQuery } from "@/modules/region/region.validation"
 import { resourceBody } from "@/modules/resource/resource.validation"
 import { t, type Static } from "elysia"
 import { sortFields } from "@/utils/list-sort"
@@ -44,7 +45,8 @@ export const contractBody = t.Object({
     pattern: "^(0|[1-9][0-9]{0,11})(\\.[0-9]{1,2})?$",
     error: "合同金额须为非负数，整数最多 12 位、小数最多 2 位",
   }),
-  serviceArea: shortText(100, "服务区域"),
+  regionCode: regionCodeBody,
+  serviceArea: t.Optional(t.String({ maxLength: 100 })),
   note: t.Optional(t.String({ maxLength: 5000 })),
 })
 export const teamBody = t.Array(
@@ -64,6 +66,7 @@ export const pointBody = t.Array(
   t.Object({
     id: t.Optional(t.Integer({ minimum: 1 })),
     name: shortText(100, "服务点名称"),
+    regionCode: regionCodeBody,
     latitude: t.Optional(t.Union([t.Number({ minimum: -90, maximum: 90 }), t.Null()])),
     longitude: t.Optional(t.Union([t.Number({ minimum: -180, maximum: 180 }), t.Null()])),
     radius: t.Optional(t.Union([t.Integer({ minimum: 50, maximum: 5000 }), t.Null()])),
@@ -83,6 +86,7 @@ export const allocationBody = t.Array(
   { maxItems: 100 },
 )
 export const listQuery = t.Object({
+  ...regionQuery,
   ...sortFields,
   page: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
   pageSize: t.Optional(t.Numeric({ minimum: 1, maximum: 100, multipleOf: 1 })),

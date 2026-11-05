@@ -90,6 +90,7 @@ export function registerOutcomeTests(
         pointId,
         location: "虚构服务室",
         address: "隔离验收",
+        regionCode: "440304",
         startAt: new Date(`${today}T${start}:00+08:00`).toISOString(),
         endAt: new Date(`${today}T${finish}:00+08:00`).toISOString(),
         leaderId: socialId,
@@ -257,6 +258,7 @@ export function registerOutcomeTests(
         endDate: end,
         amount: "100",
         serviceArea: "测试",
+        regionCode: "440304",
       })
       await db.insert(s.projectTeams).values({ projectId, teamId, reporterId: l.id })
       await db.insert(s.projectMemberships).values(
@@ -271,7 +273,8 @@ export function registerOutcomeTests(
       const [point] = await db.insert(s.projectServicePoints).values({
         projectId,
         name: "参考点",
-        address: "虚构",
+        address: "隔离验收",
+        regionCode: "440304",
         latitude: 23,
         longitude: 113,
         radius: 200,

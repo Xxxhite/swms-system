@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -83,6 +83,7 @@ let mergePayload:
 async function load() {
     try {
         const d = await resourceApi.detail(Number(route.params.id))
+        if (d.id !== Number(route.params.id)) return
         resource.value = d
         model.value = Object.fromEntries(
             Object.keys(emptyResource()).map((k) => [
@@ -90,6 +91,8 @@ async function load() {
                 d[k as keyof ResourceDetail] ?? emptyResource()[k as keyof ResourceInput],
             ]),
         ) as unknown as ResourceInput
+        model.value.regionCode = d.regionCode ?? null
+        model.value.regionPathSnapshot = d.regionPathSnapshot
         candidates.value = await resourceApi.candidates()
     } catch {
         /* 请求层提示 */
@@ -261,6 +264,13 @@ async function previewMerge() {
 async function confirmMerge() {
     if (mergePayload && mergeSummary.value) await operate(() => resourceApi.merge(mergePayload!))
 }
+watch(
+    () => route.params.id,
+    () => {
+        resource.value = undefined
+        void load()
+    },
+)
 onMounted(load)
 </script>
 <template>

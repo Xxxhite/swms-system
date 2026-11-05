@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RegionSelect from '@/components/RegionSelect.vue'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -44,6 +45,8 @@ const query = reactive({
     status: '',
     serviceFieldCode: '',
     serviceArea: '',
+    regionCode: undefined as string | null | undefined,
+    regionUnmapped: undefined as string | undefined,
     dateFrom: '',
     dateTo: '',
 })
@@ -98,6 +101,8 @@ function reset() {
         status: '',
         serviceFieldCode: '',
         serviceArea: '',
+        regionCode: undefined,
+        regionUnmapped: undefined,
         dateFrom: '',
         dateTo: '',
     })
@@ -228,13 +233,19 @@ onMounted(async () => {
                     </el-select>
                 </el-form-item>
                 <el-form-item label="区域">
-                    <el-select v-model="query.serviceArea" clearable filterable>
-                        <el-option
-                            v-for="area in filterAreas"
-                            :key="area"
-                            :value="area"
-                            :label="area"
-                        />
+                    <RegionSelect
+                        v-model="query.regionCode"
+                        @change="query.regionUnmapped = undefined"
+                    />
+                </el-form-item>
+                <el-form-item label="区域核对">
+                    <el-select
+                        v-model="query.regionUnmapped"
+                        clearable
+                        placeholder="全部"
+                        @change="query.regionCode = undefined"
+                    >
+                        <el-option label="历史区域待核对" value="1" />
                     </el-select>
                 </el-form-item>
                 <el-form-item label="合同区间起">

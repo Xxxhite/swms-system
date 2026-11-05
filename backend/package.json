@@ -23,7 +23,9 @@
     "db:seed:business-permissions": "bun src/db/seed.ts --business-permissions",
     "db:seed:execution-permissions": "bun src/db/seed.ts --execution-permissions",
     "db:seed:task-permissions": "bun src/db/seed.ts --task-permissions",
-    "db:seed:resource-permissions": "bun src/db/seed.ts --resource-permissions"
+    "db:seed:resource-permissions": "bun src/db/seed.ts --resource-permissions",
+    "db:seed:regions": "bun src/db/seed-regions.ts",
+    "db:normalize:regions": "bun src/db/normalize-regions.ts"
   },
   "dependencies": {
     "@elysiajs/cookie": "^0.8.0",

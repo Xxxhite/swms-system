@@ -65,6 +65,7 @@ export async function seedProjects(database: Database, _adminUsername = "admin")
         name: "虚构合作单位",
         unitType: "测试单位",
         region: "演示区域",
+        regionCode: "440304",
         ownerOrgId: actor.user.orgId!,
         maintainerId: actor.user.id,
         requestKey: "legacy-demo-resource",
@@ -73,6 +74,7 @@ export async function seedProjects(database: Database, _adminUsername = "admin")
       endDate,
       amount: "100000.00",
       serviceArea: "演示区域",
+      regionCode: "440304",
     },
     p.version,
   )

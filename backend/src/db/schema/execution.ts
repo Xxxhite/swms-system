@@ -15,6 +15,7 @@ import { projects, businessTimestamps } from "./project"
 import { serviceTasks } from "./task"
 
 export interface ExecutionPolicy {
+  locationCheckEnabled?: boolean
   latitude: number | null
   longitude: number | null
   radius: number
@@ -33,6 +34,8 @@ export interface ExecutionSnapshot {
   endAt: string
   location: string
   address: string
+  regionCode?: string | null
+  regionPathSnapshot?: import("./region").RegionPathItem[] | null
   policy: ExecutionPolicy
   staff: Array<{
     userId: number
@@ -45,7 +48,7 @@ export interface ExecutionSnapshot {
   indicators: Array<{ indicatorId: number; planId: number; periodId: number; plannedValue: string }>
 }
 export interface GeoSample {
-  status: "OK" | "DENIED" | "UNAVAILABLE" | "TIMEOUT" | "UNSUPPORTED"
+  status: "OK" | "DENIED" | "UNAVAILABLE" | "TIMEOUT" | "UNSUPPORTED" | "NOT_REQUESTED"
   latitude?: number
   longitude?: number
   accuracy?: number

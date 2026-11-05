@@ -30,6 +30,8 @@ export interface OutcomeIssue {
   notes: Array<{ reason: string; createdAt: string; evidenceIds: number[] }>
 }
 export interface OutcomeSource {
+  address?: string
+  regionPathSnapshot?: Array<{ code: string; name: string }> | null
   taskId: number
   taskVersion: number
   sourceVersion: number

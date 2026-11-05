@@ -9,6 +9,8 @@ export interface BusinessQuery extends SortQuery {
     status?: string
     serviceFieldCode?: string
     serviceArea?: string
+    regionCode?: string | null
+    regionUnmapped?: string
     teamId?: number
     projectId?: number
     indicatorId?: number
@@ -55,6 +57,8 @@ export interface ContractInput {
     endDate: string
     amount: string
     serviceArea: string
+    regionCode?: string | null
+    regionPathSnapshot?: Array<{ code: string; name: string }> | null
     note?: string
 }
 export interface Allocation {
@@ -92,6 +96,8 @@ export interface Project extends ProjectInput {
         id?: number
         name: string
         address?: string
+        regionCode?: string | null
+        regionPathSnapshot?: Array<{ code: string; name: string }> | null
         note?: string
         latitude?: number | null
         longitude?: number | null

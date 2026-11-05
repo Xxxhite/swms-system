@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { regionText } from '@/api/region-types'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { executionApi } from '@/api/modules/execution'
@@ -51,7 +52,7 @@ onMounted(() => load(true))
             <h3>{{ t.title }}</h3>
             <p>{{ t.projectName }}</p>
             <p>{{ formatDateTime(t.startAt) }} 至 {{ formatDateTime(t.endAt) }}</p>
-            <p>{{ t.location }} · {{ taskForms[t.form] }}</p>
+            <p>{{ t.location }} · {{ taskForms[t.form] }} {{ regionText(t) }} {{ t.address }}</p>
             <div class="field-tasks__heading">
                 <el-tag>{{ taskStatuses[t.state] ?? t.state }}</el-tag>
                 <el-button type="primary" @click="router.push(`/field/tasks/${t.id}`)">

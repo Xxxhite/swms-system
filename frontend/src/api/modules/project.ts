@@ -56,6 +56,7 @@ export const projectApi = {
                 id: point.id,
                 name: point.name,
                 address: point.address ?? '',
+                regionCode: point.regionCode,
                 note: point.note ?? '',
                 latitude: point.latitude ?? null,
                 longitude: point.longitude ?? null,

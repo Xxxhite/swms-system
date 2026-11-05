@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RegionSelect from '@/components/RegionSelect.vue'
 import CalculationRuleDialog from './components/CalculationRuleDialog.vue'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
@@ -67,7 +68,8 @@ const contract = reactive<ContractInput>({
     startDate: '',
     endDate: '',
     amount: '0.00',
-    serviceArea: '',
+    serviceArea: '深圳市',
+    regionCode: '440300',
     note: '',
 })
 const members = ref<Project['members']>([])
@@ -169,6 +171,8 @@ async function load() {
                 endDate: p.contract.endDate,
                 amount: p.contract.amount,
                 serviceArea: p.contract.serviceArea,
+                regionCode: p.contract.regionCode ?? null,
+                regionPathSnapshot: p.contract.regionPathSnapshot,
                 note: p.contract.note ?? '',
             })
         members.value = p.members.map((m) => ({ ...m }))
@@ -441,7 +445,11 @@ const { isMobile } = useViewport()
                         <el-input v-model="contract.amount" placeholder="如 10000.00" />
                     </el-form-item>
                     <el-form-item label="服务区域" prop="serviceArea" required>
-                        <el-input v-model="contract.serviceArea" maxlength="100" />
+                        <RegionSelect
+                            v-model="contract.regionCode"
+                            :legacy="contract.serviceArea"
+                            @change="contract.serviceArea = $event ?? ''"
+                        />
                     </el-form-item>
                     <el-form-item label="说明">
                         <el-input v-model="contract.note" type="textarea" maxlength="5000" />
@@ -608,22 +616,27 @@ const { isMobile } = useViewport()
                 </div>
             </el-tab-pane>
             <el-tab-pane label="服务点">
-                <el-alert
-                    title="现场参考点使用 WGS84 经纬度；请核对定位来源后填写。"
-                    type="info"
-                    :closable="false"
-                />
-                <div v-for="(point, index) in points" :key="index" class="edit-row">
+                <div
+                    v-for="(point, index) in points"
+                    :key="index"
+                    class="edit-row address-point-row"
+                >
                     <el-input
                         v-model="point.name"
                         :disabled="!has('project:record:update')"
                         placeholder="服务点名称"
                         maxlength="100"
                     />
+                    <RegionSelect
+                        v-model="point.regionCode"
+                        :disabled="!has('project:record:update')"
+                        terminal
+                        :legacy="point.address"
+                    />
                     <el-input
                         v-model="point.address"
                         :disabled="!has('project:record:update')"
-                        placeholder="地址"
+                        placeholder="详细地址（街道、门牌）"
                         maxlength="255"
                     />
                     <el-input
@@ -632,38 +645,16 @@ const { isMobile } = useViewport()
                         placeholder="说明"
                         maxlength="1000"
                     />
-                    <el-input-number
-                        v-model="point.latitude"
-                        :disabled="!has('project:record:update')"
-                        :min="-90"
-                        :max="90"
-                        :precision="6"
-                        placeholder="纬度"
-                        aria-label="参考点纬度"
-                    />
-                    <el-input-number
-                        v-model="point.longitude"
-                        :disabled="!has('project:record:update')"
-                        :min="-180"
-                        :max="180"
-                        :precision="6"
-                        placeholder="经度"
-                        aria-label="参考点经度"
-                    />
-                    <el-input-number
-                        v-model="point.radius"
-                        :disabled="!has('project:record:update')"
-                        :min="50"
-                        :max="5000"
-                        placeholder="范围（米）"
-                        aria-label="参考范围（米）"
-                    />
                     <el-button v-if="has('project:record:update')" @click="points.splice(index, 1)">
                         移除
                     </el-button>
                 </div>
                 <div v-if="has('project:record:update')" class="page-actions">
-                    <el-button @click="points.push({ name: '', address: '', note: '' })">
+                    <el-button
+                        @click="
+                            points.push({ name: '', address: '', regionCode: '440300', note: '' })
+                        "
+                    >
                         添加服务点
                     </el-button>
                     <el-button type="primary" :loading="busy" @click="savePoints()">
@@ -919,6 +910,32 @@ p {
     .edit-row > .el-button {
         align-self: flex-start;
         width: auto;
+    }
+}
+</style>
+
+<style scoped>
+.address-point-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 16px;
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+@media (max-width: 767px) {
+    .address-point-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+</style>
+
+<style scoped>
+@media (min-width: 1100px) {
+    .address-point-row {
+        grid-template-columns: minmax(140px, 1fr) minmax(360px, 3fr);
     }
 }
 </style>

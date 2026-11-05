@@ -18,6 +18,7 @@ export const executionApi = {
     detail: (id: number): Promise<ExecutionDetail> => http.get(base(id)),
     policy: (d: ExecutionDetail, p: ExecutionPolicy, reason: string) =>
         http.put(`${base(d.taskId)}/policy`, {
+            locationCheckEnabled: p.locationCheckEnabled,
             latitude: p.latitude,
             longitude: p.longitude,
             radius: p.radius,

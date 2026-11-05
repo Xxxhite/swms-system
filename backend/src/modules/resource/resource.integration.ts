@@ -35,6 +35,7 @@ export function registerResourceTests(
       name,
       unitType: "社区",
       region: "测试区域",
+      regionCode: "440304",
       ownerOrgId: orgId,
       maintainerId: userId,
     })
@@ -252,6 +253,7 @@ export function registerResourceTests(
         endDate: "2028-12-31",
         amount: "100.00",
         serviceArea: "测试区域",
+        regionCode: "440304",
       }
       await projects.contract(actor, projectId, contract, p.version)
       const r = await detail()

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { regionText } from '@/api/region-types'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { useViewport } from '@/composables/useViewport'
 defineOptions({ name: 'ServiceTaskDetail' })
@@ -132,7 +133,7 @@ const { isMobile } = useViewport()
                     {{ formatDateTime(task.endAt) }}
                 </el-descriptions-item>
                 <el-descriptions-item label="地点">
-                    {{ task.location }} {{ task.address }}
+                    {{ task.location }} {{ regionText(task) }} {{ task.address }}
                 </el-descriptions-item>
                 <el-descriptions-item label="预计人数">
                     {{ task.expectedPeople }}

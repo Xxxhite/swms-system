@@ -64,6 +64,13 @@
       "when": 1793770801481,
       "tag": "0008_demonic_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1793861609532,
+      "tag": "0009_clever_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import type { ExecutionPolicy, GeoSample } from "@/db/schema"
 import { AppError } from "@/utils/errors"
 export const defaultPolicy: ExecutionPolicy = {
+  locationCheckEnabled: false,
   latitude: null,
   longitude: null,
   radius: 200,
@@ -52,6 +53,11 @@ export function geoChecks(
 ) {
   const flags: string[] = []
   let distance: number | null = null
+  if (policy.locationCheckEnabled === false) {
+    if (Math.abs(receivedAt.getTime() - declaredAt.getTime()) > 120000) flags.push("CLOCK_SKEW")
+    return { flags, distance }
+  }
+  if (geo.status === "NOT_REQUESTED") throw AppError.badRequest("本次历史任务仍采用原位置核验规则")
   if (geo.status !== "OK") flags.push(`LOCATION_${geo.status}`)
   else {
     if (

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RegionSelect from '@/components/RegionSelect.vue'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -27,6 +28,8 @@ const query = reactive({
     keyword: '',
     serviceFieldCode: '',
     serviceArea: '',
+    regionCode: undefined as string | null | undefined,
+    regionUnmapped: undefined as string | undefined,
     warningLevel: '',
     asOfDate: formatDateTime(new Date()).slice(0, 10),
 })
@@ -74,6 +77,8 @@ function reset(analysis = false) {
         keyword: '',
         serviceFieldCode: '',
         serviceArea: '',
+        regionCode: undefined,
+        regionUnmapped: undefined,
         warningLevel: '',
         asOfDate: formatDateTime(new Date()).slice(0, 10),
     })
@@ -145,7 +150,20 @@ onMounted(async () => {
                     <el-input v-model="query.serviceFieldCode" clearable />
                 </el-form-item>
                 <el-form-item label="区域">
-                    <el-input v-model="query.serviceArea" clearable />
+                    <RegionSelect
+                        v-model="query.regionCode"
+                        @change="query.regionUnmapped = undefined"
+                    />
+                </el-form-item>
+                <el-form-item label="区域核对">
+                    <el-select
+                        v-model="query.regionUnmapped"
+                        clearable
+                        placeholder="全部"
+                        @change="query.regionCode = undefined"
+                    >
+                        <el-option label="历史区域待核对" value="1" />
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="业务日期">
                     <el-date-picker

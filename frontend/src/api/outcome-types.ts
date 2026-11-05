@@ -12,6 +12,8 @@ export interface OutcomeDecision {
     reason: string
 }
 export interface OutcomeSource {
+    address?: string
+    regionPathSnapshot?: Array<{ code: string; name: string }> | null
     taskId: number
     title: string
     projectId: number

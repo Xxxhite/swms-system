@@ -13,6 +13,11 @@ export function resourceScope(actor: Actor) {
 }
 export function resourceWriter(tx: ResourceTransaction) {
   return {
+    regions: {
+      all() {
+        return tx.select().from(s.administrativeRegions)
+      },
+    },
     resources: {
       all() {
         return tx.select().from(s.resources).orderBy(asc(s.resources.id))

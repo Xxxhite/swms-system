@@ -75,6 +75,8 @@ export class ExecutionService {
             teamId: t.teamId,
             form: t.form,
             location: t.location,
+            address: t.address,
+            regionPathSnapshot: t.regionPathSnapshot,
             startAt: t.startAt,
             endAt: t.endAt,
             leaderId: t.leaderId,
@@ -137,6 +139,8 @@ export class ExecutionService {
           teamId: t.teamId,
           form: t.form,
           location: t.location,
+          address: t.address,
+          regionPathSnapshot: t.regionPathSnapshot,
           startAt: t.startAt,
           endAt: t.endAt,
           leaderId: t.leaderId,
@@ -151,7 +155,8 @@ export class ExecutionService {
             (p) =>
               p.taskId === taskId &&
               (p.taskVersion !== t.version ||
-                (p.settings.pointId !== null &&
+                (p.settings.locationCheckEnabled !== false &&
+                  p.settings.pointId !== null &&
                   data.points.find((point) => point.id === p.settings.pointId)?.version !==
                     p.settings.pointVersion)),
           ),
@@ -270,7 +275,15 @@ export class ExecutionService {
       void version
       void taskVersion
       const point = data.points.find((p) => p.id === t.pointId && !p.deletedAt),
-        policy = { ...settings, pointId: point?.id ?? null, pointVersion: point?.version ?? null }
+        policy = {
+          ...settings,
+          locationCheckEnabled:
+            settings.locationCheckEnabled ??
+            old?.settings.locationCheckEnabled ??
+            (old ? true : false),
+          pointId: point?.id ?? null,
+          pointVersion: point?.version ?? null,
+        }
       validatePolicy(policy)
       const values = {
         taskId,
@@ -369,7 +382,11 @@ export class ExecutionService {
       occurredAt.getTime() < t.endAt.getTime() - p.toleranceMinutes * 60000
     )
       flags.push("EARLY")
-    if ((input.geo.status !== "OK" || flags.includes("NO_REFERENCE_POINT")) && !input.reason.trim())
+    if (
+      p.locationCheckEnabled !== false &&
+      (input.geo.status !== "OK" || flags.includes("NO_REFERENCE_POINT")) &&
+      !input.reason.trim()
+    )
       throw AppError.badRequest("定位缺失或未设参考点，请填写现场说明")
     const id = await tx.executions.staffEvents.insert({
       taskId: t.id,
@@ -428,7 +445,8 @@ export class ExecutionService {
         point = data.points.find((x) => x.id === p.pointId)
       if (
         configured &&
-        (configured.taskVersion !== t.version || (p.pointId && point?.version !== p.pointVersion))
+        (configured.taskVersion !== t.version ||
+          (p.locationCheckEnabled !== false && p.pointId && point?.version !== p.pointVersion))
       )
         throw AppError.conflict("安排或服务点已变化，请先重新核对现场规则")
       const ids = data.scheduling.staff.filter((s) => s.taskId === taskId).map((s) => s.userId),
@@ -465,6 +483,8 @@ export class ExecutionService {
         endAt: t.endAt.toISOString(),
         location: t.location,
         address: t.address,
+        regionCode: t.regionCode,
+        regionPathSnapshot: t.regionPathSnapshot,
         policy: p,
         staff,
         indicators: data.scheduling.indicators

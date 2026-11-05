@@ -178,6 +178,7 @@ export function registerProjectTests(
               name: "验收单位",
               unitType: "测试单位",
               region: "福田区",
+              regionCode: "440304",
               ownerOrgId: (await context().database.select().from(s.users)).find(
                 (u) => u.id === managerId,
               )!.orgId!,
@@ -188,6 +189,7 @@ export function registerProjectTests(
             endDate: end,
             amount: "100.10",
             serviceArea: "福田区",
+            regionCode: "440304",
           })
         ).code,
       ).toBe(0)
@@ -301,6 +303,7 @@ export function registerProjectTests(
               name: "另一单位",
               unitType: "测试单位",
               region: "测试区",
+              regionCode: "440304",
               ownerOrgId: d.orgId!,
               maintainerId: d.id,
               requestKey: "project-other-resource",
@@ -309,6 +312,7 @@ export function registerProjectTests(
             endDate: end,
             amount: "20.00",
             serviceArea: "南山区",
+            regionCode: "440304",
           })
         ).code,
       ).toBe(0)

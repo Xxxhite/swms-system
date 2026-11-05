@@ -78,11 +78,15 @@ async function submit() {
     busy.value = true
     try {
         if (!pending.value) {
-            const geo = historical.value
-                ? { status: 'UNAVAILABLE' as const }
-                : (sample.value ?? (await captureLocation()))
+            const geo =
+                props.detail.policy.locationCheckEnabled === false
+                    ? { status: 'NOT_REQUESTED' as const }
+                    : historical.value
+                      ? { status: 'UNAVAILABLE' as const }
+                      : (sample.value ?? (await captureLocation()))
             sample.value = geo
             if (
+                props.detail.policy.locationCheckEnabled !== false &&
                 (geo.status !== 'OK' || props.detail.policy.latitude === null) &&
                 !reason.value.trim()
             ) {
@@ -147,7 +151,11 @@ async function submit() {
         />
         <el-alert
             v-else
-            title="点击提交时获取本次位置，仅用于现场记录。"
+            :title="
+                detail.policy.locationCheckEnabled === false
+                    ? '按任务安排的服务地点登记本次记录，无需获取定位。'
+                    : '点击提交时获取本次位置，仅用于现场记录。'
+            "
             type="info"
             :closable="false"
         />
@@ -175,18 +183,25 @@ async function submit() {
                 label="现场说明／原因"
                 :required="
                     historical ||
-                    detail.policy.latitude === null ||
-                    (!!sample && sample.status !== 'OK')
+                    (detail.policy.locationCheckEnabled !== false &&
+                        detail.policy.latitude === null) ||
+                    (detail.policy.locationCheckEnabled !== false &&
+                        !!sample &&
+                        sample.status !== 'OK')
                 "
             >
                 <el-input
                     v-model="reason"
                     type="textarea"
                     maxlength="1000"
-                    placeholder="定位异常、补录或更正时填写"
+                    :placeholder="
+                        detail.policy.locationCheckEnabled === false
+                            ? '可补充现场说明；补录或更正时填写原因'
+                            : '定位异常、补录或更正时填写'
+                    "
                 />
             </el-form-item>
-            <p v-if="sample">
+            <p v-if="sample && sample.status !== 'NOT_REQUESTED'">
                 {{
                     sample.status === 'OK'
                         ? `已获取本次位置，精度约${Math.round(sample.accuracy ?? 0)}米`

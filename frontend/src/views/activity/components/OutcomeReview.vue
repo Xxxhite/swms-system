@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { regionText } from '@/api/region-types'
 import { ref, watch } from 'vue'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import { executionApi } from '@/api/modules/execution'
@@ -54,6 +55,9 @@ async function download(id: number, name: string) {
         <h3>{{ source.title }}</h3>
         <p>
             实际执行：{{ formatDateTime(source.startedAt) }} 至 {{ formatDateTime(source.endedAt) }}
+        </p>
+        <p v-if="source.address || source.regionPathSnapshot?.length">
+            服务地点：{{ regionText(source) }} {{ source.address }}
         </p>
         <p>服务总结：{{ source.summary || '尚未填写' }}</p>
         <ResponsiveTable v-if="source.rules.length" :data="source.rules">

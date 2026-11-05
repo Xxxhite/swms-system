@@ -1,3 +1,4 @@
+import { regionCodeBody, regionQuery } from "@/modules/region/region.validation"
 import { t, type Static } from "elysia"
 import { shortText, listQuery } from "./resource.shared"
 import { cooperationStatuses } from "@/db/schema/resource"
@@ -10,7 +11,8 @@ export const resourceBody = t.Object({
   name: shortText(150, "单位名称"),
   creditCode: optionalText(32),
   unitType: shortText(50, "单位类型"),
-  region: shortText(100, "区域"),
+  regionCode: regionCodeBody,
+  region: t.Optional(t.String({ maxLength: 100 })),
   address: optionalText(255),
   description: optionalText(5000),
   source: optionalText(100),
@@ -62,6 +64,7 @@ export const mergeBody = t.Object({
   reason: shortText(1000, "合并原因"),
 })
 export const resourceQuery = t.Object({
+  ...regionQuery,
   ...listQuery.properties,
   region: optionalText(100),
   unitType: optionalText(50),

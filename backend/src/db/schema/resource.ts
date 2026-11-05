@@ -1,3 +1,4 @@
+import { regionColumns } from "./region"
 import {
   datetime,
   index,
@@ -29,6 +30,7 @@ export const resources = mysqlTable(
     normalizedName: varchar("normalized_name", { length: 150 }).notNull(),
     creditCode: varchar("credit_code", { length: 32 }),
     unitType: varchar("unit_type", { length: 50 }).notNull(),
+    ...regionColumns(),
     region: varchar("region", { length: 100 }).notNull(),
     address: varchar("address", { length: 255 }).notNull().default(""),
     description: text("description"),

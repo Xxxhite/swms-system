@@ -1,3 +1,7 @@
+import { registerRegionTests } from "@/modules/region/region.integration"
+import { createRegionRoutes } from "@/modules/region/region.route"
+import { RegionRepository } from "@/modules/region/region.repository"
+import { seedRegions } from "@/modules/region/region.seed"
 import { createOutcomeRoutes } from "@/modules/outcome/outcome.route"
 import { registerExecutionTests } from "@/modules/execution/execution.integration"
 import { registerOutcomeTests } from "@/modules/outcome/outcome.integration"
@@ -148,6 +152,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
         "roles",
         "permissions",
         "organizations",
+        "administrative_regions",
         "__drizzle_migrations",
       ]
       const existing = tables.map((row) => String(Object.values(row)[0]))
@@ -164,6 +169,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     }
     database = drizzle(pool, { schema, mode: "default" })
     await migrate(database, { migrationsFolder: "./drizzle" })
+    await seedRegions(database)
     await seedIdentity(database, {
       adminUsername: "admin",
       adminPassword: demoPassword,
@@ -177,6 +183,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       .group("/api", (api) =>
         api.use([
           createAuthRoutes(auth),
+          createRegionRoutes(new RegionRepository(database), identities),
           createIdentityRoutes(identities),
           createSystemRoutes(identities),
           createExecutionRoutes(
@@ -805,6 +812,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     const firstNull = logs.findIndex((r) => r.actorName == null)
     if (firstNull !== -1) expect(logs.slice(firstNull).every((r) => r.actorName == null)).toBe(true)
   })
+  registerRegionTests(() => ({ database, handle }))
   registerProjectTests(() => ({ database, handle }))
   registerResourceTests(() => ({ database, handle }))
   registerTaskTests(() => ({ database, handle }))

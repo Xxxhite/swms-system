@@ -12,9 +12,9 @@ describe("测试数据重建边界", () => {
     reset: true,
     tables: [...demoResetTables.map((table) => getTableName(table)), "__drizzle_migrations"],
   }
-  test("清理清单包含58张数据表并保留迁移记录", () => {
-    expect(demoResetTables).toHaveLength(58)
-    expect(new Set(valid.tables).size).toBe(59)
+  test("清理清单包含59张数据表并保留迁移记录", () => {
+    expect(demoResetTables).toHaveLength(59)
+    expect(new Set(valid.tables).size).toBe(60)
     expect(demoResetTables.map((table) => getTableName(table))).not.toContain(
       "__drizzle_migrations",
     )

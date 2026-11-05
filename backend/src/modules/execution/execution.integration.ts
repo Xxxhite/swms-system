@@ -90,6 +90,7 @@ export function registerExecutionTests(
         pointId,
         location: "虚构社区",
         address: "测试地址",
+        regionCode: "440304",
         startAt: at("10:00").toISOString(),
         endAt: at("11:00").toISOString(),
         leaderId: socialId,
@@ -109,6 +110,15 @@ export function registerExecutionTests(
         conflictReason: "测试不同服务场景的独立来源",
       })
       expect(r.code).toBe(0)
+      const d = await detail(r.data.id, manager)
+      const configured = await request(`${base(r.data.id)}/policy`, "PUT", manager, {
+        ...d.policy,
+        locationCheckEnabled: true,
+        version: d.policyVersion,
+        taskVersion: d.taskVersion,
+        reason: "原定位策略回归场景",
+      })
+      expect(configured.code).toBe(0)
       return r.data.id as number
     }
     async function roster(id = taskId, count = 1) {
@@ -201,6 +211,7 @@ export function registerExecutionTests(
         endDate: nextDay(today, 10),
         amount: "100",
         serviceArea: "测试区域",
+        regionCode: "440304",
       })
       await db.insert(s.projectTeams).values({ projectId, teamId, reporterId: leaderId })
       await db.insert(s.projectMemberships).values(
@@ -215,7 +226,8 @@ export function registerExecutionTests(
       const [point] = await db.insert(s.projectServicePoints).values({
         projectId,
         name: "测试参考点",
-        address: "虚构地址",
+        address: "测试地址",
+        regionCode: "440304",
         latitude: 23,
         longitude: 113,
         radius: 200,

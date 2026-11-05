@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RegionSelect from '@/components/RegionSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { taskApi } from '@/api/modules/task'
@@ -71,6 +72,8 @@ function pointChange() {
     if (p) {
         model.value.location = p.name
         model.value.address = p.address ?? ''
+        model.value.regionCode = p.regionCode ?? null
+        model.value.regionPathSnapshot = p.regionPathSnapshot
     }
 }
 function valid() {
@@ -181,8 +184,16 @@ defineExpose({
         <el-form-item label="地点名称" required>
             <el-input v-model="model.location" maxlength="150" />
         </el-form-item>
-        <el-form-item label="详细地址">
-            <el-input v-model="model.address" maxlength="255" />
+        <el-form-item label="地区" required>
+            <RegionSelect
+                v-model="model.regionCode"
+                :disabled="!!model.pointId"
+                terminal
+                :legacy="model.address"
+            />
+        </el-form-item>
+        <el-form-item label="详细地址" required>
+            <el-input v-model="model.address" :disabled="!!model.pointId" maxlength="255" />
         </el-form-item>
         <el-form-item label="开始时间" required>
             <el-date-picker

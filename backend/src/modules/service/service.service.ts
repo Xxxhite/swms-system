@@ -1,3 +1,4 @@
+import { regionMatches, regionDisplay, validateRegionQuery } from "@/modules/region/region.shared"
 import { calculationRule } from "@/modules/outcome/outcome.source"
 import { sourceActual } from "@/modules/outcome/outcome.statistics"
 import { matchesRecordChange } from "@/modules/approval/approval-link"
@@ -530,6 +531,7 @@ export class ServiceService {
   }
   /** 从单一事务快照计算所有筛选后的团队及合同指标，不跨口径求和。 */
   progressRows(data: BusinessState, actor: Actor, q: BusinessQuery) {
+    validateRegionQuery(data.regions, q, q.serviceArea)
     const asOfDate = q.asOfDate ?? businessToday()
     if (asOfDate > businessToday()) throw AppError.badRequest("查询日期不能晚于今天")
     const rows = []
@@ -544,6 +546,8 @@ export class ServiceService {
         (q.projectId && p.id !== q.projectId) ||
         (q.serviceFieldCode && p.serviceFieldCode !== q.serviceFieldCode) ||
         (q.serviceArea && c.serviceArea !== q.serviceArea) ||
+        !regionMatches(data.regions, q.regionCode, c, true) ||
+        (q.regionUnmapped && !!c.regionCode) ||
         (q.keyword && !`${p.name} ${indicator.name}`.includes(q.keyword))
       )
         continue
@@ -558,7 +562,8 @@ export class ServiceService {
         unit: indicator.unit,
         definition: indicator.definition,
         serviceFieldCode: p.serviceFieldCode,
-        serviceArea: c.serviceArea,
+        serviceArea: regionDisplay(c, c.serviceArea),
+        ...(c.regionCode ? { regionCode: c.regionCode } : {}),
         endDate: c.endDate,
         asOfDate,
         month: asOfDate.slice(0, 7),

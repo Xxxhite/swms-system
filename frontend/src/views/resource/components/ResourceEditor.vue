@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RegionSelect from '@/components/RegionSelect.vue'
 import { computed, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { ResourceInput, ResourceCandidates } from '@/api/resource-types'
@@ -68,7 +69,13 @@ defineExpose({ validate: () => validateForm(form.value) })
             />
         </el-form-item>
         <el-form-item label="区域" prop="region">
-            <el-input v-model="model.region" maxlength="100" />
+            <RegionSelect
+                v-model="model.regionCode"
+                :legacy="model.region"
+                :disabled="disabled"
+                terminal
+                @change="model.region = $event ?? ''"
+            />
         </el-form-item>
         <el-form-item label="地址">
             <el-input v-model="model.address" maxlength="255" />

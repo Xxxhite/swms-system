@@ -1,3 +1,7 @@
+import { createManagementRoutes } from "@/modules/management/management.route"
+import { ManagementRepository } from "@/modules/management/management.repository"
+import { createDashboardRoutes } from "@/modules/dashboard/dashboard.route"
+import { registerManagementTests } from "@/modules/management/management.integration"
 import { registerRegistrationTests } from "@/modules/execution/registration.integration"
 import { createRegistrationRoutes } from "@/modules/execution/registration.route"
 import { registerRegionTests } from "@/modules/region/region.integration"
@@ -94,6 +98,8 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "management_followup_events",
+        "management_followups",
         "outcome_reviews",
         "outcome_record_links",
         "outcome_snapshots",
@@ -185,6 +191,8 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       .group("/api", (api) =>
         api.use([
           createAuthRoutes(auth),
+          createManagementRoutes(new ManagementRepository(database), identities),
+          createDashboardRoutes(new ManagementRepository(database), identities),
           createRegionRoutes(new RegionRepository(database), identities),
           createIdentityRoutes(identities),
           createSystemRoutes(identities),
@@ -837,6 +845,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       executionNow = at
     },
   }))
+  registerManagementTests(() => ({ database, handle }))
   registerRegistrationTests(() => ({
     database,
     handle,

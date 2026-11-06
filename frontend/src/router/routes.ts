@@ -34,6 +34,11 @@ export const menuTree: MenuNode[] = [
                 layout: 'field',
             },
             { path: '/service/plans', title: '阶段计划', permission: PERM.PLAN_VIEW },
+            {
+                path: '/service/management-followups',
+                title: '管理跟进',
+                permission: PERM.MANAGEMENT_VIEW,
+            },
             { path: '/service/records', title: '服务档案填报', permission: PERM.MONTHLY_VIEW },
             { path: '/service/approvals', title: '服务档案审批', permission: PERM.MONTHLY_APPROVE },
         ],
@@ -100,6 +105,8 @@ function flattenMenu(
 export function menuToRoutes(nodes: MenuNode[]): RouteRecordRaw[] {
     const pages: Record<string, RouteRecordRaw['component']> = {
         '/activity': () => import('@/views/activity/index.vue'),
+        '/service/management-followups': () =>
+            import('@/views/service/management-followups/index.vue'),
         '/service/plans': () => import('@/views/service/plans/index.vue'),
         '/resource': () => import('@/views/resource/index.vue'),
         '/project': () => import('@/views/project/headquarters.vue'),

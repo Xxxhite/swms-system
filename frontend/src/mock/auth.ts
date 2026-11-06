@@ -17,6 +17,8 @@ const executionPermissions = Object.values(PERM).filter((p) =>
     /^service:(execution|participant|credential|evidence|exception):/.test(p),
 )
 const readBusiness = [
+    PERM.MANAGEMENT_VIEW,
+    PERM.MANAGEMENT_MANAGE,
     ...executionPermissions.filter((p) => p !== PERM.EXECUTION_CONFIGURE),
     PERM.RESOURCE,
     PERM.ACTIVITY,

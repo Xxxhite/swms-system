@@ -1,3 +1,4 @@
+import { grantManagementPermissions } from "@/modules/management/management.seed"
 import { grantExecutionPermissions } from "@/modules/execution/execution.seed"
 import { grantTaskPermissions } from "@/modules/task/task.seed"
 import { grantResourcePermissions } from "@/modules/resource/resource.seed"
@@ -7,7 +8,15 @@ import { seedIdentity } from "@/modules/identity/identity.seed.repository"
 
 // 显式初始化入口：从本地环境取密码，完成或失败后均关闭数据库连接池。
 try {
-  if (process.argv.includes("--execution-permissions")) {
+  if (process.argv.includes("--management-permissions")) {
+    console.log(
+      JSON.stringify(
+        await grantManagementPermissions(db, process.argv.includes("--apply")),
+        null,
+        2,
+      ),
+    )
+  } else if (process.argv.includes("--execution-permissions")) {
     console.log(
       JSON.stringify(
         await grantExecutionPermissions(db, process.argv.includes("--apply")),

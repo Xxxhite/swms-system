@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import ResponsiveTable from '@/components/ResponsiveTable.vue'
 import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import { useTableSort } from '@/utils/tableSort'
 import { projectApi } from '@/api/modules/project'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import {
     fieldRule,
@@ -20,7 +20,8 @@ import { useMock } from '@/api/config'
 import { serviceApi } from '@/api/modules/service'
 import { businessStatus, type Monthly, type MonthlyInput } from '@/api/business-types'
 import { formatDateTime } from '@/utils/dateTime'
-const router = useRouter()
+const router = useRouter(),
+    route = useRoute()
 const store = useUserStore(),
     rows = ref<Monthly[]>([]),
     total = ref(0),
@@ -240,7 +241,19 @@ async function withdraw(id: number) {
 function withdrawInitial(id: number) {
     void operate(() => serviceApi.withdrawSubmission(id))
 }
+async function locateRecord() {
+    const id = Number(route.query.recordId)
+    if (!useMock && Number.isSafeInteger(id) && id > 0)
+        try {
+            history.value = await serviceApi.detail(id)
+            historyDialog.value = true
+        } catch {
+            /* 请求层提示 */
+        }
+}
+watch(() => route.query.recordId, locateRecord)
 onMounted(async () => {
+    await locateRecord()
     await load()
     if (!useMock) {
         try {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useUserStore } from '@/stores/user'
 import OutcomeReview from '@/views/activity/components/OutcomeReview.vue'
 import { outcomeApi } from '@/api/modules/outcome'
 import type { OutcomePreview } from '@/api/outcome-types'
@@ -7,7 +8,8 @@ import ResponsivePagination from '@/components/ResponsivePagination.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import { useViewport } from '@/composables/useViewport'
 import { useTableSort } from '@/utils/tableSort'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useApprovalList } from './useApprovalList'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
@@ -15,6 +17,8 @@ import { useMock } from '@/api/config'
 import { approvalApi } from '@/api/modules/approval'
 import { businessStatus, type ApprovalTask, type ApprovalInstance } from '@/api/business-types'
 import { formatDateTime } from '@/utils/dateTime'
+const route = useRoute(),
+    store = useUserStore()
 const taskList = useApprovalList(approvalApi.tasks)
 const { rows, total, loading, query } = taskList
 const busy = ref(false),
@@ -112,7 +116,30 @@ async function decide(approved: boolean) {
         busy.value = false
     }
 }
-onMounted(load)
+async function locateApproval() {
+    const id = Number(route.query.instanceId)
+    if (useMock || !Number.isSafeInteger(id) || id <= 0) return
+    try {
+        const instance = await approvalApi.detail(id)
+        detail.value = instance
+        const task = instance.tasks?.find(
+            (t) => t.approverId === store.profile?.id && t.status === 'PENDING',
+        )
+        selected.value = task
+            ? { ...task, canDecide: instance.applicantId !== store.profile?.id }
+            : undefined
+        comment.value = ''
+        preview.value = undefined
+        dialog.value = true
+    } catch {
+        /* 请求层提示 */
+    }
+}
+watch(() => route.query.instanceId, locateApproval)
+onMounted(async () => {
+    await load()
+    await locateApproval()
+})
 const { isMobile } = useViewport()
 </script>
 <template>

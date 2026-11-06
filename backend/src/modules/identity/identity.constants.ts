@@ -1,3 +1,4 @@
+import { managementPermissionEntries } from "@/modules/management/management-permissions"
 import { executionPermissionEntries } from "@/modules/execution/execution-permissions"
 import { taskPermissionEntries } from "@/modules/task/task-permissions"
 import { resourcePermissionEntries } from "@/modules/resource/resource-permissions"
@@ -112,6 +113,7 @@ export const dictionaries = {
 export const permissionCatalog = [
   ...businessPermissionEntries,
   ...resourcePermissionEntries,
+  ...managementPermissionEntries,
   ...taskPermissionEntries,
   ...executionPermissionEntries,
   ["system:view", "系统管理"],

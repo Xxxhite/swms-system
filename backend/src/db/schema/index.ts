@@ -14,3 +14,5 @@ export * from "./execution"
 export * from "./outcome"
 
 export * from "./region"
+
+export * from "./management"

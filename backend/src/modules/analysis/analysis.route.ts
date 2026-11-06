@@ -1,3 +1,4 @@
+import { reportParam, reportQuery } from "./management.validation"
 import { Elysia, t } from "elysia"
 import { createAuthentication } from "@/plugins/auth"
 import { identityService, type IdentityService } from "@/modules/identity/identity.service"
@@ -13,6 +14,37 @@ export function createAnalysisRoutes(
   const service = new AnalysisService(repository)
   return new Elysia({ prefix: "/analysis", tags: ["数据分析"] })
     .use(createAuthentication(identities))
+    .get(
+      "/management/:report",
+      async ({ authenticate, params, query }) =>
+        ok(await service.management(await authenticate(), params.report, query)),
+      { params: reportParam, query: reportQuery },
+    )
+    .get(
+      "/management/:report/details",
+      async ({ authenticate, params, query }) =>
+        ok(await service.management(await authenticate(), params.report, query, "details")),
+      { params: reportParam, query: reportQuery },
+    )
+    .get(
+      "/management/:report/export",
+      async ({ authenticate, params, query }) =>
+        new Response(
+          (await service.management(
+            await authenticate(),
+            params.report,
+            query,
+            "export",
+          )) as Uint8Array<ArrayBuffer>,
+          {
+            headers: {
+              "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "Content-Disposition": `attachment; filename="management-${params.report}.xlsx"`,
+            },
+          },
+        ),
+      { params: reportParam, query: reportQuery },
+    )
     .get(
       "/monthly-warnings",
       async ({ authenticate, query }) => ok(await service.warnings(await authenticate(), query)),

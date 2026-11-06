@@ -94,6 +94,14 @@ async function load() {
         model.value.regionCode = d.regionCode ?? null
         model.value.regionPathSnapshot = d.regionPathSnapshot
         candidates.value = await resourceApi.candidates()
+        const id = Number(route.query.followupId)
+        if (Number.isSafeInteger(id) && id > 0) {
+            const row = d.followups.find((f) => f.id === id)
+            if (row) {
+                tab.value = 'followups'
+                if (has('resource:followup:manage')) openFollowup(row)
+            }
+        }
     } catch {
         /* 请求层提示 */
     }
@@ -268,6 +276,12 @@ watch(
     () => route.params.id,
     () => {
         resource.value = undefined
+        void load()
+    },
+)
+watch(
+    () => route.query.followupId,
+    () => {
         void load()
     },
 )

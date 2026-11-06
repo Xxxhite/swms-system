@@ -1,3 +1,9 @@
+import { ManagementRepository } from "@/modules/management/management.repository"
+import { calculateReport } from "./management.calculation"
+import { exportManagement } from "./management.export"
+import type { ReportKind, ReportQuery } from "./management.validation"
+import { AppError } from "@/utils/errors"
+import { requirePermission } from "@/utils/authorization"
 import { ServiceService } from "@/modules/service/service.service"
 import { projectRepository, type ProjectRepository } from "@/modules/project/project.repository"
 import { pageResult, type BusinessQuery } from "@/modules/project/project.validation"
@@ -8,6 +14,36 @@ export class AnalysisService {
   readonly service: ServiceService
   constructor(repository: ProjectRepository = projectRepository) {
     this.service = new ServiceService(repository)
+  }
+  management(
+    actor: Actor,
+    kind: ReportKind,
+    q: ReportQuery,
+    mode: "query" | "details" | "export" = "query",
+  ) {
+    return new ManagementRepository(this.service.repository.database).run(
+      actor,
+      false,
+      async (data) => {
+        if (mode !== "query" && !q.fingerprint)
+          throw AppError.badRequest("请先查询报表后再查看明细或导出")
+        if (mode === "export") requirePermission(data.actor!, "analysis:report:export")
+        const report = calculateReport(data, data.actor!, kind, q)
+        if (mode === "export") return exportManagement(report)
+        const rows = mode === "details" && q.rowKey ? (report.details[q.rowKey] ?? []) : report.rows
+        const page = q.page ?? 1,
+          pageSize = q.pageSize ?? 20
+        return {
+          ...report,
+          rows: undefined,
+          details: undefined,
+          list: rows.slice((page - 1) * pageSize, page * pageSize),
+          total: rows.length,
+          page,
+          pageSize,
+        }
+      },
+    )
   }
   /** 月度预警分页查询，包含合同与团队统计层级。 */
   async warnings(actor: Actor, q: BusinessQuery) {

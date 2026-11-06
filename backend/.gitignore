@@ -1,42 +1,23 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# 依赖与生成产物
+/node_modules/
+/coverage/
+/build/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# 本地配置与上传附件
+.env
+.env.*
+!.env.example
+/storage/
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
+# 密钥、归档、日志与系统文件
 *.pem
+*.zip
+*.tar.gz
+*.tgz
+*.trace
+*.log
+.DS_Store
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# vercel
-.vercel
-
-**/*.trace
-**/*.zip
-**/*.tar.gz
-**/*.tgz
-**/*.log
+# Bun项目不混用其他锁文件
 package-lock.json
-**/*.bun
+*.bun

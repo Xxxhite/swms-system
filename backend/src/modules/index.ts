@@ -21,10 +21,12 @@ import { createSystemRoutes } from "./system/system.route"
 /**
  * 业务模块注册入口，由 app.ts 统一挂载。
  *
- * 模块约定（每个模块一个目录，导出三个文件）：
+ * 模块按业务组织，按实际职责拆分文件：
  * - xxx.route.ts        Elysia 实例，只做路由声明和参数校验，prefix 由模块自带
  * - xxx.service.ts      业务编排，写业务规则、状态流转、审批链路
  * - xxx.repository.ts   数据库读写，只有这里可以直接用 @/db 的 db 实例
+ *
+ * 多个模块需要同一事务快照时直接复用已有仓储，不另建纯别名文件。
  *
  * 所有模块统一挂在 /api 下，例如 service 模块声明 prefix "/service"，
  * 最终路径就是 /api/service/...。

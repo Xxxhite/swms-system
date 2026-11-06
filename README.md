@@ -1,0 +1,39 @@
+# 温馨社工服务信息管理系统
+
+面向社工机构的业务管理系统，支持合同包项目、阶段计划与服务任务、执行登记、档案审批、资源合作、管理分析及职责待办。
+
+技术栈：Vue 3、TypeScript、Element Plus、Bun、Elysia、Drizzle ORM、MySQL。
+
+## 目录
+
+```text
+frontend/    前端页面、接口客户端与测试
+backend/     后端接口、数据库模型、正式迁移与测试
+deploy/      Linux 部署说明与配置模板
+```
+
+本地调研、设计和验收资料保存在不入库的 `.docs/`；上传附件保存在 `backend/storage/`。
+
+## 本地运行
+
+需要 Bun、Node.js 和 MySQL。根目录没有统一启动脚本，两端分别安装依赖、配置和启动。
+
+1. 按[后端说明](backend/README.md)配置数据库与认证密钥，首次运行执行迁移和初始化。
+2. 按[前端说明](frontend/README.md)启动页面；连接真实接口时设置 `VITE_USE_MOCK=false`。
+3. 默认前端为 `http://127.0.0.1:5173`，后端为 `http://127.0.0.1:3000`，页面使用 hash 路由。
+
+## 检查
+
+在 `backend/` 和 `frontend/` 分别执行：
+
+```bash
+bun run check
+```
+
+前端另外执行 `bun run build`。数据库集成测试使用显式指定的独立测试库，命令见后端说明。
+
+## 部署与数据
+
+部署模板与步骤见 [deploy/README.md](deploy/README.md)。数据库结构使用 `backend/drizzle/` 中的正式迁移；发布时同时核对目标版本的迁移和权限／地区初始化步骤。
+
+数据库与上传附件联合备份，部署时附件目录独立于版本目录。环境文件、密码、实际业务资料和本地备份不入库。

@@ -56,6 +56,19 @@ bun run db:seed:feedback-permissions
 - `src/db/schema/` 定义表结构，`drizzle/` 保存正式迁移及元数据，`src/db/data/` 保存地区字典。
 - 测试与模块源码相邻，命名为 `*.test.ts`；集成场景由身份集成入口统一装配。
 
+## 后端编码约定
+
+采用 Elysia 1.4 的[官方最佳实践](https://elysiajs.com/essential/best-practice)，按业务模块组织：
+
+- `xxx.route.ts` 声明 HTTP 路由、参数模型及认证要求，处理请求与响应。
+- `xxx.validation.ts` 承担 Model 职责，集中 TypeBox 模型，并用 `Static<typeof schema>` 推导输入类型。
+- `xxx.service.ts` 接收明确的业务参数，维护规则、状态及仓储调用；`xxx.repository.ts` 负责数据库访问。
+- 路由通过 `.use(createAuthentication(...))` 显式声明依赖；`auth: "active"` 要求启用账号，`auth: "restricted"` 仅用于本人资料、申请重提和退出等白名单。
+- 认证 macro 在参数校验后注入类型化 `actor`；同一要求的地区路由使用 `.guard({ auth: "active" })`。动作权限、数据范围与实际职责继续由业务服务校验。
+- 认证与地区模块已采用上述写法。其他模块暂沿用同一插件提供的 `authenticate()`，按确认批次迁移。
+
+路由保持当前版本的 `method(path, handler, options)` 调用顺序。测试通过注入身份服务、仓储或测试密钥隔离依赖，使用 `app.handle(new Request(...))` 验证响应及拒绝路径。排版由现有 ESLint、Prettier 统一。
+
 合同及执行附件默认位于 `storage/contracts/`、`storage/execution/`，通过受控接口访问。配置与示例见 [.env.example](.env.example)，部署时将附件放在版本目录之外，并与数据库联合备份。
 
 项目概览见[根目录说明](../README.md)，部署步骤见[部署说明](../deploy/README.md)。

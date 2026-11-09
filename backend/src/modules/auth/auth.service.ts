@@ -8,25 +8,7 @@ import { assertVersion, safeUser, type Actor } from "@/utils/authorization"
 import { AppError } from "@/utils/errors"
 import { hashPassword, verifyPassword } from "@/utils/password"
 import { AuthRepository } from "./auth.repository"
-
-export interface RegistrationInput {
-  username: string
-  password: string
-  name: string
-  phone: string
-  arrivalDate: string
-  major: string
-  proposedPosition: string
-  education: string
-  politicalStatus: string
-  socialWorkerNo?: string | null
-  serviceFieldCode?: string | null
-  serviceFieldCodes?: string[]
-  proposedTeam?: string | null
-}
-export type ProfileInput = Partial<Omit<RegistrationInput, "username" | "password">> & {
-  version: number
-}
+import type { ProfileInput, RegistrationInput } from "./auth.validation"
 
 /** 拒绝不存在的自然日期，在入库前拦截二月三十日等自动进位日期。 */
 function assertArrivalDate(value: string) {
@@ -134,6 +116,11 @@ export class AuthService {
         return { patch: { passwordHash, authVersion: target.authVersion + 1 } }
       },
     )
+    return null
+  }
+  /** 退出只记录业务动作，凭证由客户端清理，保留原有多处登录规则。 */
+  async logout(actor: Actor) {
+    await this.repository.record(actor.user.id, "logout")
     return null
   }
 }

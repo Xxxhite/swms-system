@@ -20,6 +20,17 @@ const fixture = new Elysia()
   .compile()
 
 describe("应用基础契约", () => {
+  test("认证和地区路由保持认证边界及参数校验优先级", async () => {
+    for (const path of ["/api/auth/profile", "/api/regions/tree", "/api/regions/440300"]) {
+      const response = await app.handle(new Request(`http://localhost${path}`))
+      expect(response.status).toBe(401)
+      expect((await response.json()).code).toBe(2000)
+    }
+    const response = await app.handle(new Request(`http://localhost/api/regions/${"x".repeat(25)}`))
+    expect(response.status).toBe(422)
+    expect((await response.json()).code).toBe(1000)
+  })
+
   test("人员编辑的空领域返回具体提示，不进入鉴权和数据库写入", async () => {
     const response = await app.handle(
       new Request("http://localhost/api/users/1", {

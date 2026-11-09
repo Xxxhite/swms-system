@@ -1,4 +1,7 @@
 import { t } from "elysia"
+
+export const regionCodeParams = t.Object({ code: t.String({ maxLength: 24 }) })
+
 export const regionCodeBody = t.Optional(
   t.Union([t.String({ minLength: 1, maxLength: 24 }), t.Null()]),
 )

@@ -3,6 +3,9 @@
  * 统一前端功能权限标识；后端接入时需对齐权限编码并独立执行授权校验。
  */
 export const PERM = {
+    FEEDBACK_VIEW: 'service:feedback:view',
+    FEEDBACK_MANAGE: 'service:feedback:manage',
+    COOPERATION_EVALUATE: 'resource:cooperation:evaluate',
     MANAGEMENT_VIEW: 'management:followup:view',
     MANAGEMENT_MANAGE: 'management:followup:manage',
     PROJECT_RECORD_VIEW: 'project:record:view',

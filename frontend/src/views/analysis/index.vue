@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import type { ReportKind } from '@/api/management-types'
 import { reportLabels } from '@/api/management-types'
+import QualityReport from './components/QualityReport.vue'
 import ReportView from './components/ReportView.vue'
 const store = useUserStore()
 const kinds = computed(
@@ -17,7 +18,7 @@ const kinds = computed(
                 (kind === 'resources' && store.hasPermission('resource:view')),
         ) as [ReportKind, string][],
 )
-const active = ref<ReportKind>('progress')
+const active = ref<ReportKind | 'quality'>('progress')
 </script>
 <template>
     <el-card>
@@ -30,8 +31,17 @@ const active = ref<ReportKind>('progress')
                     :label="title"
                     :name="kind"
                 />
+                <el-tab-pane
+                    v-if="
+                        store.hasPermission('service:feedback:view') ||
+                        store.hasPermission('resource:view')
+                    "
+                    label="质量反馈"
+                    name="quality"
+                />
             </el-tabs>
-            <ReportView :key="active" :kind="active" />
+            <QualityReport v-if="active === 'quality'" />
+            <ReportView v-else :key="active" :kind="active" />
         </template>
         <el-empty v-else description="暂无分析查询权限" />
     </el-card>

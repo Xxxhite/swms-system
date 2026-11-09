@@ -1,3 +1,6 @@
+import { QualityService } from "./quality.service"
+import { qualityParam, qualityQuery } from "./quality.validation"
+import { FeedbackRepository } from "@/modules/feedback/feedback.repository"
 import { reportParam, reportQuery } from "./management.validation"
 import { Elysia, t } from "elysia"
 import { createAuthentication } from "@/plugins/auth"
@@ -12,8 +15,40 @@ export function createAnalysisRoutes(
   identities: IdentityService = identityService,
 ) {
   const service = new AnalysisService(repository)
+  const quality = new QualityService(new FeedbackRepository(repository.database))
   return new Elysia({ prefix: "/analysis", tags: ["数据分析"] })
     .use(createAuthentication(identities))
+    .get(
+      "/quality/:kind",
+      async ({ authenticate, params, query }) =>
+        ok(await quality.report(await authenticate(), params.kind, query)),
+      { params: qualityParam, query: qualityQuery },
+    )
+    .get(
+      "/quality/:kind/details",
+      async ({ authenticate, params, query }) =>
+        ok(await quality.report(await authenticate(), params.kind, query, "details")),
+      { params: qualityParam, query: qualityQuery },
+    )
+    .get(
+      "/quality/:kind/export",
+      async ({ authenticate, params, query }) =>
+        new Response(
+          (await quality.report(
+            await authenticate(),
+            params.kind,
+            query,
+            "export",
+          )) as Uint8Array<ArrayBuffer>,
+          {
+            headers: {
+              "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "Content-Disposition": `attachment; filename="quality-${params.kind}.xlsx"`,
+            },
+          },
+        ),
+      { params: qualityParam, query: qualityQuery },
+    )
     .get(
       "/management/:report",
       async ({ authenticate, params, query }) =>

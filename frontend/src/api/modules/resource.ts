@@ -1,3 +1,4 @@
+import type { EvaluationDetail, EvaluationInput } from '@/api/feedback-types'
 import { http } from '@/api/request'
 import type { PageResult } from '@/api/types'
 import type {
@@ -8,6 +9,15 @@ import type {
     LegacyContract,
 } from '@/api/resource-types'
 export const resourceApi = {
+    evaluation: (resourceId: number, id: number): Promise<EvaluationDetail> =>
+        http.get(`/resources/${resourceId}/cooperations/${id}/evaluation`),
+    evaluate: (
+        resourceId: number,
+        id: number,
+        input: EvaluationInput,
+    ): Promise<{ id: number; version: number }> =>
+        http.put(`/resources/${resourceId}/cooperations/${id}/evaluation`, input),
+
     list: (query: Record<string, unknown>): Promise<PageResult<Resource>> =>
         http.get('/resources', query),
     candidates: (): Promise<ResourceCandidates> => http.get('/resources/candidates'),

@@ -1,3 +1,4 @@
+import { feedbackRoleDefaults } from "@/modules/feedback/feedback-permissions"
 import { managementRoleDefaults } from "@/modules/management/management-permissions"
 import { executionRoleDefaults } from "@/modules/execution/execution-permissions"
 import { taskRoleDefaults } from "@/modules/task/task-permissions"
@@ -114,6 +115,7 @@ export async function seedIdentity(
                 ...(taskRoleDefaults[definition.code] ?? []),
                 ...(executionRoleDefaults[definition.code] ?? []),
                 ...(managementRoleDefaults[definition.code] ?? []),
+                ...(feedbackRoleDefaults[definition.code] ?? []),
               ]),
             ].map((permissionCode) => ({ roleId: role.id, permissionCode })),
           )

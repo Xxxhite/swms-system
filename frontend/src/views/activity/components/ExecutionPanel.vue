@@ -18,6 +18,7 @@ import {
     type Evidence,
     type ExecutionException,
 } from '@/api/execution-types'
+import TaskFeedback from './TaskFeedback.vue'
 import OutcomePanel from './OutcomePanel.vue'
 import ExecutionRegistration from './ExecutionRegistration.vue'
 import AttendanceDialog from './AttendanceDialog.vue'
@@ -878,6 +879,11 @@ onMounted(load)
             </el-dialog>
         </template>
         <el-empty v-else-if="!loading && !useMock" description="现场执行不可访问" />
+        <TaskFeedback
+            v-if="store.hasPermission('service:feedback:view')"
+            :key="taskId"
+            :task-id="taskId"
+        />
     </section>
 </template>
 <style scoped>

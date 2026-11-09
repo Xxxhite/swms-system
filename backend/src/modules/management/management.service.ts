@@ -78,6 +78,8 @@ export class ManagementService {
         .filter(
           (r) =>
             canReadFollowup(data, current, r) &&
+            (!q.sourceType || r.sourceType === q.sourceType) &&
+            (!q.sourceId || r.sourceId === q.sourceId) &&
             (!q.projectId || r.projectId === q.projectId) &&
             (!q.teamId || r.teamId === q.teamId) &&
             (!q.ownerId || r.ownerId === q.ownerId) &&

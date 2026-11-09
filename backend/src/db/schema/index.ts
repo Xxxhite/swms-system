@@ -16,3 +16,4 @@ export * from "./outcome"
 export * from "./region"
 
 export * from "./management"
+export * from "./feedback"

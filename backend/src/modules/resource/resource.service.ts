@@ -387,6 +387,8 @@ export class ResourceService {
       if (old) {
         assertVersion(old.version, version!)
         if (old.type === "CONTRACT") throw AppError.conflict("合同合作请在合同资料中维护")
+        if (old.feedbackRating && (input.feedback !== old.feedback || input.result !== old.result))
+          throw AppError.conflict("已评价合作请通过合作评价入口更正结果与反馈")
         if (old.status !== input.status && !input.reason?.trim())
           throw AppError.badRequest("变更合作状态请填写原因")
       }

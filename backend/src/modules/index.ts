@@ -1,3 +1,4 @@
+import { createFeedbackRoutes } from "./feedback/feedback.route"
 import { createManagementRoutes } from "./management/management.route"
 import { createDashboardRoutes } from "./dashboard/dashboard.route"
 import { createRegistrationRoutes } from "./execution/registration.route"
@@ -34,6 +35,7 @@ import { createSystemRoutes } from "./system/system.route"
  * 仅注册已实现的模块；待业务需求与表结构确认后再接入模块骨架。
  */
 export const modules: AnyElysia[] = [
+  createFeedbackRoutes(),
   createManagementRoutes(),
   createDashboardRoutes(),
   createRegistrationRoutes(),

@@ -58,6 +58,7 @@ export interface ResourceCooperation {
     basis: string
     result: string
     feedback: string
+    feedbackRating?: import('./feedback-types').FeedbackRating | null
     version: number
 }
 export interface ResourceFollowup {

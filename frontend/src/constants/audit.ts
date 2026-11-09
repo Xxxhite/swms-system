@@ -1,5 +1,10 @@
 /** 审计动作编码沿用后端记录，中文字典同时用于表格显示和筛选选项。 */
 export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    'create-feedback': '登记服务反馈',
+    'correct-feedback': '更正服务反馈',
+    'void-feedback': '作废服务反馈',
+    'restore-feedback': '恢复服务反馈',
+    'evaluate-cooperation': '评价合作事项',
     'configure-execution': '维护现场规则',
     'record-staff-attendance': '记录到离',
     'end-execution': '结束服务',
@@ -80,6 +85,8 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
 
 /** 被操作的数据类别，与人员角色或账号状态分别管理。 */
 export const AUDIT_ENTITY_TYPE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+    task_feedback: '服务质量反馈',
+    cooperation_evaluation: '合作评价',
     execution: '现场执行',
     participant: '服务对象',
     resource: '单位资源',

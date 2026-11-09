@@ -1,3 +1,5 @@
+import { CooperationEvaluationService, evaluationBody } from "./resource.evaluation"
+import { FeedbackRepository } from "@/modules/feedback/feedback.repository"
 import { Elysia, t } from "elysia"
 import { createAuthentication } from "@/plugins/auth"
 import { identityService, type IdentityService } from "@/modules/identity/identity.service"
@@ -19,6 +21,7 @@ export function createResourceRoutes(
   identities: IdentityService = identityService,
 ) {
   const service = new ResourceService(repository)
+  const evaluation = new CooperationEvaluationService(new FeedbackRepository(repository.database))
   return new Elysia({ prefix: "/resources", tags: ["资源管理"] })
     .use(createAuthentication(identities))
     .get(
@@ -148,6 +151,29 @@ export function createResourceRoutes(
           childId: t.Numeric({ minimum: 1, multipleOf: 1 }),
         }),
         body: t.Object({ ...cooperationBody.properties, ...versionBody.properties }),
+      },
+    )
+    .get(
+      "/:id/cooperations/:childId/evaluation",
+      async ({ authenticate, params }) =>
+        ok(await evaluation.detail(await authenticate(), params.id, params.childId)),
+      {
+        params: t.Object({
+          ...idParam.properties,
+          childId: t.Numeric({ minimum: 1, multipleOf: 1 }),
+        }),
+      },
+    )
+    .put(
+      "/:id/cooperations/:childId/evaluation",
+      async ({ authenticate, params, body }) =>
+        ok(await evaluation.save(await authenticate(), params.id, params.childId, body)),
+      {
+        params: t.Object({
+          ...idParam.properties,
+          childId: t.Numeric({ minimum: 1, multipleOf: 1 }),
+        }),
+        body: evaluationBody,
       },
     )
     .get(

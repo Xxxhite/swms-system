@@ -1,3 +1,4 @@
+import { feedbackPermissionEntries } from "@/modules/feedback/feedback-permissions"
 import { managementPermissionEntries } from "@/modules/management/management-permissions"
 import { executionPermissionEntries } from "@/modules/execution/execution-permissions"
 import { taskPermissionEntries } from "@/modules/task/task-permissions"
@@ -114,6 +115,7 @@ export const permissionCatalog = [
   ...businessPermissionEntries,
   ...resourcePermissionEntries,
   ...managementPermissionEntries,
+  ...feedbackPermissionEntries,
   ...taskPermissionEntries,
   ...executionPermissionEntries,
   ["system:view", "系统管理"],

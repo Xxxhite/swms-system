@@ -19,6 +19,8 @@ import {
 } from '@/api/resource-types'
 import { formatDateTime } from '@/utils/dateTime'
 import { auditActionLabel } from '@/constants/audit'
+import CooperationEvaluation from './components/CooperationEvaluation.vue'
+import { feedbackRatings } from '@/api/feedback-types'
 import ResourceEditor from './components/ResourceEditor.vue'
 defineOptions({ name: 'ResourceDetail' })
 const route = useRoute(),
@@ -30,6 +32,17 @@ const resource = ref<ResourceDetail>(),
 const candidates = ref<ResourceCandidates>({ resources: [], organizations: [], users: [] })
 const model = ref<ResourceInput>(emptyResource()),
     editor = ref<InstanceType<typeof ResourceEditor>>()
+const evaluatedCooperation = computed(
+    () => !!resource.value?.cooperations.find((c) => c.id === selected.value)?.feedbackRating,
+)
+const evaluationId = ref(0)
+function evaluationFollowup() {
+    const id = evaluationId.value
+    evaluationId.value = 0
+    tab.value = 'followups'
+    openFollowup()
+    followup.cooperationId = id
+}
 const active = computed(() => resource.value?.status === 'ACTIVE')
 const has = (p: string) => active.value && store.hasPermission(p)
 const dialog = ref<'contacts' | 'cooperations' | 'followups' | ''>('')
@@ -94,6 +107,11 @@ async function load() {
         model.value.regionCode = d.regionCode ?? null
         model.value.regionPathSnapshot = d.regionPathSnapshot
         candidates.value = await resourceApi.candidates()
+        const cooperationId = Number(route.query.cooperationId)
+        if (d.cooperations.some((c) => c.id === cooperationId)) {
+            tab.value = 'cooperations'
+            evaluationId.value = cooperationId
+        }
         const id = Number(route.query.followupId)
         if (Number.isSafeInteger(id) && id > 0) {
             const row = d.followups.find((f) => f.id === id)
@@ -396,6 +414,24 @@ onMounted(load)
                     <el-table-column prop="startDate" label="开始日期" />
                     <el-table-column prop="endDate" label="结束日期" />
                     <el-table-column prop="feedback" label="合作反馈" />
+                    <el-table-column label="合作评价">
+                        <template #default="{ row }">
+                            {{
+                                row.feedbackRating
+                                    ? feedbackRatings[
+                                          row.feedbackRating as keyof typeof feedbackRatings
+                                      ]
+                                    : '未评价'
+                            }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="评价">
+                        <template #default="{ row }">
+                            <el-button link type="primary" @click="evaluationId = row.id">
+                                查看／评价
+                            </el-button>
+                        </template>
+                    </el-table-column>
                     <el-table-column v-if="has('resource:cooperation:manage')" label="操作">
                         <template #default="{ row }">
                             <el-button
@@ -582,7 +618,13 @@ onMounted(load)
                         :key="key"
                         :label="label"
                     >
-                        <el-input v-model="cooperation[key]" type="textarea" />
+                        <el-input
+                            v-model="cooperation[key]"
+                            type="textarea"
+                            :disabled="
+                                evaluatedCooperation && (key === 'result' || key === 'feedback')
+                            "
+                        />
                     </el-form-item>
                 </template>
                 <template v-else>
@@ -716,6 +758,21 @@ onMounted(load)
         </el-dialog>
     </div>
     <el-empty v-else description="资源资料暂未加载，请返回列表或刷新重试" />
+    <el-dialog
+        :model-value="!!evaluationId"
+        title="合作评价"
+        width="640px"
+        destroy-on-close
+        @close="evaluationId = 0"
+    >
+        <CooperationEvaluation
+            v-if="evaluationId && resource"
+            :resource-id="resource.id"
+            :cooperation-id="evaluationId"
+            @saved="load"
+            @followup="evaluationFollowup"
+        />
+    </el-dialog>
 </template>
 <style scoped>
 .resource-detail {

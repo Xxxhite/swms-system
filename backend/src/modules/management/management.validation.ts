@@ -4,6 +4,8 @@ export { idParam }
 export const managementQuery = t.Object({
   page: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
   pageSize: t.Optional(t.Numeric({ minimum: 1, maximum: 100, multipleOf: 1 })),
+  sourceType: t.Optional(t.Literal("TASK")),
+  sourceId: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
   projectId: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
   teamId: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),
   ownerId: t.Optional(t.Numeric({ minimum: 1, multipleOf: 1 })),

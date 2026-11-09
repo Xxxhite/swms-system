@@ -4,7 +4,11 @@ import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { managementApi } from '@/api/modules/management'
 import { emptyFollowup, type Followup, type ManagementCandidates } from '@/api/management-types'
-const props = defineProps<{ row?: Followup; candidates: ManagementCandidates }>(),
+const props = defineProps<{
+        row?: Followup
+        candidates: ManagementCandidates
+        initialTaskId?: number
+    }>(),
     emit = defineEmits<{ saved: [id: number]; cancel: [] }>()
 const model = reactive(emptyFollowup()),
     busy = ref(false),
@@ -13,6 +17,18 @@ watch(
     () => props.row,
     (row) => {
         Object.assign(model, emptyFollowup(), row ?? {})
+        if (!row && props.initialTaskId) {
+            const s = props.candidates.sources.find(
+                (s) => s.sourceType === 'TASK' && s.sourceId === props.initialTaskId,
+            )
+            if (s)
+                Object.assign(model, {
+                    projectId: s.projectId,
+                    teamId: s.teamId,
+                    sourceId: s.sourceId,
+                    sourceType: 'TASK',
+                })
+        }
         reason.value = ''
     },
     { immediate: true },

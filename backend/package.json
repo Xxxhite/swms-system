@@ -26,6 +26,7 @@
     "db:seed:resource-permissions": "bun src/db/seed.ts --resource-permissions",
     "db:seed:regions": "bun src/db/seed-regions.ts",
     "db:normalize:regions": "bun src/db/normalize-regions.ts",
+    "db:seed:feedback-permissions": "bun src/db/seed.ts --feedback-permissions",
     "db:seed:management-permissions": "bun src/db/seed.ts --management-permissions"
   },
   "dependencies": {

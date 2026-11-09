@@ -26,6 +26,7 @@ const store = useUserStore(),
 const { isMobile } = useViewport()
 const projects = ref<{ id: number; name: string }[]>([]),
     teams = ref<{ id: number; name: string }[]>([])
+const taskSource = ref(Number(route.query.taskId) || undefined)
 const query = reactive({
     projectId: undefined as number | undefined,
     teamId: undefined as number | undefined,
@@ -45,6 +46,8 @@ async function load() {
     try {
         const result = await managementApi.list({
             ...query,
+            sourceType: taskSource.value ? 'TASK' : undefined,
+            sourceId: taskSource.value,
             status: query.status || undefined,
             dateFrom: query.dateFrom || undefined,
             dateTo: query.dateTo || undefined,
@@ -72,6 +75,7 @@ function search() {
     void load()
 }
 function reset() {
+    taskSource.value = undefined
     Object.assign(query, {
         page: 1,
         projectId: undefined,
@@ -114,6 +118,14 @@ async function locate() {
     const id = Number(route.query.followupId)
     if (Number.isSafeInteger(id) && id > 0) await open(id)
 }
+watch(
+    () => route.query.taskId,
+    (value) => {
+        const id = Number(value)
+        taskSource.value = Number.isSafeInteger(id) && id > 0 ? id : undefined
+        search()
+    },
+)
 watch(() => route.query.followupId, locate)
 onMounted(async () => {
     if (!useMock)
@@ -142,6 +154,12 @@ onMounted(async () => {
                 </el-button>
             </div>
         </template>
+        <el-alert
+            v-if="taskSource"
+            title="已筛选此任务的管理跟进；建立新问题前请先查看未完成事项。"
+            type="info"
+            :closable="false"
+        />
         <p>记录需要持续协调的问题；日常任务、审批及资源跟进仍在原业务处理。</p>
         <FilterPanel @submit.prevent="search">
             <el-form-item label="项目">
@@ -215,6 +233,7 @@ onMounted(async () => {
             <FollowupEditor
                 :row="editRow"
                 :candidates="candidates"
+                :initial-task-id="taskSource"
                 @saved="saved"
                 @cancel="editing = false"
             />

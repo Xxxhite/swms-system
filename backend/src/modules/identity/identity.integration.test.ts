@@ -1,3 +1,6 @@
+import { createFeedbackRoutes } from "@/modules/feedback/feedback.route"
+import { FeedbackRepository } from "@/modules/feedback/feedback.repository"
+import { registerFeedbackTests } from "@/modules/feedback/feedback.integration"
 import { createManagementRoutes } from "@/modules/management/management.route"
 import { ManagementRepository } from "@/modules/management/management.repository"
 import { createDashboardRoutes } from "@/modules/dashboard/dashboard.route"
@@ -98,6 +101,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       if (process.env.TEST_DB_RESET !== "1")
         throw new Error("测试库非空；确认可清理后设置 TEST_DB_RESET=1")
       const allowed = [
+        "service_task_feedback",
         "management_followup_events",
         "management_followups",
         "outcome_reviews",
@@ -191,6 +195,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
       .group("/api", (api) =>
         api.use([
           createAuthRoutes(auth),
+          createFeedbackRoutes(new FeedbackRepository(database), identities),
           createManagementRoutes(new ManagementRepository(database), identities),
           createDashboardRoutes(new ManagementRepository(database), identities),
           createRegionRoutes(new RegionRepository(database), identities),
@@ -846,6 +851,7 @@ describe.skipIf(!testDatabase)("独立 MySQL 身份集成", () => {
     },
   }))
   registerManagementTests(() => ({ database, handle }))
+  registerFeedbackTests(() => ({ database, handle }))
   registerRegistrationTests(() => ({
     database,
     handle,

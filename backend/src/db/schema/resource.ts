@@ -108,6 +108,9 @@ export const resourceCooperations = mysqlTable(
     basis: varchar("basis", { length: 1000 }).notNull().default(""),
     result: varchar("result", { length: 2000 }).notNull().default(""),
     feedback: varchar("feedback", { length: 2000 }).notNull().default(""),
+    feedbackRating: mysqlEnum("feedback_rating", ["SATISFIED", "GENERAL", "NEEDS_IMPROVEMENT"]),
+    feedbackBy: int("feedback_by", { unsigned: true }).references(() => users.id),
+    feedbackAt: datetime("feedback_at", { mode: "date", fsp: 3 }),
     ...stamps(),
   },
   (t) => [
